@@ -379,6 +379,18 @@ bisa diubah setelah dibuat.
 
 ---
 
+## Sisipan — pilihan bisa dicari, kalender, logo (18 September 2026)
+
+Atas permintaan: semua `<select>` diganti `PilihanCari` (cmdk) termasuk kolom "Dari /
+Untuk siapa" yang kini menerima anggota terdaftar **atau** nama bebas dari kotak yang sama;
+semua `<input type="date">` diganti `PilihTanggal` (react-day-picker, Senin pertama,
+dropdown bulan/tahun, tanggal masa depan nonaktif); logo `src/assets/logo-app.png`
+dipasang di layar kunci, pengaturan awal, sidebar, header sempit; favicon dan
+`build/icon.ico` dibuat oleh `scripts/buat-ikon.mjs`. Diuji di Electron 22 / Node 16:
+cari "santun" → satu hasil, nama bebas "Ibu Marni" tersimpan sebagai `nama_pihak`,
+kalender memilih 2 September dan mengunci tanggal setelah hari ini, penyaring Catatan Kas
+dan Laporan bekerja lewat combobox/kalender, 360px tanpa geser samping.
+
 ## Fase 9 — Electron
 
 Ikuti `docs/03` seluruhnya, dan `docs/05` untuk Windows 7.

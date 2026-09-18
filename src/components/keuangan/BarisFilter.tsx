@@ -4,7 +4,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import type { Jenis } from '@/server/db/schema'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { cn } from '@/lib/utils'
 import type { PilihanRentang } from '@/lib/tanggal'
 
@@ -67,30 +68,37 @@ export function BarisFilter({ daftarJenis, arah, jenisId, rentang, awal, akhir, 
       </div>
       {rentang === 'pilih' && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-label font-semibold">
+          <div className="flex flex-col gap-1 text-label font-semibold">
             Dari tanggal
-            <Input type="date" className="angka" value={awal} onChange={(e) => ubah({ awal: e.target.value })} />
-          </label>
-          <label className="flex flex-col gap-1 text-label font-semibold">
+            <PilihTanggal label="Dari tanggal" nilai={awal} onUbah={(v) => ubah({ awal: v })} />
+          </div>
+          <div className="flex flex-col gap-1 text-label font-semibold">
             Sampai tanggal
-            <Input type="date" className="angka" value={akhir} onChange={(e) => ubah({ akhir: e.target.value })} />
-          </label>
+            <PilihTanggal label="Sampai tanggal" nilai={akhir} onUbah={(v) => ubah({ akhir: v })} />
+          </div>
         </div>
       )}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Select aria-label="Tampilkan jenis" value={arah} onChange={(e) => ubah({ arah: e.target.value, jenis: undefined })}>
-          <option value="">Semua: Masuk & Keluar</option>
-          <option value="masuk">Uang Masuk saja</option>
-          <option value="keluar">Uang Keluar saja</option>
-        </Select>
-        <Select aria-label="Tampilkan untuk apa" value={jenisId} onChange={(e) => ubah({ jenis: e.target.value })}>
-          <option value="">Semua untuk apa</option>
-          {jenisTersedia.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.nama}
-            </option>
-          ))}
-        </Select>
+        <PilihanCari<string>
+          label="Tampilkan jenis"
+          nilai={arah || null}
+          onUbah={(v) => ubah({ arah: v ?? undefined, jenis: undefined })}
+          labelKosong="Semua: Masuk & Keluar"
+          placeholder="Semua: Masuk & Keluar"
+          pilihan={[
+            { nilai: 'masuk', label: 'Uang Masuk saja' },
+            { nilai: 'keluar', label: 'Uang Keluar saja' },
+          ]}
+        />
+        <PilihanCari<string>
+          label="Tampilkan untuk apa"
+          nilai={jenisId || null}
+          onUbah={(v) => ubah({ jenis: v ?? undefined })}
+          labelKosong="Semua untuk apa"
+          placeholder="Semua untuk apa"
+          placeholderCari="Ketik nama jenis…"
+          pilihan={jenisTersedia.map((j) => ({ nilai: String(j.id), label: j.nama, kelompok: arah ? undefined : j.arah === 'masuk' ? 'Uang Masuk' : 'Uang Keluar' }))}
+        />
         <form
           className="relative"
           onSubmit={(e) => {

@@ -8,7 +8,7 @@ import { Kartu } from '@/components/ui/kartu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import { PilihanCari } from '@/components/ui/pilihan-cari'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { KodePemulihan } from '@/components/auth/KodePemulihan'
@@ -110,12 +110,13 @@ export function KartuKeamanan({ p }: { p: Pengaturan }) {
 
         <div className="flex flex-col gap-2 sm:max-w-xs">
           <Label htmlFor="auto-kunci">Kunci otomatis bila tidak dipakai selama</Label>
-          <Select id="auto-kunci" value={p.autoKunciMenit} onChange={(e) => ubahMenit(Number(e.target.value))} disabled={sedangKirim}>
-            <option value={5}>5 menit</option>
-            <option value={15}>15 menit</option>
-            <option value={30}>30 menit</option>
-            <option value={60}>60 menit</option>
-          </Select>
+          <PilihanCari<number>
+            id="auto-kunci"
+            nilai={p.autoKunciMenit}
+            onUbah={(v) => v !== null && ubahMenit(v)}
+            nonaktif={sedangKirim}
+            pilihan={[5, 15, 30, 60].map((m) => ({ nilai: m, label: `${m} menit` }))}
+          />
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { MENU } from './menu'
+import { Logo } from './Logo'
 import { cn } from '@/lib/utils'
 
 /**
@@ -12,11 +13,9 @@ export function Sidebar({ namaStm }: { namaStm: string }) {
   const pathname = usePathname()
   return (
     <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-r border-border bg-surface md:flex min-[1100px]:w-sidebar">
-      <div className="flex min-h-16 items-center border-b border-border px-3 min-[1100px]:px-5">
+      <div className="flex min-h-16 items-center gap-3 border-b border-border px-4 min-[1100px]:px-5">
+        <Logo ukuran={40} prioritas />
         <span className="hidden text-isi font-semibold leading-tight line-clamp-2 min-[1100px]:block">{namaStm}</span>
-        <span className="mx-auto text-judul-kartu font-bold text-primary min-[1100px]:hidden" aria-hidden>
-          {namaStm.trim().charAt(0).toUpperCase() || 'S'}
-        </span>
       </div>
       <nav aria-label="Menu utama" className="flex flex-1 flex-col gap-1 p-3">
         {MENU.map(({ rute, label, Ikon }) => {

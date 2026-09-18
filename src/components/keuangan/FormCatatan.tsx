@@ -14,7 +14,8 @@ import { hariIni, kemarin } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
@@ -169,7 +170,11 @@ export function FormCatatan({
           ]}
         />
         {modeTanggal === 'pilih' && (
-          <Input id="tanggal" type="date" max={hariIni()} {...register('tanggal')} aria-invalid={!!g.tanggal} className="angka" />
+          <Controller
+            control={control}
+            name="tanggal"
+            render={({ field }) => <PilihTanggal id="tanggal" nilai={field.value} onUbah={field.onChange} maks={hariIni()} galat={!!g.tanggal} />}
+          />
         )}
         <PesanGalat>{g.tanggal?.message}</PesanGalat>
       </div>
@@ -181,20 +186,16 @@ export function FormCatatan({
           control={control}
           name="jenisId"
           render={({ field }) => (
-            <Select
+            <PilihanCari
               id="jenisId"
-              value={field.value ?? ''}
-              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-              aria-invalid={!!g.jenisId}
-              disabled={!arah}
-            >
-              <option value="">{arah ? 'Pilih dari daftar…' : 'Pilih dulu Uang Masuk atau Uang Keluar'}</option>
-              {jenisTersedia.map((j) => (
-                <option key={j.id} value={j.id}>
-                  {j.nama}
-                </option>
-              ))}
-            </Select>
+              nilai={field.value ?? null}
+              onUbah={(v) => field.onChange(v ?? undefined)}
+              pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: j.nama, keterangan: j.keterangan ?? undefined }))}
+              placeholder={arah ? 'Pilih dari daftar…' : 'Pilih dulu Uang Masuk atau Uang Keluar'}
+              placeholderCari="Ketik nama jenis…"
+              galat={!!g.jenisId}
+              nonaktif={!arah}
+            />
           )}
         />
         <PesanGalat>{g.jenisId?.message}</PesanGalat>
@@ -210,12 +211,22 @@ export function FormCatatan({
       {/* 5. Dari / Untuk siapa */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="pihak">{arah === 'keluar' ? 'Untuk siapa' : 'Dari siapa'}</Label>
-        <Input id="pihak" list="daftar-anggota" placeholder="Pilih anggota atau ketik nama (boleh dikosongkan)" maxLength={120} autoComplete="off" {...register('pihak')} />
-        <datalist id="daftar-anggota">
-          {daftarAnggota.map((a) => (
-            <option key={a.id} value={a.nama} />
-          ))}
-        </datalist>
+        <Controller
+          control={control}
+          name="pihak"
+          render={({ field }) => (
+            <PilihanCari<string>
+              id="pihak"
+              nilai={field.value || null}
+              onUbah={(v) => field.onChange(v ?? '')}
+              pilihan={daftarAnggota.map((a) => ({ nilai: a.nama, label: a.nama }))}
+              placeholder="Pilih anggota atau ketik nama (boleh dikosongkan)"
+              placeholderCari="Ketik nama anggota atau nama bebas…"
+              labelKosong="Tanpa nama"
+              bolehBebas
+            />
+          )}
+        />
         <PesanGalat>{g.pihak?.message}</PesanGalat>
       </div>
 

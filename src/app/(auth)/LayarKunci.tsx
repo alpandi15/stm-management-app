@@ -5,6 +5,7 @@ import { bukaKunci } from '@/server/actions/auth'
 import { Button } from '@/components/ui/button'
 import { InputPin } from '@/components/auth/InputPin'
 import { FormLupaPin } from './FormLupaPin'
+import { Logo } from '@/components/kerangka/Logo'
 
 export function LayarKunci({ namaStm, namaBendahara }: { namaStm: string; namaBendahara: string }) {
   const router = useRouter()
@@ -49,7 +50,8 @@ export function LayarKunci({ namaStm, namaBendahara }: { namaStm: string; namaBe
   return (
     <main className="flex min-h-dvh items-center justify-center bg-bg p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo ukuran={96} prioritas className="mb-5" />
           <p className="text-judul-kartu font-semibold text-muted">{namaStm}</p>
           <h1 className="mt-1 text-judul font-bold">Halo, {namaBendahara}</h1>
         </div>

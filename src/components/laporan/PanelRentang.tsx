@@ -2,8 +2,8 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { Jenis } from '@/server/db/schema'
 import type { Periode } from '@/lib/tanggal'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { cn } from '@/lib/utils'
 
 const PILIHAN: ReadonlyArray<[Periode, string]> = [
@@ -66,35 +66,42 @@ export function PanelRentang({
       </div>
       {periode === 'pilih' ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-label font-semibold">
+          <div className="flex flex-col gap-1 text-label font-semibold">
             Dari tanggal
-            <Input type="date" className="angka" value={awal} onChange={(e) => ubah({ awal: e.target.value })} />
-          </label>
-          <label className="flex flex-col gap-1 text-label font-semibold">
+            <PilihTanggal label="Dari tanggal" nilai={awal} onUbah={(v) => ubah({ awal: v })} />
+          </div>
+          <div className="flex flex-col gap-1 text-label font-semibold">
             Sampai tanggal
-            <Input type="date" className="angka" value={akhir} onChange={(e) => ubah({ akhir: e.target.value })} />
-          </label>
+            <PilihTanggal label="Sampai tanggal" nilai={akhir} onUbah={(v) => ubah({ akhir: v })} />
+          </div>
         </div>
       ) : (
-        <label className="flex flex-col gap-1 text-label font-semibold sm:max-w-xs">
+        <div className="flex flex-col gap-1 text-label font-semibold sm:max-w-sm">
           Tanggal acuan
-          <Input type="date" className="angka" value={acuan} onChange={(e) => ubah({ acuan: e.target.value })} />
-        </label>
+          <PilihTanggal label="Tanggal acuan" nilai={acuan} onUbah={(v) => ubah({ acuan: v })} />
+        </div>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Select aria-label="Tampilkan jenis" value={jenisId} onChange={(e) => ubah({ jenis: e.target.value })}>
-          <option value="">Semua jenis</option>
-          {daftarJenis.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.arah === 'masuk' ? 'Masuk' : 'Keluar'} · {j.nama}
-            </option>
-          ))}
-        </Select>
-        <Select aria-label="Tampilkan cara bayar" value={metode} onChange={(e) => ubah({ metode: e.target.value })}>
-          <option value="">Tunai & Transfer</option>
-          <option value="tunai">Tunai saja</option>
-          <option value="transfer">Transfer saja</option>
-        </Select>
+        <PilihanCari<string>
+          label="Tampilkan jenis"
+          nilai={jenisId || null}
+          onUbah={(v) => ubah({ jenis: v ?? undefined })}
+          labelKosong="Semua jenis"
+          placeholder="Semua jenis"
+          placeholderCari="Ketik nama jenis…"
+          pilihan={daftarJenis.map((j) => ({ nilai: String(j.id), label: j.nama, kelompok: j.arah === 'masuk' ? 'Uang Masuk' : 'Uang Keluar' }))}
+        />
+        <PilihanCari<string>
+          label="Tampilkan cara bayar"
+          nilai={metode || null}
+          onUbah={(v) => ubah({ metode: v ?? undefined })}
+          labelKosong="Tunai & Transfer"
+          placeholder="Tunai & Transfer"
+          pilihan={[
+            { nilai: 'tunai', label: 'Tunai saja' },
+            { nilai: 'transfer', label: 'Transfer saja' },
+          ]}
+        />
       </div>
     </div>
   )

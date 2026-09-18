@@ -41,6 +41,8 @@ alasannya di `docs/05`.
   `radix-ui` + cva; CLI shadcn tidak dipakai) + lucide-react — token warna hex, tanpa oklch
 - Recharts untuk grafik
 - Zod + React Hook Form
+- `cmdk` + `react-day-picker` untuk pilihan-bisa-cari dan kalender (klien saja); tidak ada
+  `<select>`/`<input type="date">` mentah di aplikasi
 - **`jose` 4.x** untuk sesi, `bcryptjs` untuk PIN
 - **Electron 22.3.27** + electron-builder (target `nsis` dan `portable`, arch `ia32` + `x64`)
 - Node **20** di mesin pengembangan (`nvm use`); runtime pengguna adalah Node 16.17 di Electron

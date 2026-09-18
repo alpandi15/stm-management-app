@@ -15,6 +15,7 @@
 | Sesi | `jose` **4.x** (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native. 4.x karena 5.x butuh Node 18 |
 | Hash PIN | `bcryptjs` | Murni JavaScript — penting, lihat catatan di bawah |
 | Tanggal | `date-fns` + `date-fns/locale/id` | |
+| Pilihan & kalender | `cmdk` + `react-day-picker` | Komponen Combobox dan Calendar shadcn/ui: semua pilihan bisa dicari (pengganti `<select>`), pemilih tanggal berbahasa Indonesia dengan dropdown bulan/tahun. Keduanya hanya berjalan di klien |
 | Desktop | Electron **22.3.27** + electron-builder | Lihat `docs/03` dan `docs/05` — versi terakhir untuk Windows 7 |
 | Uji | `node --test` + `tsx` | Bawaan Node; `tsx` hanya untuk menjalankan `.ts` tanpa langkah kompilasi |
 
@@ -45,6 +46,18 @@ npm i -D typescript @types/node@20 @types/react@18 @types/react-dom@18 \
 `bcryptjs` 3.x sudah membawa tipe sendiri, tidak perlu `@types/bcryptjs`. `server-only`
 dipakai di `src/server/db/index.ts` supaya impor tak sengaja dari komponen klien gagal
 saat build, bukan saat dijalankan.
+
+**Pilihan dan tanggal.** Tidak ada `<select>` maupun `<input type="date">` di aplikasi:
+semua pilihan memakai `components/ui/pilihan-cari.tsx` (Popover + cmdk, dengan kotak
+cari, kelompok, dan mode `bolehBebas` untuk nama anggota/nama bebas), semua tanggal
+memakai `components/ui/pilih-tanggal.tsx` (Popover + `components/ui/kalender.tsx`, minggu
+mulai Senin, `captionLayout="dropdown"`, tanggal di luar batas dinonaktifkan, `required`
+supaya klik ulang tidak membatalkan pilihan).
+
+**Logo dan ikon.** Sumber `src/assets/logo-app.png`; `public/logo-app.png` (512px)
+dipakai `components/kerangka/Logo.tsx` di layar kunci, pengaturan awal, sidebar, dan
+header layar sempit. `scripts/buat-ikon.mjs` membuat `src/app/favicon.ico` dan
+`build/icon.ico` (7 ukuran, entri PNG) dari sumber itu — jalankan ulang bila logo berubah.
 
 **shadcn/ui tanpa CLI.** CLI shadcn v4 memasang paket runtime (`shadcn`, `cn`,
 `tw-animate-css`), font Geist, dan palet oklch yang tidak dikenal Chromium 108. Karena itu

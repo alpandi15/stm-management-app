@@ -8,7 +8,7 @@ import type { Pengaturan } from '@/server/db/schema'
 import { formatTanggal, hariIni } from '@/lib/tanggal'
 import { Kartu } from '@/components/ui/kartu'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { Label } from '@/components/ui/label'
 
 /** Penguncian periode (docs/02 §5.5): pagar terhadap kekeliruan, bisa dibuka sendiri. */
@@ -45,7 +45,7 @@ export function KartuPenguncian({ p }: { p: Pengaturan }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex flex-col gap-2">
             <Label htmlFor="kunci-sampai">Tutup pembukuan sampai tanggal</Label>
-            <Input id="kunci-sampai" type="date" className="angka" value={sampai} max={hariIni()} onChange={(e) => setSampai(e.target.value)} />
+            <PilihTanggal id="kunci-sampai" className="sm:w-80" nilai={sampai} maks={hariIni()} onUbah={setSampai} />
           </div>
           <Button onClick={() => sampai && atur(sampai)} disabled={sedangKirim || !sampai}>
             <Lock /> Tutup Pembukuan

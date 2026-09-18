@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { sudahSetup } from '@/server/queries/pengaturan'
 import { WizardSetup } from './WizardSetup'
+import { Logo } from '@/components/kerangka/Logo'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,8 +11,11 @@ export default function HalamanSetup() {
   if (sudahSetup()) redirect('/')
   return (
     <main className="flex min-h-dvh items-center justify-center bg-bg p-4 sm:p-6">
-      <div className="w-full max-w-md rounded-kartu border border-border bg-surface p-6 shadow-kartu sm:p-8">
-        <WizardSetup />
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
+        <Logo ukuran={80} prioritas />
+        <div className="w-full rounded-kartu border border-border bg-surface p-6 shadow-kartu sm:p-8">
+          <WizardSetup />
+        </div>
       </div>
     </main>
   )

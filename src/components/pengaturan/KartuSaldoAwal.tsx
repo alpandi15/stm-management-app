@@ -8,7 +8,7 @@ import type { Pengaturan } from '@/server/db/schema'
 import { hariIni } from '@/lib/tanggal'
 import { Kartu } from '@/components/ui/kartu'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { InputRupiah } from '@/components/keuangan/InputRupiah'
@@ -46,7 +46,7 @@ export function KartuSaldoAwal({ p }: { p: Pengaturan }) {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="tanggal-mulai">Tanggal mulai pembukuan</Label>
-          <Input id="tanggal-mulai" type="date" className="angka sm:max-w-xs" value={tanggalMulai} max={hariIni()} onChange={(e) => setTanggalMulai(e.target.value)} />
+          <PilihTanggal id="tanggal-mulai" className="sm:max-w-sm" nilai={tanggalMulai} maks={hariIni()} onUbah={setTanggalMulai} />
           <p className="text-ket text-muted">Catatan dengan tanggal sebelum ini tidak bisa dibuat.</p>
         </div>
         <PesanGalat>{galat}</PesanGalat>
