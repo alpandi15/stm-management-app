@@ -5,7 +5,8 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack, HandCoins } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack, HandCoins, Info } from 'lucide-react'
+import Link from 'next/link'
 import { simpanCatatan, ubahCatatan, type HasilSimpanCatatan } from '@/server/actions/transaksi'
 import type { Jenis, Transaksi } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
@@ -107,6 +108,19 @@ export function FormCatatan({
   const jenisTerpilih = daftarJenis.find((j) => j.id === jenisId)
   const anggotaTerpilih = daftarAnggota.find((a) => a.nama.toLowerCase() === pihak.trim().toLowerCase())
   const nominalTerkunci = !!jenisTerpilih?.nominalDikunci && jenisTerpilih.nominalBawaan != null
+  // Tanpa nama = uang gabungan banyak orang: jumlahnya boleh diisi total (kelipatan nominal bila terkunci)
+  const tanpaNama = !pihak.trim()
+  const jumlahSekarang = watch('jumlah')
+  const petunjukJumlah = (() => {
+    const nominal = jenisTerpilih?.nominalBawaan
+    if (nominalTerkunci && nominal != null) {
+      if (!tanpaNama) return 'Nominal ditetapkan pengurus. Ubah di Pengaturan › Jenis Uang bila memang berubah.'
+      const orang = jumlahSekarang && jumlahSekarang > nominal && jumlahSekarang % nominal === 0 ? jumlahSekarang / nominal : null
+      return `Nominal per orang ${formatRupiah(nominal)}. Tanpa nama anggota, isi jumlah keseluruhan yang diterima — kelipatan ${formatRupiah(nominal)}${orang ? ` (sekarang = ${orang} orang)` : `, mis. 12 orang = ${formatRupiah(nominal * 12)}`}.`
+    }
+    if (nominal != null) return `Terisi otomatis dari nominal jenis ini${tanpaNama && arah === 'masuk' ? ' (per orang)' : ''}; boleh diubah. ${tanpaNama && arah === 'masuk' ? 'Dari banyak anggota? Isi jumlah keseluruhannya.' : ''}`.trim()
+    return arah === 'masuk' ? 'Jumlah keseluruhan yang benar-benar diterima, dalam rupiah penuh.' : 'Jumlah keseluruhan yang benar-benar dikeluarkan, dalam rupiah penuh.'
+  })()
   const tanggal = watch('tanggal')
   const jenisPeriode = jenisTerpilih?.periode === 'bulanan' || jenisTerpilih?.periode === 'tahunan' ? jenisTerpilih.periode : null
   // Periode yang dibayar: bawaan mengikuti tanggal; direset saat jenis berganti
@@ -289,7 +303,9 @@ export function FormCatatan({
 
       {/* 5. Dari / Untuk siapa */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="pihak">{arah === 'keluar' ? 'Untuk siapa' : 'Dari siapa'}</Label>
+        <Label htmlFor="pihak">
+          {arah === 'keluar' ? 'Untuk siapa' : 'Dari anggota'} <span className="font-normal text-muted">(boleh kosong)</span>
+        </Label>
         <Controller
           control={control}
           name="pihak"
@@ -299,7 +315,7 @@ export function FormCatatan({
               nilai={field.value || null}
               onUbah={(v) => field.onChange(v ?? '')}
               pilihan={daftarAnggota.map((a) => ({ nilai: a.nama, label: a.nama, keterangan: [a.nomor, a.status === 'meninggal' ? 'meninggal dunia' : null].filter(Boolean).join(' · ') || undefined }))}
-              placeholder="Pilih anggota atau ketik nama (boleh dikosongkan)"
+              placeholder="Pilih anggota atau ketik nama"
               placeholderCari="Ketik nama anggota atau nama bebas…"
               labelKosong="Tanpa nama"
               bolehBebas
@@ -307,6 +323,20 @@ export function FormCatatan({
           )}
         />
         <PesanGalat>{g.pihak?.message}</PesanGalat>
+        {arah === 'masuk' && !modeUbah && (
+          <div className="flex gap-3 rounded-input border border-primary-soft bg-primary-soft px-4 py-3 text-ket text-text">
+            <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p>
+              Isi bila uang ini dari <b>satu</b> anggota — nama dan status iurannya ikut tercatat. Kalau ini kutipan dari <b>banyak anggota sekaligus</b>,
+              kosongkan saja dan tulis ringkasannya di keterangan, misalnya “Iuran wajib Januari, 12 anggota Blok C”. Ingin setiap anggota tercatat lunas?
+              Pakai{' '}
+              <Link href="/catatan/setoran/baru" className="font-semibold text-primary underline-offset-4 hover:underline">
+                Catat Iuran Kolektif
+              </Link>
+              .
+            </p>
+          </div>
+        )}
         {jenisTerpilih?.menandaiMeninggal && pihak.trim() && !anggotaTerpilih && (
           <p className="text-ket text-muted">Nama di atas belum terdaftar sebagai anggota, jadi tidak ada status yang bisa ditandai. Catatan kasnya tetap tersimpan seperti biasa.</p>
         )}
@@ -354,8 +384,8 @@ export function FormCatatan({
               nilai={field.value ?? null}
               onUbah={(n) => field.onChange(n ?? undefined)}
               galat={!!g.jumlah}
-              hanyaBaca={nominalTerkunci}
-              petunjuk={nominalTerkunci ? 'Nominal ditetapkan pengurus. Ubah di Pengaturan › Jenis Uang bila memang berubah.' : jenisTerpilih?.nominalBawaan != null ? 'Terisi otomatis dari nominal jenis ini; boleh diubah.' : undefined}
+              hanyaBaca={nominalTerkunci && !tanpaNama}
+              petunjuk={petunjukJumlah}
             />
           )}
         />

@@ -488,7 +488,16 @@ apa pun yang dikirim klien. Pecah KK membawa jenis kelamin tanggungan ke anggota
 Electron 22: anggota + 3 keluarga (Istri → P terkunci, Anak → P dipilih, Anak → kosong) →
 DB sesuai; ubah Siti (Istri) tombol terkunci; detail anggota menampilkan "Jenis kelamin".
 
-**Sidebar tablet & tombol Kembali**: di 768–1099px sidebar ikon melebar ke 240px saat
+**Form catat — "Dari anggota" & jumlah**: label "Dari siapa" → "Dari anggota (boleh kosong)"
+dengan kotak info: isi bila dari satu anggota; kutipan banyak anggota → kosongkan dan tulis
+ringkasan di keterangan, atau pakai Catat Iuran Kolektif (tautan). Petunjuk Jumlah Uang
+menyesuaikan: nominal terkunci + tanpa nama → kolom bisa diisi total, harus kelipatan nominal
+(petunjuk menghitung "= 12 orang"); dengan nama tetap terkunci. Uji Electron 22: Iuran Wajib
+tanpa nama Rp 600.000 tersimpan (KM-2026-0042), Rp 75.000 ditolak, dengan nama Dewi tetap
+`readOnly` 50.000.
+
+**Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
+di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)
 sehingga nama menu terbaca sebelum diklik. Halaman Catat dan Catat Iuran Kolektif memiliki
 tombol **Kembali** (`TombolKembali`, ke `/catatan`) di kepala halaman.

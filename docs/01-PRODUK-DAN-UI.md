@@ -155,9 +155,9 @@ tidak ada parallax, tidak ada skeleton yang berkedip lama. Hormati
 
 ## 4. Kerangka aplikasi
 
-**Sidebar kiri tetap** selebar 240px, menciut jadi ikon saja di bawah 1100px (melebar
-sementara di atas isi halaman saat kursor berada di atasnya, agar nama menu terbaca), dan menjadi
-menu bawah (bottom bar) di bawah 768px. Di menu bawah hanya lima item pertama yang muat
+**Sidebar kiri tetap** selebar 240px di laptop dan desktop (≥ 1024px), menciut jadi ikon saja
+di tablet 768–1023px (melebar sementara di atas isi halaman saat kursor berada di atasnya, agar
+nama menu terbaca), dan menjadi menu bawah (bottom bar) di bawah 768px. Di menu bawah hanya lima item pertama yang muat
 dengan label 13px pada lebar 360px; **Pengaturan pindah ke ikon roda gigi di header**
 (di sebelah tombol Kunci) pada lebar itu.
 

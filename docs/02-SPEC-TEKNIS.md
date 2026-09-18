@@ -474,7 +474,9 @@ sudah punya jenis buatan sendiri. Migrasi 0004 memindahkan kode yang terlanjur b
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat
   kolom `readOnly` **dan** server menolak `jumlah ≠ nominal` (`periksaNominal`). Mengubah
-  nominal tidak mengubah catatan lama. Label opsi: `Iuran Wajib Anggota · Rp 50.000 / bulan`.
+  nominal tidak mengubah catatan lama. **Catatan tanpa nama** (tanpa anggota maupun nama
+  bebas) dianggap uang gabungan banyak orang: kunci berlaku per orang, jadi kolom bisa
+  diisi dan server menerima **kelipatan** nominal (Rp 600.000 = 12 orang), menolak selain itu. Label opsi: `Iuran Wajib Anggota · Rp 50.000 / bulan`.
 - `jenis.menandaiMeninggal` (hanya uang keluar, dipaksa false untuk uang masuk): mencatat
   jenis ini atas nama anggota menandai sasarannya meninggal — `anggotaKeluargaId` bila
   terisi, kalau tidak anggotanya sendiri, kalau nama lepas tidak ada yang ditandai.

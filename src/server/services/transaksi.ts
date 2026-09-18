@@ -63,9 +63,11 @@ function periksaIsi(input: InputCatatan, kecualiId?: number, kelipatan = 1) {
     penyetorAnggotaId = p.id
   }
 
-  // Nominal terkunci ditegakkan di server (Spec 2 §B4) — per satuan bila catatan gabungan
+  // Nominal terkunci ditegakkan di server (Spec 2 §B4) — per satuan bila catatan gabungan.
+  // Catatan tanpa nama anggota/pihak dianggap uang gabungan: boleh kelipatan nominal.
   if (kelipatan > 1 && input.jumlah % kelipatan !== 0) throw new GalatPengguna('Jumlah gabungan tidak habis dibagi kelipatannya.', 'jumlah')
-  periksaNominal(j, input.jumlah / kelipatan)
+  const tanpaNama = !anggotaId && !input.namaPihak?.trim()
+  periksaNominal(j, input.jumlah / kelipatan, kelipatan === 1 && tanpaNama)
 
   // Kemungkinan duplikat (docs/02 §5.2 + Spec 2 §B4): per periode bila anggota terisi
   const periode = periodeUntuk(j.periode, input.tanggal, input.periode)

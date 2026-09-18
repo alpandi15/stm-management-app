@@ -115,6 +115,10 @@ test('nominal terkunci menolak jumlah berbeda; tidak terkunci menerima', () => {
   assert.doesNotThrow(() => periksaNominal(j, 50000))
   assert.doesNotThrow(() => periksaNominal({ ...j, nominalDikunci: false }, 60000))
   assert.doesNotThrow(() => periksaNominal({ nama: 'x', nominalBawaan: null, nominalDikunci: false }, 1))
+  // tanpa nama = gabungan: kelipatan nominal boleh, selain itu tidak
+  assert.doesNotThrow(() => periksaNominal(j, 600000, true))
+  assert.throws(() => periksaNominal(j, 75000, true), /kelipatan Rp 50.000/)
+  assert.throws(() => periksaNominal(j, 600000, false), /sudah ditetapkan Rp 50.000\./)
 })
 
 test('duplikat per periode: bulanan, tahunan, sekali, bebas, dan nama lepas', () => {

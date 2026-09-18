@@ -63,13 +63,22 @@ export function cariDuplikat(
 }
 
 /** Kunci nominal (Spec 2 §B4): ditegakkan di server — form readOnly hanya menyembunyikan aksi. */
-export function periksaNominal(j: Pick<Jenis, 'nama' | 'nominalBawaan' | 'nominalDikunci'>, jumlah: number): void {
-  if (j.nominalDikunci && j.nominalBawaan != null && jumlah !== j.nominalBawaan) {
-    throw new GalatPengguna(
-      `Jumlah untuk ${j.nama} sudah ditetapkan ${formatRupiah(j.nominalBawaan)}. Bila angkanya memang berubah, ubah dulu di Pengaturan › Jenis Uang.`,
-      'jumlah',
-    )
-  }
+export function periksaNominal(j: Pick<Jenis, 'nama' | 'nominalBawaan' | 'nominalDikunci'>, jumlah: number, gabungan = false): void {
+  if (!j.nominalDikunci || j.nominalBawaan == null || jumlah === j.nominalBawaan) return
+  // Catatan tanpa nama = uang dari banyak orang: kunci berlaku per orang, jadi boleh kelipatannya
+  if (gabungan && jumlah > j.nominalBawaan && jumlah % j.nominalBawaan === 0) return
+  throw new GalatPengguna(
+    gabungan
+      ? `Jumlah untuk ${j.nama} sudah ditetapkan ${formatRupiah(j.nominalBawaan)} per orang. Tanpa nama anggota, isi jumlah keseluruhannya — harus kelipatan ${formatRupiah(j.nominalBawaan)} (mis. 12 orang = ${formatRupiah(j.nominalBawaan * 12)}).`
+      : `Jumlah untuk ${j.nama} sudah ditetapkan ${formatRupiah(j.nominalBawaan)}. Bila angkanya memang berubah, ubah dulu di Pengaturan › Jenis Uang.`,
+    'jumlah',
+  )
+}
+
+/** Berapa orang yang terwakili catatan gabungan tanpa nama pada jenis berkunci nominal (1 bila bukan). */
+export function kelipatanGabungan(j: Pick<Jenis, 'nominalBawaan' | 'nominalDikunci'>, jumlah: number, tanpaNama: boolean): number {
+  if (!tanpaNama || !j.nominalDikunci || !j.nominalBawaan || jumlah <= j.nominalBawaan || jumlah % j.nominalBawaan !== 0) return 1
+  return jumlah / j.nominalBawaan
 }
 
 /** Tanggungan harus milik anggota yang dipilih (Spec 2 §A6) — id yang dikarang bisa menandai orang lain meninggal. */
