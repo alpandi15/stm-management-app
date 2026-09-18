@@ -56,7 +56,7 @@ export function PetaSemua({ titik, totalAnggota }: { titik: TitikAnggota[]; tota
           `<div style="font-weight:700;font-size:16px">${a.nama}</div>` +
           (a.alamat ? `<div style="color:#374151">${a.alamat}</div>` : '') +
           (a.noHp ? `<div style="color:#6b7280">${a.noHp}</div>` : '') +
-          `<div style="margin-top:6px"><a href="/anggota/${a.id}/keluarga" style="color:#1d4ed8;font-weight:600">Keluarga →</a></div></div>`,
+          `<div style="margin-top:6px"><a href="/anggota/${a.id}" style="color:#1d4ed8;font-weight:600">Detail & riwayat →</a></div></div>`,
       )
       marker.current.set(a.id, mk)
       k.addLayer(mk)

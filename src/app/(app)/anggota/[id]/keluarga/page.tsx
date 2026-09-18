@@ -21,8 +21,8 @@ export default async function HalamanKeluarga({ params }: { params: { id: string
   return (
     <div className="flex flex-col gap-6">
       <Button asChild variant="halus" className="-ml-2 w-fit px-2 text-muted">
-        <Link href="/anggota">
-          <ArrowLeft /> Kembali ke Anggota
+        <Link href={`/anggota/${a.id}`}>
+          <ArrowLeft /> Kembali ke {a.nama}
         </Link>
       </Button>
       <div>

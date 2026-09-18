@@ -1,7 +1,8 @@
 import 'server-only'
 import { and, asc, count, eq, isNotNull, isNull, like, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { anggota, anggotaKeluarga, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, jenis, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
+import { dariCatatan, type BarisCatatan } from './transaksi'
 
 export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null }
 
@@ -153,4 +154,71 @@ export function daftarAlmarhum(): Array<{ label: string; nama: string }> {
     .all()
     .map((x) => ({ nama: x.nama, label: `${x.nama} · ${x.hubungan} dari ${x.induk}${x.tanggal ? ` · ${x.tanggal}` : ''}` }))
   return [...a, ...k].sort((x, y) => x.nama.localeCompare(y.nama))
+}
+
+export const PER_HALAMAN_RIWAYAT_ANGGOTA = 25
+
+/** Riwayat pembayaran seorang anggota: semua catatan atas namanya, terbaru dulu. */
+export function riwayatAnggota(anggotaId: number, halaman = 1): { baris: BarisCatatan[]; total: number; totalMasuk: number; totalKeluar: number } {
+  const where = and(eq(transaksi.anggotaId, anggotaId), isNull(transaksi.dihapusPada))
+  const r = db
+    .select({
+      n: count(),
+      masuk: sql<number>`coalesce(sum(case when ${transaksi.arah} = 'masuk' then ${transaksi.jumlah} else 0 end), 0)`,
+      keluar: sql<number>`coalesce(sum(case when ${transaksi.arah} = 'keluar' then ${transaksi.jumlah} else 0 end), 0)`,
+    })
+    .from(transaksi)
+    .where(where)
+    .get()
+  const baris = dariCatatan()
+    .where(where)
+    .orderBy(sql`${transaksi.tanggal} desc`, sql`${transaksi.id} desc`)
+    .limit(PER_HALAMAN_RIWAYAT_ANGGOTA)
+    .offset((halaman - 1) * PER_HALAMAN_RIWAYAT_ANGGOTA)
+    .all()
+  return { baris, total: r?.n ?? 0, totalMasuk: Number(r?.masuk ?? 0), totalKeluar: Number(r?.keluar ?? 0) }
+}
+
+export type MatriksJenis = {
+  jenisId: number
+  nama: string
+  periode: 'bulanan' | 'tahunan'
+  tahun: number[]
+  /** periode ('2026-10' / '2026') → nomor bukti */
+  sudah: Record<string, string>
+}
+
+/**
+ * Matriks "sudah bayar / belum" per jenis berperiode (bulanan → 12 kotak per tahun, tahunan → per
+ * tahun). Tahun yang ditampilkan: dari tahun bergabung / catatan pertama sampai tahun ini.
+ */
+export function matriksPeriode(a: Anggota, tanggalMulaiPembukuan: string): MatriksJenis[] {
+  const tahunIni = new Date().getFullYear()
+  // Tidak lebih awal dari tanggal mulai pembukuan: sebelum itu tidak ada iuran yang dicatat aplikasi
+  const tahunMinimal = Number(tanggalMulaiPembukuan.slice(0, 4)) || tahunIni
+  const jenisBerperiode = db
+    .select({ id: jenis.id, nama: jenis.nama, periode: jenis.periode })
+    .from(jenis)
+    .where(and(eq(jenis.aktif, true), or(eq(jenis.periode, 'bulanan'), eq(jenis.periode, 'tahunan'))))
+    .orderBy(asc(jenis.urutan))
+    .all()
+  const bayar = db
+    .select({ jenisId: transaksi.jenisId, periode: transaksi.periode, noBukti: transaksi.noBukti })
+    .from(transaksi)
+    .where(and(eq(transaksi.anggotaId, a.id), isNull(transaksi.dihapusPada), isNotNull(transaksi.periode)))
+    .all()
+  const tahunBergabung = Number((a.tanggalBergabung ?? '').slice(0, 4)) || new Date(a.dibuatPada).getFullYear()
+  const tahunAwalDasar = Math.max(tahunMinimal, Math.min(tahunIni, tahunBergabung))
+  return jenisBerperiode.map((j) => {
+    const milik = bayar.filter((b) => b.jenisId === j.id)
+    const tahunPertama = Math.max(tahunMinimal, Math.min(tahunAwalDasar, ...milik.map((b) => Number((b.periode ?? '').slice(0, 4)) || tahunIni)))
+    const tahun = Array.from({ length: Math.max(1, tahunIni - tahunPertama + 1) }, (_, i) => tahunPertama + i)
+    return {
+      jenisId: j.id,
+      nama: j.nama,
+      periode: j.periode as 'bulanan' | 'tahunan',
+      tahun,
+      sudah: Object.fromEntries(milik.filter((b) => b.periode).map((b) => [b.periode as string, b.noBukti])),
+    }
+  })
 }

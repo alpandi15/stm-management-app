@@ -12,9 +12,13 @@ function segarkan() {
   revalidatePath('/laporan')
 }
 
-/** Kode jenis buatan pengguna: PMxx / PKxx melanjutkan nomor terakhir. */
+/**
+ * Kode jenis buatan pengguna: UMxx / UKxx — ruang terpisah dari kode bawaan PMxx/PKxx,
+ * supaya jenis bawaan yang ditambahkan pembaruan aplikasi (PM10, PM11, …) tidak pernah
+ * bentrok dengan kode yang sudah dipakai pengguna.
+ */
 function kodeBerikutnya(arah: 'masuk' | 'keluar'): string {
-  const awalan = arah === 'masuk' ? 'PM' : 'PK'
+  const awalan = arah === 'masuk' ? 'UM' : 'UK'
   const semua = db.select({ kode: schema.jenis.kode }).from(schema.jenis).all().map((j) => j.kode)
   let n = 0
   for (const k of semua) if (k.startsWith(awalan)) n = Math.max(n, Number(k.slice(2)) || 0)

@@ -466,7 +466,15 @@ Okt/Nov/Des; Budi yang bayar September tampil *Sudah bayar September 2026 · KM-
 hanya saat periode September; mengulang Oktober → 4 abu-abu, November → Eko abu-abu;
 tanda terima 12 baris → PDF; Buku Kas: subjudul *Setoran SI-2026-0001 · disetor oleh …*
 + subtotal; hapus setoran → 0 catatan hidup, 6 entri Dihapus di Riwayat dengan Kembalikan;
-360px tanpa geser samping. 40 tes (periode eksplisit, tambahBulan). Langkah 3: detail anggota.
+360px tanpa geser samping. 40 tes (periode eksplisit, tambahBulan).
+
+**Langkah 3 — detail anggota** (`docs/02` §5.1c): `/anggota/[id]` dengan matriks periode dan
+riwayat; nama di daftar, popup peta, dan halaman keluarga menautkannya. Uji: setoran Eko
+Jul–Sep → matriks 2026 `––––––✓✓✓···` (Okt–Des "belum jatuh tempo"), Iuran Tahunan
+per tahun, riwayat 6 catatan dengan tautan setoran, 360px tanpa geser samping. Bug yang
+tertangkap lewat uji ini: kode jenis buatan pengguna bentrok dengan bawaan baru (PM10),
+seed melewati Iuran Tahunan — diperbaiki (kode `UMxx/UKxx` + migrasi 0004); pada database
+uji `UM10 Arisan Bulanan` dan `PM10 Iuran Tahunan` kini sama-sama ada (23 jenis).
 
 ## Fase 9 — Electron
 

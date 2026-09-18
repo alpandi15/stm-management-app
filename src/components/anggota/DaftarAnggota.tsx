@@ -2,7 +2,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRoundCheck, UserRoundX, Users } from 'lucide-react'
+import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifAnggota, hapusAnggota, tambahAnggota, ubahAnggota } from '@/server/actions/anggota'
 import type { BarisAnggota } from '@/server/queries/anggota'
@@ -157,6 +157,11 @@ export function DaftarAnggota({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/anggota/${a.id}`}>
+            <UserRound /> Detail & riwayat
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => bukaUbah(a)}>
           <Pencil /> Ubah
         </DropdownMenuItem>
@@ -273,9 +278,9 @@ export function DaftarAnggota({
                   <tr key={a.id} className={cn('hover:bg-bg', !a.aktif && 'opacity-70')}>
                     <td className="angka whitespace-nowrap px-4 py-3 text-muted">{a.nomor ?? '–'}</td>
                     <td className="px-4 py-3">
-                      <button type="button" className="text-left font-semibold hover:text-primary" onClick={() => bukaUbah(a)}>
+                      <Link href={`/anggota/${a.id}`} className="font-semibold hover:text-primary hover:underline">
                         {a.nama}
-                      </button>
+                      </Link>
                       {a.noHp && (
                         <p className="angka flex items-center gap-1 text-ket text-muted">
                           <Phone className="size-3.5" /> {a.noHp}
@@ -316,7 +321,9 @@ export function DaftarAnggota({
               <li key={a.id} className={cn('flex items-start gap-3 rounded-kartu border border-border bg-surface p-4 shadow-kartu', !a.aktif && 'opacity-70')}>
                 <div className="min-w-0 flex-1">
                   {a.nomor && <p className="angka text-ket font-semibold text-muted">{a.nomor}</p>}
-                  <p className="truncate text-judul-kartu font-semibold">{a.nama}</p>
+                  <Link href={`/anggota/${a.id}`} className="block truncate text-judul-kartu font-semibold hover:text-primary">
+                    {a.nama}
+                  </Link>
                   {a.alamat && <p className="line-clamp-2 text-ket text-muted">{a.alamat}</p>}
                   <p className="mt-1 text-isi">
                     <span className="angka font-bold text-masuk">{formatRupiah(a.totalIuran)}</span>

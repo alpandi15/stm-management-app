@@ -447,6 +447,19 @@ periode itu abu-abu dengan nomor buktinya), `/catatan/setoran/[id]` (detail + ha
 `/cetak/setoran/[id]` (tanda terima untuk pengutip). Buku Kas mengelompokkan baris satu
 setoran dengan subjudul dan subtotal.
 
+### 5.1c Detail anggota
+
+`/anggota/[id]`: data diri, tanggungan, total masuk/keluar atas nama anggota, **matriks
+periode** per jenis berperiode (`matriksPeriode()` — bulanan 12 kotak per tahun, tahunan
+per tahun; kata yang dipakai *sudah bayar / belum / belum jatuh tempo*, bukan
+"menunggak"; tahun dibatasi tanggal mulai pembukuan), dan riwayat catatan berhalaman
+(`riwayatAnggota()`), dengan penyetor dan tautan setorannya.
+
+**Kode jenis buatan pengguna memakai `UMxx`/`UKxx`**, bukan melanjutkan `PMxx`/`PKxx`
+bawaan: kode yang sama dipakai seed untuk jenis bawaan yang ditambahkan pembaruan
+(PM10–PM12), dan pernah bentrok sehingga seed melewati "Iuran Tahunan" pada pemasangan yang
+sudah punya jenis buatan sendiri. Migrasi 0004 memindahkan kode yang terlanjur bentrok.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat

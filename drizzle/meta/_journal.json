@@ -29,6 +29,13 @@
       "when": 1789738445231,
       "tag": "0003_setoran_periode",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789739687553,
+      "tag": "0004_kode_jenis_pengguna",
+      "breakpoints": true
     }
   ]
 }
