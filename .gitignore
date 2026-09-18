@@ -44,3 +44,6 @@ next-env.d.ts
 
 # hasil electron-builder
 /release
+
+# prebuild better-sqlite3 untuk Windows (diunduh scripts/unduh-native.mjs)
+/build/native

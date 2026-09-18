@@ -164,43 +164,25 @@ Penyebabnya: `npm install` mengompilasi `better-sqlite3` untuk Node yang terpasa
 sistem, sementara aplikasi menjalankannya di dalam Electron yang membawa versi Node
 sendiri.
 
-Penyelesaian:
+Penyelesaian yang dipakai (Fase 9): **tidak ada `electron-rebuild` sama sekali**, supaya
+`node_modules` di mesin pengembang tetap ber-ABI Node 20 dan `npm run dev`/`npm test`
+terus jalan. Modul native untuk bundel diambil terpisah:
 
-```bash
-npx electron-rebuild -f -w better-sqlite3
-```
+1. `scripts/unduh-native.mjs` (`npm run native:win`) mengunduh prebuild resmi
+   `better-sqlite3-v9.6.0-electron-v110-win32-{ia32,x64}.tar.gz` dari GitHub ke
+   `build/native/win32-<arch>/better_sqlite3.node` (sekali; folder ini di-gitignore).
+   Untuk 9.6.0 + Electron 22 prebuild itu **ada** — itulah alasan kedua versi dikunci
+   (`docs/05` §2); dengan versi lain, membangun target Windows ia32 dari macOS mustahil.
+2. `extraResources` di `package.json` menyalin `.next/standalone` **tanpa** berkas `.node`
+   (hasil kompilasi mesin pengembang), lalu menaruh `.node` dari
+   `build/native/${platform}-${arch}/` ke tempat yang sama per arsitektur.
+3. `npmRebuild: false` — electron-builder tidak menyentuh dependensi; `files` juga
+   mengecualikan `node_modules/**` karena seluruh dependensi runtime sudah ada di
+   `standalone/` (tanpa ini asar membengkak 300 MB).
 
-Untuk better-sqlite3 **9.6.0** dan Electron **22.3.27**, perintah ini tidak mengompilasi
-apa pun — ia mengunduh prebuild `electron-v110-<os>-<arch>` dari GitHub. Itulah alasan
-kedua versi dikunci (`docs/05` §2): dengan versi lain, membangun target Windows ia32 dari
-macOS mustahil.
-
-Jadikan langkah tetap:
-
-```json
-"postinstall": "electron-rebuild -f -w better-sqlite3"
-```
-
-Dan di `electron-builder`, modul native harus berada **di luar arsip asar**, karena berkas
-`.node` tidak bisa dimuat dari dalam asar:
-
-```json
-"asarUnpack": ["**/*.node"]
-```
-
-Konsekuensi yang perlu disadari: setelah `electron-rebuild`, menjalankan
-`npm run dev` di browser biasa akan gagal memuat `better-sqlite3` karena ABI-nya kini
-milik Electron. Karena itu selama fase pengembangan fitur (Fase 1–8), **jangan**
-menjalankan `electron-rebuild`. Pasang skrip `postinstall` itu belakangan, saat mulai
-Fase 9, dan sediakan dua perintah terpisah:
-
-```json
-"rebuild:node": "npm rebuild better-sqlite3",
-"rebuild:electron": "electron-rebuild -f -w better-sqlite3"
-```
-
-Sebutkan hal ini di `CLAUDE.md` bila belum ada — ini akan membingungkan siapa pun yang
-berpindah antara dua mode tanpa tahu penyebabnya.
+Karena `.node` berada di `resources/standalone/` (bukan di dalam asar), `asarUnpack`
+tidak diperlukan. Untuk menguji paket di macOS, taruh prebuild darwin di
+`build/native/darwin-arm64/` lalu `electron-builder --mac dir --arm64`.
 
 ## 5. Konfigurasi electron-builder
 
@@ -246,6 +228,13 @@ Beberapa pilihan di atas sengaja:
 - **`arch: ["ia32", "x64"]`** — satu installer NSIS untuk kedua arsitektur; ia memilih
   sendiri saat dipasang. Portable menghasilkan dua berkas (`docs/05` §6).
 
+Yang benar-benar dipakai ada di `package.json` bidang `build` (tambahan: `npmRebuild: false`,
+`files` tanpa `node_modules`, `extraResources` dua entri seperti §4, nama artefak
+`AplikasiKasSTM-Setup-<versi>.exe` dan `AplikasiKasSTM-Portable-<versi>-<arch>.exe`).
+`productName` juga ditulis di **tingkat atas** `package.json` — dari situlah Electron
+menamai folder `userData` (`%APPDATA%/Aplikasi Kas STM`); tanpa itu namanya jadi
+`stm-management-app`.
+
 ### Versi portable
 
 Target `portable` menghasilkan satu `.exe` yang dijalankan langsung dari flash disk.
@@ -253,10 +242,10 @@ Perlu diperhatikan: Electron portable mengekstrak dirinya ke folder sementara, d
 `app.getPath('userData')` tetap menunjuk ke `%APPDATA%` komputer yang dipakai — artinya
 datanya **tidak** ikut berpindah bersama flash disk.
 
-Bila yang diinginkan benar-benar "bawa data di flash disk", tambahkan pemeriksaan:
-bila ada berkas `stm-portable.txt` di sebelah `.exe`, pakai folder `data` di sebelahnya
-sebagai `dataDir`. Tulis ini eksplisit karena asumsi pengguna soal "portable" hampir selalu
-mencakup datanya.
+Bila yang diinginkan benar-benar "bawa data di flash disk": buat berkas kosong
+`stm-portable.txt` di sebelah `.exe` — `main.js` lalu memakai folder `data` di sebelahnya
+sebagai `dataDir` (lewat `PORTABLE_EXECUTABLE_DIR` yang disetel pelontar portable). Tulis
+ini di panduan karena asumsi pengguna soal "portable" hampir selalu mencakup datanya.
 
 ## 6. Ikon dan identitas
 

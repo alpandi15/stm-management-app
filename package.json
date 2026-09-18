@@ -2,7 +2,7 @@
   "name": "stm-management-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Aplikasi Kas STM — pembukuan kas Serikat Tolong Menolong",
+  "description": "Aplikasi pembukuan kas STM (Serikat Tolong Menolong)",
   "engines": {
     "node": ">=20.19 <21"
   },
@@ -15,7 +15,11 @@
     "test": "find src -name '*.test.ts' | xargs node --import tsx --test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "build:app": "next build && node scripts/salin-standalone.mjs",
+    "dev:electron": "node scripts/dev-electron.mjs",
+    "native:win": "node scripts/unduh-native.mjs win32-ia32,win32-x64",
+    "dist:win": "npm run build:app && npm run native:win && electron-builder --win --ia32 --x64"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -52,10 +56,84 @@
     "@types/react-dom": "^18.3.7",
     "drizzle-kit": "^0.31.6",
     "electron": "22.3.27",
+    "electron-builder": "^24.13.3",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.35",
     "tailwindcss": "^4.1.16",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
-  }
+  },
+  "main": "electron/main.js",
+  "author": "STM",
+  "build": {
+    "appId": "id.stm.kas",
+    "productName": "Aplikasi Kas STM",
+    "copyright": "STM",
+    "electronVersion": "22.3.27",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "build/icon.ico",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "standalone",
+        "filter": [
+          "**/*",
+          "!**/*.node",
+          "!**/.next/cache/**"
+        ]
+      },
+      {
+        "from": "build/native/${platform}-${arch}/better_sqlite3.node",
+        "to": "standalone/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+      }
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32",
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "ia32",
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "AplikasiKasSTM-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Aplikasi Kas STM",
+      "installerLanguages": [
+        "id_ID",
+        "en_US"
+      ],
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "AplikasiKasSTM-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "AplikasiKasSTM-Portable-${version}-${arch}.${ext}"
+    }
+  },
+  "productName": "Aplikasi Kas STM"
 }

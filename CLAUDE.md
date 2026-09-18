@@ -13,9 +13,9 @@ dipakai **satu orang** — bendahara — di satu komputer. Bukan aplikasi web mu
 **Aplikasi harus bisa dijalankan di Windows 7 SP1, 32-bit maupun 64-bit.** Syarat ini
 mengunci beberapa versi dependensi (lihat `docs/05`). Jangan menaikkan versi yang dikunci.
 
-Status repo: Fase 0–8 selesai — seluruh fitur di browser. Berikutnya Fase 9 (Electron)
-dan Fase 10 (pengujian & panduan). Lihat `docs/04`
-untuk fase berikutnya.
+Status repo: Fase 0–9 selesai — seluruh fitur, dan `npm run dist:win` menghasilkan `.exe`
+dari macOS. Yang tersisa: uji paket di Windows sungguhan (`docs/03` §9) dan Fase 10
+(pengujian & panduan). Lihat `docs/04`.
 
 ## Dokumen (baca berurutan)
 
@@ -80,8 +80,9 @@ npm run dev:electron   # Next dev + jendela Electron
 npm run db:generate    # Buat berkas migrasi dari perubahan skema Drizzle
 npm run db:migrate     # Terapkan migrasi
 npm run db:studio      # Lihat isi database
-npm run build          # Build Next standalone
-npm run dist:win       # Hasilkan installer .exe dan versi portable
+npm run build:app      # Build Next standalone + salin static/public/drizzle
+npm run native:win     # Unduh prebuild better-sqlite3 Windows ia32+x64 (sekali, butuh internet)
+npm run dist:win       # build:app + native:win + electron-builder → release/*.exe
 npm run lint && npm run typecheck
 npm test               # node --test lewat tsx
 ```
@@ -90,8 +91,10 @@ npm test               # node --test lewat tsx
 
 Semuanya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03` dan `docs/05`.
 
-1. **better-sqlite3 adalah modul native.** Harus dikompilasi ulang untuk ABI Electron
-   (`@electron/rebuild`), bukan ABI Node sistem.
+1. **better-sqlite3 adalah modul native.** Di bundel harus ber-ABI Electron (110), bukan
+   Node sistem. Repo ini **tidak** memakai `electron-rebuild`: prebuild Windows diunduh ke
+   `build/native/` dan disalin per arch oleh electron-builder (`docs/03` §4), sehingga
+   `node_modules` tetap ber-ABI Node 20 untuk `npm run dev`/`npm test`.
 2. **Berkas database tidak boleh berada di dalam `asar`.** Lokasinya di
    `app.getPath('userData')`, dan path itu dikirim ke server Next lewat variabel lingkungan.
 3. **Aplikasi ini tidak bisa di-deploy ke Vercel.** SQLite butuh disk permanen.

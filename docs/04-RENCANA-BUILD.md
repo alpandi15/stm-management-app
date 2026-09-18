@@ -17,7 +17,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 6 | Laporan — **selesai** |
 | 7 | Cetak — **selesai** |
 | 8 | Anggota, jenis, pengaturan, cadangan — **selesai** |
-| 9 | Electron & pembuatan `.exe` |
+| 9 | Electron & pembuatan `.exe` — **selesai di macOS; uji di Windows belum** |
 | 10 | Pengujian, penyisiran UI, panduan pengguna |
 
 ---
@@ -529,6 +529,25 @@ Urutan yang disarankan:
 
 **Bukti selesai:** seluruh daftar periksa di `docs/03` §9, terutama pemasangan di komputer
 bersih tanpa Node.js **dan di VM Windows 7 SP1 32-bit**.
+
+**Hasil (18 September 2026):** `electron/{main.js,preload.js,memuat.html,logo.png}`,
+`scripts/{salin-standalone,unduh-native,dev-electron}.mjs`, konfigurasi `build` di
+`package.json`, `electron-builder` 24.13.3 sebagai devDependency (dependensi baru, alasan:
+satu-satunya cara membuat NSIS + portable ia32/x64 dari macOS tanpa Wine).
+`npm run dist:win` di macOS menghasilkan `release/AplikasiKasSTM-Setup-0.1.0.exe` (148 MB,
+ia32+x64), `AplikasiKasSTM-Portable-0.1.0-ia32.exe` (72 MB), `-x64.exe` (76 MB), dan
+`-Portable-0.1.0.exe` gabungan. Isi paket diperiksa: `resources/standalone/` berisi
+`server.js`, `drizzle/` (9 migrasi), `.next/static`, `public`, dan `better_sqlite3.node`
+yang **berbeda per arch** (ia32 2,3 MB / x64 2,9 MB); asar 140 KB tanpa `node_modules`.
+Alur proses utama diuji lewat paket macOS (`--mac dir`, prebuild darwin dari uji `docs/05`
+§4): layar muat → fork `jalankan-server.js` → migrasi → jendela membuka `/setup`; data di
+`Application Support/Aplikasi Kas STM/data/` (`stm.db`, `.secret`, `aplikasi.log`); keluar
+mematikan server (log "berhenti, kode 0", port tertutup). Temuan: (1) `productName` harus di
+tingkat atas `package.json`, kalau tidak `userData` bernama `stm-management-app`; (2) `files`
+harus mengecualikan `node_modules` (asar 306 MB → 140 KB); (3) makro path native memakai
+`${platform}` bukan tulisan `win32`. **Belum dilakukan** (butuh mesin Windows): daftar
+periksa `docs/03` §9 — pemasangan di komputer bersih, VM Windows 7 SP1 32/64-bit, cetak PDF,
+cadangan, portable dari flash disk.
 
 ---
 
