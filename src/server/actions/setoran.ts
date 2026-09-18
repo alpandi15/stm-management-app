@@ -27,11 +27,11 @@ export const cekSudahBayar = aksiTerlindungi(async (jenisId: number, periode: st
 
 export const simpanSetoran = aksiTerlindungi(async (fd: FormData) => {
   const teks = (k: string) => (typeof fd.get(k) === 'string' ? (fd.get(k) as string) : '')
-  let baris: service.BarisSetoranInput[]
+  let kartu: service.KartuInput[]
   try {
-    baris = JSON.parse(teks('baris') || '[]')
+    kartu = JSON.parse(teks('kartu') || '[]')
   } catch {
-    return gagal('Daftar anggota tidak terbaca. Muat ulang halaman lalu coba lagi.', 'baris')
+    return gagal('Rincian setoran tidak terbaca. Muat ulang halaman lalu coba lagi.', 'kartu')
   }
   const berkas = fd.get('bukti')
   let namaBukti: string | null = null
@@ -45,14 +45,14 @@ export const simpanSetoran = aksiTerlindungi(async (fd: FormData) => {
   }
   const hasil = tangkap(() =>
     service.buatSetoran({
-      jenisId: Number(teks('jenisId')),
       tanggal: teks('tanggal'),
-      periode: teks('periode') || null,
       penyetorAnggotaId: Number(teks('penyetorAnggotaId')) || null,
       keterangan: teks('keterangan'),
       metode: (teks('metode') as Metode) || 'tunai',
       buktiFile: namaBukti,
-      baris,
+      jenisUtamaId: Number(teks('jenisUtamaId')) || null,
+      periodeUtama: teks('periodeUtama') || null,
+      kartu,
     }),
   )
   if (!hasil.ok && namaBukti) hapusBerkasBukti(namaBukti)

@@ -26,8 +26,8 @@ function ambilTransaksi(id: number): Transaksi | null {
   return db.select().from(transaksi).where(eq(transaksi.id, id)).get() ?? null
 }
 
-/** Validasi lintas-tabel yang tidak bisa dilakukan Zod (docs/02 §5.1). */
-function periksaIsi(input: InputCatatan, kecualiId?: number) {
+/** Validasi lintas-tabel yang tidak bisa dilakukan Zod (docs/02 §5.1). `kelipatan` > 1 = catatan gabungan (nominal × n). */
+function periksaIsi(input: InputCatatan, kecualiId?: number, kelipatan = 1) {
   const p = ambilPengaturan()
   if (!p) throw new GalatPengguna('Pengaturan awal belum dilakukan.')
 
@@ -63,8 +63,9 @@ function periksaIsi(input: InputCatatan, kecualiId?: number) {
     penyetorAnggotaId = p.id
   }
 
-  // Nominal terkunci ditegakkan di server (Spec 2 §B4)
-  periksaNominal(j, input.jumlah)
+  // Nominal terkunci ditegakkan di server (Spec 2 §B4) — per satuan bila catatan gabungan
+  if (kelipatan > 1 && input.jumlah % kelipatan !== 0) throw new GalatPengguna('Jumlah gabungan tidak habis dibagi kelipatannya.', 'jumlah')
+  periksaNominal(j, input.jumlah / kelipatan)
 
   // Kemungkinan duplikat (docs/02 §5.2 + Spec 2 §B4): per periode bila anggota terisi
   const periode = periodeUntuk(j.periode, input.tanggal, input.periode)
@@ -73,9 +74,9 @@ function periksaIsi(input: InputCatatan, kecualiId?: number) {
   return { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat }
 }
 
-export function buatCatatan(input: InputCatatan, ekstra: { setoranId?: number } = {}): HasilSimpan {
+export function buatCatatan(input: InputCatatan, ekstra: { setoranId?: number; kelipatan?: number } = {}): HasilSimpan {
   pastikanTidakTerkunci(input.tanggal)
-  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat } = periksaIsi(input)
+  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat } = periksaIsi(input, undefined, ekstra.kelipatan ?? 1)
   if (duplikat) return { perluKonfirmasi: true, ...duplikat }
 
   const sekarang = Date.now()

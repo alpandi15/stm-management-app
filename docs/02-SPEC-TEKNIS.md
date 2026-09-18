@@ -437,16 +437,25 @@ tanggal setor 18 September bisa membayar Oktober. Form catat memilih "Untuk bula
 "sudah bayar" (`sudahBayar`) memakai kolom ini; migrasi 0003 mengisinya untuk catatan lama.
 
 **Setoran kolektif** (`setoran` + `transaksi.setoranId`, `services/setoran.ts`): satu
-kejadian pengutip menyetor iuran banyak anggota. Satu catatan per anggota **per periode**
-(baris boleh membayar n bulan/tahun sekaligus → n catatan, keterangan ditambah nama
-periode), semuanya dalam satu transaksi SQLite lewat `buatCatatan()` — nomor bukti
-berurutan, log, kunci nominal, penanda, dan penguncian berlaku otomatis. Nomor setoran
-`SI-2026-0001` per tahun. Hanya untuk uang masuk. Hapus setoran = hapus lunak semua
-catatannya lewat service (masing-masing bisa dikembalikan dari Riwayat). Halaman:
-`/catatan/setoran` (daftar), `/catatan/setoran/baru` (daftar centang; yang sudah bayar
-periode itu abu-abu dengan nomor buktinya), `/catatan/setoran/[id]` (detail + hapus),
-`/cetak/setoran/[id]` (tanda terima untuk pengutip). Buku Kas mengelompokkan baris satu
-setoran dengan subjudul dan subtotal.
+kejadian pengutip menyetor uang banyak anggota, **boleh banyak jenis**. Rincian = kartu
+per anggota (atau kartu *tanpa nama* untuk uang yang tidak dirinci per orang) berisi baris
+jenis. Setiap baris menjadi catatan lewat `buatCatatan()` dalam satu transaksi SQLite:
+jenis berperiode → satu catatan per periode (baris "3 bulan" → 3 catatan); jenis lain →
+satu catatan bernilai nominal × kelipatan (iuran duka × jumlah almarhum, nama almarhum
+di keterangan); kartu tanpa nama berperiode → satu catatan `nominal × orang`. Kunci nominal
+dibandingkan **per satuan** untuk catatan gabungan (`ekstra.kelipatan`). Nomor setoran
+`SI-2026-0001`; `setoran.jenisId` hanya jenis utama (informasi). Hanya uang masuk.
+
+Alur form (`/catatan/setoran/baru`): (1) kepala — tanggal, disetor oleh, cara bayar,
+keterangan, foto; (2) **jenis utama** — jenis, periode, nominal per anggota, diisi sekali;
+(3) **Tambah anggota** membuka modal pencarian dengan centang banyak (yang sudah ada di
+setoran nonaktif; yang sudah bayar periode jenis utama ditandai dan dilewati "centang
+semua") — setiap anggota yang ditambahkan langsung mendapat baris jenis utama; per anggota
+bisa **Tambah jenis lain**; tombol *Terapkan ke semua baris* untuk nominal; ringkasan
+lengket per jenis + total + terbilang. Jalur sederhana tetap ada: catatan biasa tanpa nama
+anggota dengan keterangan bebas. Halaman `/catatan/setoran` (daftar, badge "n jenis"),
+`/catatan/setoran/[id]` (rekap per jenis + catatan + hapus), `/cetak/setoran/[id]` (tanda
+terima dengan kolom jenis). Buku Kas mengelompokkan baris satu setoran dengan subtotal.
 
 ### 5.1c Detail anggota
 

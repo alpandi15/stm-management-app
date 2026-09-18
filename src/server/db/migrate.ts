@@ -16,11 +16,15 @@ const migrationsDir = process.env.STM_MIGRATIONS_DIR ?? path.join(process.cwd(),
 fs.mkdirSync(dataDir, { recursive: true })
 const sqlite = new Database(path.join(dataDir, 'stm.db'))
 sqlite.pragma('journal_mode = WAL')
-sqlite.pragma('foreign_keys = ON')
 sqlite.pragma('busy_timeout = 5000')
 
 const db = drizzle(sqlite, { schema })
+// Kunci asing mati selama migrasi (lihat db/index.ts), dinyalakan dan diperiksa sesudahnya
+sqlite.pragma('foreign_keys = OFF')
 migrate(db, { migrationsFolder: migrationsDir })
+sqlite.pragma('foreign_keys = ON')
+const rusak = sqlite.pragma('foreign_key_check') as unknown[]
+if (rusak.length > 0) throw new Error(`Integritas kunci asing rusak setelah migrasi: ${JSON.stringify(rusak.slice(0, 5))}`)
 const ditambahkan = seedJenisBawaan(db)
 const total = db.select({ n: count() }).from(schema.jenis).get()?.n ?? 0
 

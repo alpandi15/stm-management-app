@@ -43,6 +43,13 @@
       "when": 1789742084582,
       "tag": "0005_nama_iuran_duka",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789742813409,
+      "tag": "0006_setoran_banyak_jenis",
+      "breakpoints": true
     }
   ]
 }

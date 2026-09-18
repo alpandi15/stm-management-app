@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { wajibSesi } from '@/server/auth/session'
 import { ambilPengaturan } from '@/server/queries/pengaturan'
-import { ambilSetoran } from '@/server/queries/setoran'
+import { ambilSetoran, rekapJenisSetoran } from '@/server/queries/setoran'
 import { formatRupiah, terbilangRupiah } from '@/lib/rupiah'
 import { formatPeriode, formatTanggal } from '@/lib/tanggal'
 import { BilahCetak } from '@/components/keuangan/cetak/BilahCetak'
@@ -18,6 +18,7 @@ export default async function HalamanCetakSetoran({ params, searchParams }: { pa
   if (!p) redirect('/setup')
   const s = Number.isInteger(Number(params.id)) ? ambilSetoran(Number(params.id)) : null
   if (!s) notFound()
+  const rekap = rekapJenisSetoran(s.id)
   const namaBerkas = `Tanda-Terima-${s.nomor}.pdf`
   return (
     <>
@@ -31,7 +32,7 @@ export default async function HalamanCetakSetoran({ params, searchParams }: { pa
         </header>
         <table style={{ marginBottom: '12pt' }}>
           <tbody>
-            <tr><td style={{ width: '30%' }}>Jenis</td><td>{s.namaJenis}{s.periode ? ` — ${formatPeriode(s.periode)}` : ''}</td></tr>
+            <tr><td style={{ width: '30%' }}>Isi setoran</td><td>{rekap.map((r) => `${r.nama} (${r.jumlah}) ${formatRupiah(r.total)}`).join(' · ')}</td></tr>
             <tr><td>Tanggal setor</td><td>{formatTanggal(s.tanggal)}</td></tr>
             <tr><td>Disetor oleh</td><td>{s.namaPenyetor ?? 'Bendahara'}</td></tr>
             <tr><td>Keterangan</td><td>{s.keterangan}</td></tr>
@@ -43,7 +44,8 @@ export default async function HalamanCetakSetoran({ params, searchParams }: { pa
             <tr>
               <th style={{ width: '5%' }}>No</th>
               <th>Nama anggota</th>
-              <th style={{ width: '22%' }}>Keterangan</th>
+              <th style={{ width: '20%' }}>Jenis</th>
+              <th style={{ width: '18%' }}>Keterangan</th>
               <th style={{ width: '15%' }}>No. Bukti</th>
               <th className="angka" style={{ width: '18%' }}>Jumlah</th>
             </tr>
@@ -52,14 +54,15 @@ export default async function HalamanCetakSetoran({ params, searchParams }: { pa
             {s.catatan.map((c, i) => (
               <tr key={c.id}>
                 <td className="tengah">{i + 1}</td>
-                <td>{c.namaPihak ?? c.namaAnggota ?? '–'}</td>
+                <td>{c.namaPihak ?? c.namaAnggota ?? 'Tanpa nama'}</td>
+                <td>{c.namaJenis}</td>
                 <td>{c.periode ? formatPeriode(c.periode) : c.keterangan}</td>
                 <td className="rapat">{c.noBukti}</td>
                 <td className="angka">{formatRupiah(c.jumlah)}</td>
               </tr>
             ))}
             <tr className="total">
-              <td colSpan={4}>Jumlah · {s.jumlahAnggota} anggota · {s.jumlahCatatan} catatan</td>
+              <td colSpan={5}>Jumlah · {s.jumlahAnggota} anggota · {s.jumlahCatatan} catatan</td>
               <td className="angka">{formatRupiah(s.total)}</td>
             </tr>
           </tbody>

@@ -40,8 +40,10 @@ export default async function HalamanDaftarSetoran({ searchParams }: { searchPar
               <Link href={`/catatan/setoran/${s.id}`} className="flex flex-col gap-1 rounded-kartu border border-border bg-surface p-4 shadow-kartu transition-colors hover:bg-bg sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="font-semibold">
-                    <span className="angka">{s.nomor}</span> · {s.namaJenis}
+                    <span className="angka">{s.nomor}</span>
+                    {s.namaJenis && ` · ${s.namaJenis}`}
                     {s.periode && <span className="text-muted"> · {formatPeriode(s.periode)}</span>}
+                    {s.jumlahJenis > 1 && <span className="ml-2 rounded-badge bg-primary-soft px-2 py-0.5 text-ket text-primary">{s.jumlahJenis} jenis</span>}
                   </p>
                   <p className="truncate text-isi text-muted">{s.keterangan}</p>
                   <p className="angka text-ket text-muted">

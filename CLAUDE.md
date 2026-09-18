@@ -111,7 +111,11 @@ Semuanya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03` dan `d
 8. **Jangan mengekspor konstanta/fungsi biasa dari berkas `'use client'`** lalu memakainya
    di Server Component — Next mengubahnya jadi referensi klien dan gagal saat render.
    Taruh di `src/lib/`.
-9. **Next 14, bukan 15/16.** Nama konfigurasinya berbeda: `next.config.mjs` (bukan `.ts`),
+9. **Migrasi yang membangun ulang tabel** (SQLite tidak bisa mengubah kolom) memakai
+   `DROP TABLE`; `PRAGMA foreign_keys=OFF` di dalam berkas migrasi diabaikan karena berada
+   dalam transaksi. `db/index.ts` mematikan kunci asing sebelum `migrate()` dan memeriksa
+   `foreign_key_check` sesudahnya — jangan pindahkan pragma itu.
+10. **Next 14, bukan 15/16.** Nama konfigurasinya berbeda: `next.config.mjs` (bukan `.ts`),
    `experimental.serverComponentsExternalPackages` (bukan `serverExternalPackages`),
    `middleware.ts` selalu edge runtime (tidak bisa membuka SQLite), `useFormState`
    (bukan `useActionState`), `params` dan `cookies()` sinkron.

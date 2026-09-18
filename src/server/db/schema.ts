@@ -161,10 +161,9 @@ export const setoran = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     nomor: text('nomor').notNull().unique(), // SI-2026-0001
     tanggal: text('tanggal').notNull(), // tanggal setor = tanggal semua catatannya
-    jenisId: integer('jenis_id')
-      .notNull()
-      .references(() => jenis.id),
-    periode: text('periode'), // periode awal yang dibayar ('2026-10' / '2026'); null bila jenis tanpa periode
+    // Jenis utama (informasi, untuk daftar): setoran boleh berisi banyak jenis
+    jenisId: integer('jenis_id').references(() => jenis.id),
+    periode: text('periode'), // periode awal jenis utama ('2026-10' / '2026'); null bila tanpa periode
     penyetorAnggotaId: integer('penyetor_anggota_id').references(() => anggota.id),
     keterangan: text('keterangan').notNull(),
     metode: text('metode', { enum: METODE }).notNull().default('tunai'),

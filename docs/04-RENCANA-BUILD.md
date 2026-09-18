@@ -468,6 +468,16 @@ tanda terima 12 baris → PDF; Buku Kas: subjudul *Setoran SI-2026-0001 · diset
 + subtotal; hapus setoran → 0 catatan hidup, 6 entri Dihapus di Riwayat dengan Kembalikan;
 360px tanpa geser samping. 40 tes (periode eksplisit, tambahBulan).
 
+**Perombakan setoran kolektif (banyak jenis, modal anggota)** — `docs/02` §5.1b diperbarui.
+Uji Electron 22 / Node 16: jenis utama Iuran Wajib (kunci 50.000, Desember), modal
+"centang semua" menambah 6 anggota, Budi + Iuran Tahunan 120.000 + Iuran Duka 2 almarhum
+× 10.000, kartu tanpa nama 4 orang → *7 anggota · 9 catatan · Rp 640.000*; DB: Budi
+KM-0034 Des, KM-0035 "Iuran Tahunan — 2026", KM-0036 "Iuran duka alm. Nenek Sumi & alm.
+Budi Santoso" 20.000; tanpa nama "… — Desember 2026 (4 orang)" 200.000. Temuan: kunci
+nominal harus dibandingkan per satuan untuk catatan gabungan; migrasi yang membangun ulang
+tabel butuh `PRAGMA foreign_keys=OFF` **sebelum** transaksi migrasi (diatur di `db/index.ts`,
+diperiksa `foreign_key_check` sesudahnya). Nama PM12 → "Iuran Duka / Kemalangan" (migrasi 0005).
+
 **Langkah 3 — detail anggota** (`docs/02` §5.1c): `/anggota/[id]` dengan matriks periode dan
 riwayat; nama di daftar, popup peta, dan halaman keluarga menautkannya. Uji: setoran Eko
 Jul–Sep → matriks 2026 `––––––✓✓✓···` (Okt–Des "belum jatuh tempo"), Iuran Tahunan

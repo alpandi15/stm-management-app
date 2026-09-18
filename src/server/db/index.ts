@@ -20,14 +20,20 @@ function bukaKoneksi(): Koneksi {
 
   const sqlite = new Database(dbFile)
   sqlite.pragma('journal_mode = WAL') // tulis-baca bersamaan lebih aman
-  sqlite.pragma('foreign_keys = ON') // SQLite mematikannya secara bawaan
   sqlite.pragma('busy_timeout = 5000')
 
   const db = drizzle(sqlite, { schema })
 
   // Migrasi + seed berjalan otomatis setiap aplikasi start (docs/02 §3.4):
   // pengguna memperbarui aplikasi lewat installer dan tidak akan mengetik perintah apa pun.
+  // Kunci asing dimatikan SELAMA migrasi: migrasi yang membangun ulang tabel (SQLite tidak
+  // bisa mengubah kolom) memakai DROP TABLE, yang ditolak bila ada tabel lain yang merujuk.
+  // `PRAGMA foreign_keys` tidak bisa diubah di dalam transaksi migrasi, jadi diatur di sini.
+  sqlite.pragma('foreign_keys = OFF')
   migrate(db, { migrationsFolder: migrationsDir })
+  sqlite.pragma('foreign_keys = ON') // SQLite mematikannya secara bawaan
+  const rusak = sqlite.pragma('foreign_key_check') as unknown[]
+  if (rusak.length > 0) throw new Error(`Integritas kunci asing rusak setelah migrasi: ${JSON.stringify(rusak.slice(0, 5))}`)
   seedJenisBawaan(db)
 
   return { sqlite, db }

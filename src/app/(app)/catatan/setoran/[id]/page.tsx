@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
-import { ambilSetoran } from '@/server/queries/setoran'
+import { ambilSetoran, rekapJenisSetoran } from '@/server/queries/setoran'
 import { formatRupiah, terbilangRupiah } from '@/lib/rupiah'
 import { formatPeriode, formatTanggal } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ export default async function HalamanDetailSetoran({ params }: { params: { id: s
   const id = Number(params.id)
   const s = Number.isInteger(id) ? ambilSetoran(id) : null
   if (!s) notFound()
+  const rekap = rekapJenisSetoran(s.id)
   return (
     <div className="flex flex-col gap-6">
       <Button asChild variant="halus" className="-ml-2 w-fit px-2 text-muted">
@@ -41,12 +42,27 @@ export default async function HalamanDetailSetoran({ params }: { params: { id: s
 
       <section className="rounded-kartu border border-border bg-surface p-6 shadow-kartu" aria-label="Kepala setoran">
         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-isi sm:grid-cols-[auto_1fr]">
-          <dt className="text-muted">Jenis</dt>
-          <dd className="font-semibold">{s.namaJenis}</dd>
-          {s.periode && (
+          <dt className="text-muted">Isi setoran</dt>
+          <dd>
+            <ul className="flex flex-col gap-0.5">
+              {rekap.map((r) => (
+                <li key={r.jenisId} className="flex flex-wrap justify-between gap-x-4">
+                  <span className="font-semibold">{r.nama}</span>
+                  <span className="angka">
+                    {r.jumlah} catatan · <span className="font-semibold">{formatRupiah(r.total)}</span>
+                  </span>
+                </li>
+              ))}
+              {rekap.length === 0 && <li className="text-muted">–</li>}
+            </ul>
+          </dd>
+          {s.namaJenis && (
             <>
-              <dt className="text-muted">Periode awal</dt>
-              <dd>{formatPeriode(s.periode)}</dd>
+              <dt className="text-muted">Jenis utama</dt>
+              <dd>
+                {s.namaJenis}
+                {s.periode && ` — ${formatPeriode(s.periode)}`}
+              </dd>
             </>
           )}
           <dt className="text-muted">Tanggal setor</dt>
