@@ -46,16 +46,12 @@ npm i -D typescript @types/node@20 @types/react@18 @types/react-dom@18 \
 dipakai di `src/server/db/index.ts` supaya impor tak sengaja dari komponen klien gagal
 saat build, bukan saat dijalankan.
 
-shadcn/ui dipasang saat komponennya mulai dibutuhkan (Fase 2–3):
-
-```bash
-npx shadcn@latest init
-npx shadcn@latest add button input label card dialog sheet select \
-      dropdown-menu badge separator sonner switch alert
-```
-
-Setelah `init`, **kembalikan `globals.css` ke token kita** — shadcn menulis palet oklch
-yang tidak dikenal Chromium 108 (`docs/05` §5).
+**shadcn/ui tanpa CLI.** CLI shadcn v4 memasang paket runtime (`shadcn`, `cn`,
+`tw-animate-css`), font Geist, dan palet oklch yang tidak dikenal Chromium 108. Karena itu
+komponen ditulis langsung di `src/components/ui/` mengikuti pola shadcn (cva + Radix) di
+atas token kita: `radix-ui` (paket tunggal semua primitif) dan `class-variance-authority`.
+Saat butuh komponen baru (dialog, sheet, select, dropdown, switch), tulis dengan pola yang
+sama — lihat `button.tsx` dan `checkbox.tsx` sebagai contoh.
 
 ### 2.2 Struktur folder
 
@@ -290,15 +286,20 @@ Dua pemeriksaan pada setiap permintaan halaman:
 2. Sudah ada tapi cookie sesi tidak sah → arahkan ke `/` (layar kunci).
 
 **Pembagian tugasnya penting.** Di Next 14, `middleware.ts` selalu berjalan di edge
-runtime dan **tidak bisa membuka SQLite**. Karena itu:
+runtime dan **tidak bisa membuka SQLite**. Selain itu `NextURL` milik Next mengganti
+`127.0.0.1` menjadi `localhost` pada setiap pengalihan dari middleware — di Electron, yang
+memuat `http://127.0.0.1:PORT`, itu berarti pindah origin dan cookie sesi hilang. Karena itu:
 
-- `middleware.ts` hanya memeriksa **cookie sesi** dengan `jose` (murni JS, jalan di edge):
-  tidak ada/tidak sah → alihkan ke `/`. Rute `/`, `/setup`, `/api/*`, dan aset statis
-  dikecualikan dari pemeriksaan ini.
-- Pemeriksaan **"pengaturan sudah ada?"** dilakukan di Server Component:
-  `src/app/(app)/layout.tsx` dan `src/app/(auth)/page.tsx` memanggil
-  `queries/pengaturan.ts` lalu `redirect('/setup')` bila belum ada; `src/app/setup/page.tsx`
-  melakukan kebalikannya (`redirect('/')` bila sudah ada).
+- `middleware.ts` **tidak mengalihkan**. Ia hanya memperpanjang cookie sesi yang sah
+  (`jose`, murni JS, jalan di edge) dan membersihkan yang tidak sah.
+- Pengalihan ke layar kunci dilakukan `wajibSesi()` (`server/auth/session.ts`) yang
+  dipanggil di awal `src/app/(app)/layout.tsx` **dan setiap halaman** di bawahnya —
+  layout tidak dirender ulang pada navigasi antar halaman, jadi halaman harus memeriksa
+  sendiri. `redirect()` dari Server Component menghasilkan `Location` relatif yang aman.
+- Pemeriksaan **"pengaturan sudah ada?"** juga di Server Component:
+  `(app)/layout.tsx` dan `(auth)/page.tsx` memanggil `queries/pengaturan.ts` lalu
+  `redirect('/setup')` bila belum ada; `setup/page.tsx` melakukan kebalikannya.
+- Setiap Server Action dibungkus `aksiTerlindungi()` yang memeriksa sesi sendiri.
 
 Rute `/setup` hanya bisa diakses saat keadaan (1). Setelah pengaturan dibuat, membuka
 `/setup` langsung diarahkan ke `/` — supaya tidak ada jalan menimpa PIN lewat URL.
@@ -320,7 +321,11 @@ lalu dalam satu transaksi SQLite:
    simpan hash-nya, kembalikan versi terangnya **sekali saja** untuk ditampilkan.
 5. Isi `tanggalMulai` dengan tanggal hari ini.
 6. Jalankan seed jenis bawaan.
-7. Buat sesi dan arahkan ke `/beranda`.
+7. **Jangan membuat sesi di sini.** Server Action yang memasang cookie membuat Next
+   me-refresh halaman; `/setup` lalu mengalihkan ke `/beranda` dan layar Kode Pemulihan
+   terlewati sebelum terbaca. Sesi dibuat lewat `bukaKunci(pin)` saat pengguna menekan
+   *Lanjut ke Beranda* setelah mencentang *"Saya sudah menyimpannya"*. Berlaku sama untuk
+   `pulihkanPin()` di §4.5.
 
 ### 4.3 Verifikasi PIN
 

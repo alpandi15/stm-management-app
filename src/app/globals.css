@@ -22,6 +22,7 @@
   --color-text: #111827;
   --color-muted: #6b7280;
   --color-primary: #1d4ed8;
+  --color-primary-hover: #1e40af;
   --color-primary-fg: #ffffff;
   --color-masuk: #047857;
   --color-keluar: #b91c1c;
@@ -83,6 +84,7 @@
     --color-text: #f3f4f6;
     --color-muted: #9ba3af;
     --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
     --color-primary-fg: #ffffff;
     --color-masuk: #34d399;
     --color-keluar: #f87171;
@@ -125,4 +127,15 @@
 @utility angka {
   /* Semua nominal uang: kolom angka berbaris rapi */
   font-variant-numeric: tabular-nums;
+}
+
+/* Getaran singkat saat PIN salah (docs/01 §5.2) */
+@theme {
+  --animate-getar: getar 300ms ease-in-out;
+
+  @keyframes getar {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
 }

@@ -6,16 +6,11 @@ import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import * as schema from './schema'
 import { seedJenisBawaan } from './seed'
+import { dataDir, migrationsDir } from '../config'
 
 export type Db = BetterSQLite3Database<typeof schema>
 
-/** Folder data: database, foto bukti, cadangan. Diisi Electron ke `userData` saat terbundel. */
-export const dataDir = path.resolve(process.env.STM_DATA_DIR ?? './data')
-
-/** Folder berkas migrasi hasil drizzle-kit. Ikut disalin ke bundel standalone (docs/03 §2). */
-export const migrationsDir =
-  process.env.STM_MIGRATIONS_DIR ?? path.join(process.cwd(), 'drizzle')
-
+export { dataDir, migrationsDir }
 export const dbFile = path.join(dataDir, 'stm.db')
 
 function bukaKoneksi(): { sqlite: Database.Database; db: Db } {

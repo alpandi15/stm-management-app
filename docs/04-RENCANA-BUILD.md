@@ -10,7 +10,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | --- | --- |
 | 0 | Pemeriksaan awal — **selesai** |
 | 1 | Fondasi: dependensi, database, sistem desain — **selesai** |
-| 2 | Pengaturan awal & login PIN |
+| 2 | Pengaturan awal & login PIN — **selesai** |
 | 3 | Kerangka aplikasi (sidebar, header, tema) |
 | 4 | Catatan kas — inti aplikasi |
 | 5 | Riwayat & log |
@@ -99,8 +99,10 @@ src/server/actions/setup.ts
 
 Ketentuan sesuai `docs/02` §4. Yang mudah terlewat:
 
-- `middleware.ts` di Next 14 berjalan di edge dan **tidak bisa membuka SQLite** — ia hanya
-  memeriksa cookie; pemeriksaan "sudah setup?" ada di layout/halaman (`docs/02` §4.1).
+- `middleware.ts` di Next 14 berjalan di edge dan **tidak bisa membuka SQLite**, dan
+  pengalihan dari middleware mengubah `127.0.0.1` jadi `localhost` (cookie hilang di
+  Electron) — ia hanya memperpanjang cookie; pengalihan dan pemeriksaan "sudah setup?"
+  ada di layout/halaman (`docs/02` §4.1).
 - Next 14 memakai `useFormState` dari `react-dom` (bukan `useActionState`), dan `cookies()`
   sinkron.
 - `/setup` hanya bisa dibuka saat baris pengaturan belum ada — sesudahnya dialihkan.
@@ -113,6 +115,29 @@ Ketentuan sesuai `docs/02` §4. Yang mudah terlewat:
 **Bukti selesai:** hapus berkas database, jalankan aplikasi, lewati pengaturan awal,
 kunci, buka lagi dengan PIN, salah PIN lima kali dan pastikan terkunci sementara,
 lalu uji jalur Lupa PIN dengan kode pemulihan.
+
+**Hasil (18 September 2026):** dijalankan dengan skrip pengemudi Electron 22 (Chromium 108)
+terhadap server standalone di runtime Node 16 dengan database kosong — 24 langkah lolos:
+`/` → `/setup`; wizard 3 langkah; kode pemulihan tampil dan tombol Lanjut nonaktif sebelum
+dicentang; `/beranda` menyapa nama bendahara; `/setup` setelah setup dialihkan; Kunci →
+layar PIN; salah PIN 5× → *"Terlalu banyak percobaan. Coba lagi dalam 1 menit."*, papan
+angka nonaktif, PIN benar pun ditolak selama jeda (jeda tersimpan di DB); setelah 60 detik
+hitung mundur habis dan PIN benar membuka; Lupa PIN dengan kode salah ditolak, kode benar
+→ PIN baru + kode baru; PIN lama ditolak, PIN baru membuka. `npm test` 16 lulus
+(ditambah `pin.test.ts`). Berkas tambahan di luar daftar: `server/actions/auth.ts`
+(bukaKunci, kunci, pulihkanPin), `server/auth/{secret,token}.ts`, `server/config.ts`,
+`lib/hasil.ts`, `components/ui/{button,input,label,checkbox,pesan-galat}.tsx`,
+`components/auth/{InputPin,KotakPin,PapanAngka,KodePemulihan}.tsx`,
+`electron/sesi-secret.js`, kerangka sementara `(app)/layout.tsx` + `beranda/page.tsx`.
+
+Dua jebakan yang ditemukan dan ditulis di `docs/02` §4.1–4.2: pengalihan dari middleware
+mengubah `127.0.0.1` menjadi `localhost` (cookie hilang di Electron), dan Server Action
+yang memasang cookie me-refresh halaman sehingga layar kode pemulihan terlewati.
+
+shadcn/ui: CLI versi terbaru (v4) memasang paket runtime `shadcn`, `cn`, `tw-animate-css`,
+font Geist, dan palet oklch — bertentangan dengan token hex untuk Chromium 108. Komponen
+UI ditulis sendiri bergaya shadcn di `components/ui/` di atas `radix-ui` +
+`class-variance-authority` (keduanya dependensi shadcn sendiri).
 
 ---
 

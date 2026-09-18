@@ -11,6 +11,7 @@
 'use strict'
 
 require('./polyfill-node16.js')
+require('./sesi-secret.js').pasangSecretSesi()
 
 const path = require('path')
 const serverJs = process.env.STM_SERVER_JS || path.join(process.cwd(), 'server.js')

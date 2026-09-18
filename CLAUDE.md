@@ -13,8 +13,8 @@ dipakai **satu orang** — bendahara — di satu komputer. Bukan aplikasi web mu
 **Aplikasi harus bisa dijalankan di Windows 7 SP1, 32-bit maupun 64-bit.** Syarat ini
 mengunci beberapa versi dependensi (lihat `docs/05`). Jangan menaikkan versi yang dikunci.
 
-Status repo: Fase 0–1 selesai (fondasi: dependensi, database, sistem desain). Lihat
-`docs/04` untuk fase berikutnya.
+Status repo: Fase 0–2 selesai (fondasi, pengaturan awal, login PIN). Lihat `docs/04`
+untuk fase berikutnya.
 
 ## Dokumen (baca berurutan)
 
@@ -36,7 +36,8 @@ alasannya di `docs/05`.
 
 - Next.js **14.2** (App Router) + TypeScript, `output: 'standalone'`, React **18.3**
 - SQLite lewat **better-sqlite3 9.6.0** + Drizzle ORM + Drizzle Kit
-- Tailwind CSS 4 + shadcn/ui + lucide-react (token warna hex, tanpa oklch — Chromium 108)
+- Tailwind CSS 4 + komponen bergaya shadcn/ui (ditulis sendiri di `components/ui/`, di atas
+  `radix-ui` + cva; CLI shadcn tidak dipakai) + lucide-react — token warna hex, tanpa oklch
 - Recharts untuk grafik
 - Zod + React Hook Form
 - **`jose` 4.x** untuk sesi, `bcryptjs` untuk PIN

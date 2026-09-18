@@ -1,3 +1,10 @@
+import { createRequire } from 'node:module'
+
+// Kunci sesi dipasang ke process.env sebelum server dimuat, supaya middleware (edge)
+// bisa memverifikasi cookie. Lihat electron/sesi-secret.js dan docs/02 §4.4.
+const require = createRequire(import.meta.url)
+require('./electron/sesi-secret.js').pasangSecretSesi()
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Dibungkus Electron sebagai server Node mandiri (lihat docs/03 §2)
