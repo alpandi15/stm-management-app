@@ -89,10 +89,6 @@
           "!**/*.node",
           "!**/.next/cache/**"
         ]
-      },
-      {
-        "from": "build/native/${platform}-${arch}/better_sqlite3.node",
-        "to": "standalone/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
       }
     ],
     "asar": true,
@@ -133,7 +129,8 @@
     },
     "portable": {
       "artifactName": "AplikasiKasSTM-Portable-${version}-${arch}.${ext}"
-    }
+    },
+    "afterPack": "scripts/pasang-native.js"
   },
   "productName": "Aplikasi Kas STM"
 }

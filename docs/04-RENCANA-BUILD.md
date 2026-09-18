@@ -544,8 +544,10 @@ Alur proses utama diuji lewat paket macOS (`--mac dir`, prebuild darwin dari uji
 `Application Support/Aplikasi Kas STM/data/` (`stm.db`, `.secret`, `aplikasi.log`); keluar
 mematikan server (log "berhenti, kode 0", port tertutup). Temuan: (1) `productName` harus di
 tingkat atas `package.json`, kalau tidak `userData` bernama `stm-management-app`; (2) `files`
-harus mengecualikan `node_modules` (asar 306 MB → 140 KB); (3) makro path native memakai
-`${platform}` bukan tulisan `win32`. **Belum dilakukan** (butuh mesin Windows): daftar
+harus mengecualikan `node_modules` (asar 306 MB → 140 KB); (3) penyalinan `.node` per arch tidak boleh lewat makro `${platform}` (= platform mesin
+pembangun) — paket Windows pertama yang diuji pemilik di Windows 10 x64 gagal 500 "Could not
+locate the bindings file"; diganti hook `afterPack` `scripts/pasang-native.js` yang memakai
+platform/arch target dan diverifikasi ada di kedua paket. **Belum dilakukan** (butuh mesin Windows): daftar
 periksa `docs/03` §9 — pemasangan di komputer bersih, VM Windows 7 SP1 32/64-bit, cetak PDF,
 cadangan, portable dari flash disk.
 

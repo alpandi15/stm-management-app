@@ -174,8 +174,13 @@ terus jalan. Modul native untuk bundel diambil terpisah:
    Untuk 9.6.0 + Electron 22 prebuild itu **ada** — itulah alasan kedua versi dikunci
    (`docs/05` §2); dengan versi lain, membangun target Windows ia32 dari macOS mustahil.
 2. `extraResources` di `package.json` menyalin `.next/standalone` **tanpa** berkas `.node`
-   (hasil kompilasi mesin pengembang), lalu menaruh `.node` dari
-   `build/native/${platform}-${arch}/` ke tempat yang sama per arsitektur.
+   (hasil kompilasi mesin pengembang). Hook `afterPack` (`scripts/pasang-native.js`) lalu
+   menaruh `.node` dari `build/native/<platform>-<arch>/` ke tempat yang sama, berdasarkan
+   platform/arch **target** (`context.electronPlatformName`, `context.arch`), dan gagal
+   keras bila berkasnya tidak ada. Jangan memakai makro `${platform}` di `extraResources`
+   untuk ini: makro itu = `process.platform` mesin pembangun (darwin), bukan target —
+   paket Windows jadi tanpa `.node` dan aplikasi menampilkan error 500 "Could not locate
+   the bindings file".
 3. `npmRebuild: false` — electron-builder tidak menyentuh dependensi; `files` juga
    mengecualikan `node_modules/**` karena seluruh dependensi runtime sudah ada di
    `standalone/` (tanpa ini asar membengkak 300 MB).
