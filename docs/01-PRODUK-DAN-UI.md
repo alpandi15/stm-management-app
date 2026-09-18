@@ -114,6 +114,7 @@ Token turunan (ditambahkan saat implementasi, sudah lolos kontras 4.5:1 di kedua
 | `--color-masuk-soft` | `#ECFDF5` | `#052E22` | Latar badge/banner uang masuk |
 | `--color-keluar-soft` | `#FEF2F2` | `#3B0D0D` | Latar badge/banner uang keluar |
 | `--color-warning-soft` | `#FFFBEB` | `#3B2506` | Latar banner peringatan |
+| `--color-grafik-masuk` / `-keluar` | `#047857` / `#B91C1C` | `#059669` / `#DC2626` | Batang grafik. Di mode gelap token teks terlalu terang untuk batang; pasangan ini lolos pemeriksaan buta warna (ΔE deutan 8,6) |
 
 Satu warna aksen saja. Hijau dan merah **hanya** dipakai untuk arah uang, tidak pernah
 untuk hal lain — supaya maknanya tidak kabur.

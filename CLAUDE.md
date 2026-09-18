@@ -13,8 +13,8 @@ dipakai **satu orang** — bendahara — di satu komputer. Bukan aplikasi web mu
 **Aplikasi harus bisa dijalankan di Windows 7 SP1, 32-bit maupun 64-bit.** Syarat ini
 mengunci beberapa versi dependensi (lihat `docs/05`). Jangan menaikkan versi yang dikunci.
 
-Status repo: Fase 0–5 selesai (fondasi, pengaturan awal, login PIN, kerangka, catatan kas,
-riwayat). Lihat `docs/04`
+Status repo: Fase 0–6 selesai (fondasi, pengaturan awal, login PIN, kerangka, catatan kas,
+riwayat, laporan & beranda). Lihat `docs/04`
 untuk fase berikutnya.
 
 ## Dokumen (baca berurutan)

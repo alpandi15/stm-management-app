@@ -458,9 +458,11 @@ dihapus atau dipangkas** — ia adalah pembanding independen bagi tabel transaks
 
 ## 6. Laporan
 
-Seluruh rumus hidup di `src/server/services/laporan.ts`. Beranda, halaman Laporan, dan
-dokumen cetak semuanya memanggil service yang sama. Ini yang menjamin angkanya tidak
-pernah berbeda antar halaman.
+Seluruh rumus hidup di `src/server/services/laporan-rumus.ts` (fungsi murni yang menerima
+`Db`, sehingga bisa diuji dengan SQLite in-memory) dan diikat ke database sungguhan oleh
+`src/server/services/laporan.ts` (`susunLaporan`, `dataBeranda`, `hitungSisaKas`,
+`periksaKas`). Beranda, halaman Laporan, dan dokumen cetak semuanya memanggil service yang
+sama. Ini yang menjamin angkanya tidak pernah berbeda antar halaman.
 
 ### 6.1 Menentukan rentang
 

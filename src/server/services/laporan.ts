@@ -4,10 +4,13 @@ import { db } from '@/server/db'
 import { transaksi } from '@/server/db/schema'
 import { ambilPengaturan } from '@/server/queries/pengaturan'
 import { semuaLogUrut } from '@/server/queries/riwayat'
+import { grafikBulanan, rincianPerJenis, ringkasanPeriode, totalDalamRentang, type PenyaringLaporan, type RincianJenis, type RingkasanPeriode } from './laporan-rumus'
+import { rentangBulanIni, rentangBulanLalu, type Rentang } from '@/lib/tanggal'
 
 // Satu-satunya tempat rumus keuangan hidup (docs/02 §6). Beranda, Laporan, Catatan Kas,
 // dan dokumen cetak semuanya memanggil fungsi di sini. Semua penjumlahan lewat agregat SQL.
-// Fase 4 baru membawa sisa kas; ringkasan periode dan rincian per jenis menyusul di Fase 6.
+// Rumusnya sendiri ada di laporan-rumus.ts (murni, diuji); berkas ini mengikatnya ke
+// database sungguhan dan pengaturan (saldo awal).
 
 /** Σ jumlah per arah untuk catatan yang belum dihapus, opsional dibatasi tanggal < batas. */
 function totalArah(arah: 'masuk' | 'keluar', sebelumTanggal?: string): number {
@@ -73,4 +76,42 @@ export function periksaKas(): PemeriksaanKas {
   }
 
   return { saldoAwal, masuk, keluar, seharusnya, sebenarnya: saldoLog, cocok: seharusnya === saldoLog, jumlahLog: entri.length }
+}
+
+export type Laporan = {
+  rentang: Rentang
+  ringkasan: RingkasanPeriode
+  rincianMasuk: RincianJenis[]
+  rincianKeluar: RincianJenis[]
+}
+
+/** Laporan satu rentang (docs/02 §6): dipakai halaman Laporan dan dokumen cetak. */
+export function susunLaporan(rentang: Rentang, penyaring?: PenyaringLaporan): Laporan {
+  const saldoAwal = ambilPengaturan()?.saldoAwal ?? 0
+  return {
+    rentang,
+    ringkasan: ringkasanPeriode(db, saldoAwal, rentang, penyaring),
+    rincianMasuk: rincianPerJenis(db, rentang, 'masuk', penyaring),
+    rincianKeluar: rincianPerJenis(db, rentang, 'keluar', penyaring),
+  }
+}
+
+export type DataBeranda = {
+  sisaKas: number
+  bulanIni: { masuk: number; keluar: number }
+  bulanLalu: { masuk: number; keluar: number }
+  grafik: ReturnType<typeof grafikBulanan>
+  tahun: number
+}
+
+/** Angka Beranda — memakai rumus yang sama dengan Laporan, bukan query sendiri. */
+export function dataBeranda(): DataBeranda {
+  const tahun = new Date().getFullYear()
+  return {
+    sisaKas: hitungSisaKas(),
+    bulanIni: totalDalamRentang(db, rentangBulanIni()),
+    bulanLalu: totalDalamRentang(db, rentangBulanLalu()),
+    grafik: grafikBulanan(db, tahun),
+    tahun,
+  }
 }

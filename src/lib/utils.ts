@@ -4,7 +4,7 @@ import { extendTailwindMerge } from 'tailwind-merge'
 // tailwind-merge harus tahu token kustom di globals.css. Tanpa ini ia mengira
 // `text-form` (ukuran font) dan `text-primary-fg` (warna) bentrok, lalu membuang salah
 // satunya — tombol kehilangan warna teksnya tanpa galat apa pun.
-const twMerge = extendTailwindMerge({
+const twMerge = extendTailwindMerge<'gradien'>({
   extend: {
     theme: {
       text: ['ket', 'label', 'isi', 'form', 'judul-kartu', 'judul', 'saldo'],
@@ -14,6 +14,10 @@ const twMerge = extendTailwindMerge({
       container: ['konten'],
       ease: ['tenang'],
       animate: ['getar'],
+    },
+    classGroups: {
+      // utilitas kustom di globals.css yang tidak boleh dianggap bentrok dengan warna
+      gradien: ['gradien-primary', 'gradien-keluar'],
     },
   },
 })

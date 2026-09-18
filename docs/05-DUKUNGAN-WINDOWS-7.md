@@ -116,6 +116,9 @@ Ketentuan:
   (`--color-*: initial`) supaya tidak ada yang tak sengaja memakai `bg-blue-500`.
 - Hindari pengubah opasitas warna (`bg-primary/50`) — Tailwind mengubahnya menjadi
   `color-mix()`. Bila perlu warna lembut, buat token sendiri (`--color-masuk-soft`).
+- Gradien: `bg-linear-*`/`bg-gradient-*` Tailwind 4 menghasilkan `linear-gradient(... in
+  oklab, ...)` yang tidak dikenal Chromium 108. Tulis utilitas sendiri di `globals.css`
+  (`gradien-primary`, `gradien-keluar`) dengan `linear-gradient(135deg, a, b)` biasa.
 - Periksa hasil build: `grep -c oklch .next/static/css/*.css` harus `0`.
 - Fitur yang **tidak ada** di Chromium 108 dan jangan dipakai: `:has()` bertingkat rumit,
   `@container` query, `text-wrap: balance`, `@starting-style`, `field-sizing`,

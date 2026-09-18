@@ -14,7 +14,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 3 | Kerangka aplikasi (sidebar, header, tema) — **selesai** |
 | 4 | Catatan kas — inti aplikasi — **selesai** |
 | 5 | Riwayat & log — **selesai** |
-| 6 | Laporan |
+| 6 | Laporan — **selesai** |
 | 7 | Cetak |
 | 8 | Anggota, jenis, pengaturan, cadangan |
 | 9 | Electron & pembuatan `.exe` |
@@ -277,6 +277,25 @@ Ketentuan sesuai `docs/02` §6. Yang mudah terlewat:
 **Bukti selesai:** buat transaksi tepat di tanggal 1 dan tanggal terakhir sebuah bulan,
 lalu pastikan keduanya terhitung di rentang Bulanan. Uji minggu yang melintasi pergantian
 tahun. Pastikan angka di Beranda sama persis dengan Laporan rentang Tahunan.
+
+**Hasil (18 September 2026):** rumus hidup di `services/laporan-rumus.ts` (murni, menerima
+Db) dengan 6 tes SQLite in-memory: batas bulan (1 dan 28 Feb ikut, 31 Jan dan 1 Mar tidak),
+minggu 29 Des 2025 – 4 Jan 2026, penyaring jenis tidak mengubah Sisa Kas Awal/Akhir,
+catatan terhapus tidak ikut, persen per jenis (0 bila total 0), grafik 12 bulan.
+`services/laporan.ts` mengikatnya ke database (`susunLaporan`, `dataBeranda`). Lewat UI di
+Electron 22 / Node 16: catatan 1 Agu + 31 Agu (+ 31 Jul sebagai pembanding) → Bulanan
+Agustus masuk 100.000, keluar 40.000, 2 catatan, Sisa Kas Awal 1.593.000 (= 500.000 saldo
+awal + semua sebelum 1 Agu); Mingguan acuan 1 Jan 2026 → *29 Desember 2025 sampai
+4 Januari 2026*, 111.000/22.000, catatan 5 Jan tidak ikut; Harian 31 Agu benar; penyaring
+jenis Iuran: masuk berubah, Sisa Kas Akhir tetap 1.653.000; **Beranda Sisa Kas =
+Laporan Tahunan Sisa Kas Akhir (Rp 2.508.000)** dan Uang Masuk/Keluar Bulan Ini = Laporan
+Bulanan. Grafik Recharts: sumbu Y rupiah penuh, legenda urutan tetap dengan teks token,
+tabel alternatif; palet batang divalidasi untuk buta warna (mode gelap memakai
+`--color-grafik-*` yang lebih gelap). 360px tanpa geser samping.
+
+Catatan: tombol **Cetak** di Laporan menyusul di Fase 7 bersama rutenya — supaya tidak ada
+tautan buntu. Gradien kartu sisa kas ditulis sebagai utilitas sendiri (`gradien-primary`)
+karena `bg-linear-*` Tailwind 4 memakai sintaks `in oklab` yang tidak dikenal Chromium 108.
 
 ---
 
