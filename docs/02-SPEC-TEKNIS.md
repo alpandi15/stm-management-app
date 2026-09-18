@@ -1,0 +1,534 @@
+# 02 — Spesifikasi Teknis
+
+## 1. Stack dan alasannya
+
+| Bagian | Pilihan | Kenapa |
+| --- | --- | --- |
+| Framework | Next.js App Router + TypeScript | Sudah ada di repo; Server Actions menghapus kebutuhan menulis API |
+| Database | SQLite via `better-sqlite3` | Satu berkas, tanpa server, mudah dicadangkan — cocok untuk aplikasi desktop |
+| ORM | Drizzle ORM + Drizzle Kit | Ringan, migrasi berupa berkas SQL biasa, tidak membawa biner engine seperti Prisma |
+| Styling | Tailwind CSS 4 + shadcn/ui | Komponen disalin ke repo, bukan dependensi — bebas disesuaikan untuk target sentuh besar |
+| Ikon | lucide-react | |
+| Grafik | Recharts | Cukup untuk satu grafik batang |
+| Validasi | Zod | Satu skema dipakai di klien dan server |
+| Form | React Hook Form + `@hookform/resolvers` | |
+| Sesi | `jose` (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native |
+| Hash PIN | `bcryptjs` | Murni JavaScript — penting, lihat catatan di bawah |
+| Tanggal | `date-fns` + `date-fns/locale/id` | |
+| Desktop | Electron + electron-builder | Lihat `docs/03` |
+
+**Catatan `bcryptjs`, bukan `bcrypt`.** Setiap modul native tambahan berarti satu lagi yang
+harus dikompilasi ulang untuk ABI Electron. `better-sqlite3` sudah tidak terhindarkan;
+jangan menambah beban kedua demi selisih kecepatan hash yang tidak akan pernah terasa
+pada satu pengguna.
+
+## 2. Setup dari nol
+
+Repo saat ini hanya hasil `create-next-app` kosong. Jalankan berurutan.
+
+### 2.1 Dependensi
+
+```bash
+npm i better-sqlite3 drizzle-orm zod react-hook-form @hookform/resolvers \
+      jose bcryptjs date-fns recharts lucide-react clsx tailwind-merge
+npm i -D drizzle-kit @types/better-sqlite3 @types/bcryptjs \
+      electron electron-builder @electron/rebuild cross-env
+npx shadcn@latest init
+npx shadcn@latest add button input label card dialog sheet select \
+      dropdown-menu badge separator sonner tabs switch alert
+```
+
+### 2.2 Struktur folder
+
+```
+src/
+  app/
+    (auth)/page.tsx                  # layar kunci PIN (rute "/")
+    setup/page.tsx                   # pengaturan awal
+    (app)/
+      layout.tsx                     # sidebar + header, wajib sudah login
+      beranda/page.tsx
+      catatan/page.tsx
+      catatan/baru/page.tsx
+      catatan/[id]/ubah/page.tsx
+      laporan/page.tsx
+      riwayat/page.tsx
+      anggota/page.tsx
+      pengaturan/page.tsx
+    cetak/[dokumen]/page.tsx         # halaman khusus cetak, tanpa sidebar
+    api/
+      bukti/[nama]/route.ts          # menyajikan foto bukti dari disk
+      cadangan/route.ts              # unduh berkas cadangan
+  server/
+    db/
+      index.ts                       # koneksi better-sqlite3 + Drizzle
+      schema.ts                      # seluruh tabel
+      migrate.ts                     # jalankan migrasi saat aplikasi start
+      seed.ts                        # 19 jenis bawaan
+    auth/
+      session.ts                     # buat/baca/hapus cookie sesi
+      pin.ts                         # hash, verifikasi, batas percobaan
+    actions/                         # Server Actions, satu berkas per domain
+      transaksi.ts  jenis.ts  anggota.ts  pengaturan.ts  setup.ts  cadangan.ts
+    queries/                         # baca data untuk RSC
+      transaksi.ts  laporan.ts  riwayat.ts  beranda.ts
+    services/
+      nomor-bukti.ts  laporan.ts  log.ts  penguncian.ts  cadangan.ts
+  lib/
+    rupiah.ts                        # format + terbilang
+    tanggal.ts                       # rentang periode, format Indonesia
+    validasi.ts                      # skema Zod bersama
+  components/
+    ui/                              # shadcn
+    keuangan/                        # komponen domain
+electron/
+  main.js  preload.js
+drizzle/                             # hasil drizzle-kit
+data/                                # database saat mode pengembangan (di .gitignore)
+```
+
+### 2.3 Variabel lingkungan
+
+Hanya dua, dan keduanya punya nilai bawaan supaya aplikasi tetap jalan tanpa berkas `.env`.
+
+| Nama | Bawaan | Isi |
+| --- | --- | --- |
+| `STM_DATA_DIR` | `./data` | Folder database dan foto bukti. Diisi Electron ke `userData` saat terbundel |
+| `STM_SESSION_SECRET` | dibuat sekali lalu disimpan di `STM_DATA_DIR/.secret` | Kunci penanda cookie sesi |
+
+Sengaja **tidak** memakai `.env` untuk rahasia sesi. Aplikasi terbundel tidak punya tempat
+aman menyimpan `.env`, dan pengguna tidak akan pernah mengisinya. Kunci dibuat sendiri
+saat pertama jalan lalu disimpan di folder data.
+
+## 3. Database
+
+### 3.1 Koneksi
+
+```ts
+// src/server/db/index.ts
+import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+
+const file = path.join(process.env.STM_DATA_DIR ?? './data', 'stm.db')
+const sqlite = new Database(file)
+
+sqlite.pragma('journal_mode = WAL')   // tulis-baca bersamaan lebih aman
+sqlite.pragma('foreign_keys = ON')    // SQLite mematikannya secara bawaan
+sqlite.pragma('busy_timeout = 5000')
+
+export const db = drizzle(sqlite, { schema })
+export { sqlite }
+```
+
+`foreign_keys = ON` wajib ditulis eksplisit. SQLite mematikan penegakan kunci asing secara
+bawaan, jadi tanpa baris ini relasi di skema hanya jadi dokumentasi.
+
+Koneksi dibuat sekali sebagai modul singleton. Di mode pengembangan Next melakukan hot
+reload yang bisa membuat koneksi ganda — simpan instance di `globalThis` seperti pola
+umum Prisma/Drizzle.
+
+### 3.2 Aturan tipe data
+
+SQLite tidak punya `DECIMAL` maupun `DATE`. Karena itu:
+
+| Data | Tipe SQLite | Bentuk |
+| --- | --- | --- |
+| **Uang** | `INTEGER` | Rupiah penuh, tanpa sen. `1250000` berarti Rp 1.250.000 |
+| **Tanggal kejadian** | `TEXT` | `'2026-01-05'`, bisa dibandingkan dan diurutkan langsung sebagai teks |
+| **Waktu sistem** | `INTEGER` | Unix milidetik |
+| **Boolean** | `INTEGER` | 0 / 1 |
+| **JSON** | `TEXT` | Hasil `JSON.stringify` |
+
+**Jangan pernah menyimpan uang sebagai `REAL`.** Menyimpan rupiah sebagai bilangan pecahan
+akan menghasilkan sisa `0.000001` yang membuat pemeriksaan kas tidak pernah cocok, dan
+kesalahan itu baru ketahuan berbulan-bulan kemudian. Rupiah tidak punya pecahan dalam
+praktik STM, jadi integer adalah representasi yang benar, bukan sekadar yang praktis.
+
+Tanggal sebagai `TEXT 'YYYY-MM-DD'` dipilih supaya `WHERE tanggal BETWEEN ? AND ?` bekerja
+tanpa konversi dan tanpa jebakan zona waktu. Seluruh perhitungan tanggal dilakukan di
+JavaScript dengan waktu lokal, tidak pernah UTC.
+
+### 3.3 Skema
+
+```ts
+// src/server/db/schema.ts — ringkasan; tulis lengkap dengan tipe Drizzle
+export const pengaturan = sqliteTable('pengaturan', {
+  id: integer('id').primaryKey(),                  // selalu 1
+  namaStm: text('nama_stm').notNull(),
+  alamat: text('alamat'),
+  namaBendahara: text('nama_bendahara').notNull(),
+  namaKetua: text('nama_ketua'),
+  saldoAwal: integer('saldo_awal').notNull().default(0),
+  tanggalMulai: text('tanggal_mulai').notNull(),
+  terkunciSampai: text('terkunci_sampai'),
+  pinHash: text('pin_hash').notNull(),
+  pemulihanHash: text('pemulihan_hash').notNull(),
+  gagalLogin: integer('gagal_login').notNull().default(0),
+  kunciSampai: integer('kunci_sampai'),             // unix ms
+  autoKunciMenit: integer('auto_kunci_menit').notNull().default(15),
+  tema: text('tema').notNull().default('sistem'),
+  dibuatPada: integer('dibuat_pada').notNull(),
+  diubahPada: integer('diubah_pada').notNull(),
+})
+
+export const jenis = sqliteTable('jenis', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kode: text('kode').notNull().unique(),
+  nama: text('nama').notNull(),
+  arah: text('arah', { enum: ['masuk', 'keluar'] }).notNull(),
+  keterangan: text('keterangan'),
+  urutan: integer('urutan').notNull().default(0),
+  aktif: integer('aktif', { mode: 'boolean' }).notNull().default(true),
+  bawaan: integer('bawaan', { mode: 'boolean' }).notNull().default(false),
+})
+
+export const anggota = sqliteTable('anggota', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  nama: text('nama').notNull(),
+  noHp: text('no_hp'),
+  alamat: text('alamat'),
+  aktif: integer('aktif', { mode: 'boolean' }).notNull().default(true),
+  dibuatPada: integer('dibuat_pada').notNull(),
+})
+
+export const transaksi = sqliteTable('transaksi', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  noBukti: text('no_bukti').notNull().unique(),
+  tanggal: text('tanggal').notNull(),                     // YYYY-MM-DD
+  arah: text('arah', { enum: ['masuk', 'keluar'] }).notNull(),
+  jenisId: integer('jenis_id').notNull().references(() => jenis.id),
+  anggotaId: integer('anggota_id').references(() => anggota.id),
+  namaPihak: text('nama_pihak'),
+  keterangan: text('keterangan').notNull(),
+  metode: text('metode', { enum: ['tunai', 'transfer'] }).notNull().default('tunai'),
+  jumlah: integer('jumlah').notNull(),                    // rupiah penuh
+  buktiFile: text('bukti_file'),
+  dihapusPada: integer('dihapus_pada'),                   // soft delete
+  dibuatPada: integer('dibuat_pada').notNull(),
+  diubahPada: integer('diubah_pada').notNull(),
+}, (t) => ({
+  idxTanggal: index('idx_trx_tanggal').on(t.tanggal),
+  idxArahTanggal: index('idx_trx_arah_tanggal').on(t.arah, t.tanggal),
+  idxJenis: index('idx_trx_jenis').on(t.jenisId),
+}))
+
+export const log = sqliteTable('log', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  transaksiId: integer('transaksi_id'),      // tanpa FK, agar bertahan setelah hapus permanen
+  noBukti: text('no_bukti'),
+  aksi: text('aksi', { enum: ['buat', 'ubah', 'hapus', 'kembalikan'] }).notNull(),
+  dataLama: text('data_lama'),               // JSON
+  dataBaru: text('data_baru'),               // JSON
+  dibuatPada: integer('dibuat_pada').notNull(),
+}, (t) => ({ idxWaktu: index('idx_log_waktu').on(t.dibuatPada) }))
+```
+
+Kolom `arah` di `transaksi` sengaja menduplikasi `jenis.arah`. Laporan tahunan menjumlahkan
+ribuan baris, dan melakukan join hanya untuk mengetahui arah uang adalah beban yang tidak
+perlu. Konsistensinya dijaga di satu tempat — service penyimpanan menyalin ulang nilainya
+dari jenis yang dipilih, bukan menerima dari form.
+
+### 3.4 Migrasi dan seed
+
+`drizzle.config.ts` menunjuk ke `src/server/db/schema.ts`, keluaran ke `drizzle/`.
+
+Migrasi **dijalankan otomatis saat aplikasi start**, bukan lewat perintah manual:
+
+```ts
+// dipanggil sekali dari src/server/db/index.ts
+migrate(db, { migrationsFolder: path.join(process.cwd(), 'drizzle') })
+```
+
+Alasannya penting untuk aplikasi desktop: pengguna memperbarui aplikasi dengan menjalankan
+installer baru, dan tidak akan pernah mengetik perintah migrasi. Skema harus menyesuaikan
+diri sendiri saat dibuka.
+
+Seed 19 jenis bawaan (`bawaan = true`, idempoten berdasarkan `kode`):
+
+Uang masuk — `PM01` Iuran Wajib Anggota, `PM02` Iuran Sukarela, `PM03` Uang Pangkal Anggota
+Baru, `PM04` Sumbangan / Donasi, `PM05` Denda Anggota, `PM06` Hasil Usaha & Kegiatan,
+`PM07` Pengembalian Pinjaman, `PM08` Jasa / Bunga Bank, `PM09` Penerimaan Lain-lain.
+
+Uang keluar — `PK01` Santunan Duka / Kemalangan, `PK02` Bantuan Sakit / Rawat Inap,
+`PK03` Bantuan Pernikahan, `PK04` Konsumsi Rapat & Kegiatan, `PK05` Transportasi &
+Akomodasi, `PK06` Perlengkapan & ATK, `PK07` Sewa Tempat & Peralatan, `PK08` Biaya
+Administrasi Bank, `PK09` Sumbangan Sosial Keluar, `PK10` Pengeluaran Lain-lain.
+
+## 4. Pengaturan awal dan login PIN
+
+### 4.1 Penentuan keadaan
+
+Middleware memeriksa dua hal pada setiap permintaan halaman:
+
+1. Baris `pengaturan` id=1 belum ada → arahkan ke `/setup`.
+2. Sudah ada tapi cookie sesi tidak sah → arahkan ke `/` (layar kunci).
+
+Rute `/setup` hanya bisa diakses saat keadaan (1). Setelah pengaturan dibuat, membuka
+`/setup` langsung diarahkan ke `/` — supaya tidak ada jalan menimpa PIN lewat URL.
+
+### 4.2 Pengaturan awal
+
+Server Action `selesaikanSetup()` menerima nama STM, nama pengguna, dan PIN,
+lalu dalam satu transaksi SQLite:
+
+1. Validasi Zod: nama minimal 3 karakter; PIN tepat 6 digit angka.
+2. Tolak PIN yang terlalu mudah ditebak: enam angka sama (`111111`), atau berurutan
+   naik/turun (`123456`, `654321`). Pesannya ramah, bukan menggurui:
+   *"PIN ini terlalu mudah ditebak. Coba angka lain supaya catatan uang Anda aman."*
+3. Hash PIN dengan bcryptjs, cost 10.
+4. Buat kode pemulihan 10 karakter dari alfabet tanpa karakter rancu
+   (`ABCDEFGHJKLMNPQRSTUVWXYZ23456789` — tanpa I, O, 0, 1), format `XXXXX-XXXXX`,
+   simpan hash-nya, kembalikan versi terangnya **sekali saja** untuk ditampilkan.
+5. Isi `tanggalMulai` dengan tanggal hari ini.
+6. Jalankan seed jenis bawaan.
+7. Buat sesi dan arahkan ke `/beranda`.
+
+### 4.3 Verifikasi PIN
+
+Server Action `bukaKunci(pin)`:
+
+1. Bila `kunciSampai` masih di masa depan → tolak dengan sisa waktu dalam detik.
+2. Bandingkan dengan `bcrypt.compare`.
+3. Salah → `gagalLogin += 1`. Pada kelipatan 5, set `kunciSampai` dengan jeda bertambah:
+   percobaan ke-5 jeda 1 menit, ke-10 jeda 5 menit, ke-15 dan seterusnya 15 menit.
+4. Benar → nolkan `gagalLogin` dan `kunciSampai`, buat sesi.
+
+Jeda disimpan di database, bukan di memori, supaya menutup aplikasi tidak meniadakan
+hukumannya.
+
+### 4.4 Sesi
+
+JWT ditandatangani `jose` HS256, berisi `{ v: 1, iat, exp }` — tanpa data pribadi karena
+penggunanya hanya satu. Cookie `stm_sesi`: `httpOnly`, `sameSite: 'lax'`,
+`secure: false` (aplikasi berjalan di `http://localhost` dalam Electron), masa berlaku
+mengikuti `autoKunciMenit`.
+
+Sesi diperpanjang otomatis pada setiap navigasi. Kunci otomatis terjadi karena tidak ada
+aktivitas, bukan karena batas waktu mutlak.
+
+Tombol **Kunci** di header menghapus cookie dan kembali ke layar PIN.
+
+### 4.5 Lupa PIN
+
+Form meminta kode pemulihan. Bila cocok: pengguna langsung diminta membuat PIN baru,
+kode pemulihan lama dibatalkan, dan kode baru ditampilkan sekali.
+
+Bila kode juga hilang, tidak ada jalan masuk — dan itu memang benar. Sampaikan apa adanya
+di halaman bantuan: *"Data Anda tetap aman di komputer ini, tapi tanpa PIN atau kode
+pemulihan, aplikasi tidak bisa dibuka. Inilah kenapa kode pemulihan perlu dicatat."*
+Jangan membuat pintu belakang berupa kata sandi induk; itu membuat seluruh PIN tidak ada
+artinya.
+
+## 5. Aturan bisnis
+
+### 5.1 Validasi catatan
+
+Satu skema Zod di `src/lib/validasi.ts`, dipakai di form dan di Server Action.
+Validasi klien untuk kenyamanan; validasi server adalah yang menentukan.
+
+| Field | Aturan | Pesan |
+| --- | --- | --- |
+| `tanggal` | wajib, ≤ hari ini, ≥ `tanggalMulai` | "Tanggal belum diisi." / "Tanggal tidak boleh melewati hari ini." |
+| `arah` | wajib | "Pilih dulu Uang Masuk atau Uang Keluar." |
+| `jenisId` | wajib, ada, **dan `arah` jenis harus sama dengan `arah` catatan** | "Pilihan tidak sesuai. Pilih ulang dari daftar." |
+| `keterangan` | wajib, 3–255 karakter | "Keterangan belum diisi. Tulis singkat untuk apa uang ini." |
+| `jumlah` | wajib, bilangan bulat, 1 – 999.999.999.999 | "Jumlah uang belum diisi." / "Jumlah uang harus lebih dari nol." |
+| `metode` | wajib | "Pilih cara pembayarannya." |
+| `buktiFile` | opsional, gambar, ≤ 5 MB | "Foto bukti terlalu besar. Maksimal 5 MB." |
+
+Kecocokan `jenisId` dengan `arah` **wajib diperiksa di server**. Ini satu-satunya cara isi
+laporan bisa salah arah tanpa terlihat, dan dropdown di klien tidak bisa dipercaya.
+
+### 5.2 Kemungkinan duplikat
+
+Saat menyimpan, cari catatan lain yang belum terhapus dengan `tanggal` + `jenisId` +
+`jumlah` sama. Bila ada, **jangan tolak** — duplikat asli memang terjadi. Kembalikan
+status `perluKonfirmasi` beserta nomor bukti yang mirip, tampilkan dialog, dan simpan
+ulang dengan tanda `abaikanDuplikat: true` bila pengguna memilih lanjut.
+
+### 5.3 Nomor bukti
+
+Format `KM-2026-0001` / `KK-2026-0001`, diurutkan per arah per tahun.
+Dihitung di dalam transaksi SQLite, dan **memperhitungkan catatan yang sudah dihapus**:
+
+```ts
+const awalan = `${arah === 'masuk' ? 'KM' : 'KK'}-${tahun}-`
+const terakhir = db.select({ n: max(transaksi.noBukti) })
+  .from(transaksi).where(like(transaksi.noBukti, `${awalan}%`)).get()
+const urut = terakhir?.n ? Number(terakhir.n.slice(-4)) + 1 : 1
+```
+
+Nomor yang sudah dipakai lalu dihapus tidak boleh dipakai ulang, karena nomornya sudah
+terlanjur tertulis di kuitansi fisik yang dipegang warga.
+
+better-sqlite3 bersifat sinkron dan aplikasi ini satu pengguna, jadi membungkus proses
+baca-lalu-tulis dengan `sqlite.transaction(...)` sudah cukup untuk menjamin tidak ada
+nomor kembar.
+
+### 5.4 Hapus dan kembalikan
+
+Hapus mengisi `dihapusPada`, tidak menghapus baris. Semua query pembacaan menambahkan
+`isNull(transaksi.dihapusPada)`. Buat satu helper query dasar dan pakai di semua tempat —
+satu saja yang lupa, angkanya akan berbeda dari halaman lain.
+
+Catatan terhapus masih tampil di Riwayat dan bisa dikembalikan.
+
+### 5.5 Penguncian periode
+
+Bila `terkunciSampai` terisi, catatan dengan tanggal ≤ nilai itu tidak bisa dibuat, diubah,
+atau dihapus. Diperiksa di satu tempat: `services/penguncian.ts`, dipanggil dari ketiga
+Server Action. Pesan: *"Pembukuan sampai [tanggal] sudah ditutup. Buka dulu penguncian di
+Pengaturan bila memang perlu diperbaiki."*
+
+Berbeda dengan versi multi-pengguna, di sini pengguna boleh membuka penguncian sendiri —
+ia memang pemilik tunggal datanya. Penguncian di sini berfungsi sebagai pagar terhadap
+kekeliruan, bukan pembatasan wewenang.
+
+### 5.6 Kas minus
+
+Diizinkan disimpan — bendahara kadang menalangi lebih dulu. Tapi munculkan banner
+menetap di Beranda dan di Catatan Kas: *"Sisa uang kas tercatat minus Rp X. Coba periksa
+kembali catatan Anda."*
+
+### 5.7 Pencatatan log
+
+Ditulis dari **service penyimpanan**, bukan dari Server Action, sehingga setiap jalur
+penulisan tercatat. `dataLama` dan `dataBaru` disimpan sebagai JSON utuh dari baris
+transaksi; perbandingan field dihitung saat menampilkan, bukan saat menyimpan — supaya
+bisa dibaca ulang dengan cara berbeda di kemudian hari.
+
+## 6. Laporan
+
+Seluruh rumus hidup di `src/server/services/laporan.ts`. Beranda, halaman Laporan, dan
+dokumen cetak semuanya memanggil service yang sama. Ini yang menjamin angkanya tidak
+pernah berbeda antar halaman.
+
+### 6.1 Menentukan rentang
+
+```ts
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'
+
+// minggu dimulai hari Senin — konvensi Indonesia
+const opsi = { weekStartsOn: 1 as const }
+```
+
+| Pilihan | Awal | Akhir |
+| --- | --- | --- |
+| Harian | tanggal acuan | tanggal acuan |
+| Mingguan | `startOfWeek(acuan, opsi)` | `endOfWeek(acuan, opsi)` |
+| Bulanan | `startOfMonth` | `endOfMonth` |
+| Tahunan | `startOfYear` | `endOfYear` |
+| Pilih Sendiri | input pengguna | input pengguna |
+
+Hasilnya diubah ke `'yyyy-MM-dd'` sebelum dipakai di query.
+
+### 6.2 Rumus
+
+| Angka | Cara hitung |
+| --- | --- |
+| Sisa Kas Awal | `saldoAwal` + Σ masuk (`tanggal < awal`) − Σ keluar (`tanggal < awal`) |
+| Uang Masuk | Σ `jumlah` where `arah='masuk'`, dalam rentang, lolos penyaring |
+| Uang Keluar | Σ `jumlah` where `arah='keluar'`, dalam rentang, lolos penyaring |
+| Selisih | Uang Masuk − Uang Keluar |
+| Sisa Kas Akhir | Sisa Kas Awal + Σ masuk dalam rentang **tanpa penyaring** − Σ keluar dalam rentang **tanpa penyaring** |
+| Rincian per jenis | `groupBy(jenisId)` dengan `sum(jumlah)` dan `count()` |
+| Persentase | nilai ÷ total arah tersebut; **bila total 0 maka 0** |
+
+Sisa Kas Awal dan Akhir sengaja mengabaikan penyaring jenis, metode, dan pencarian,
+karena keduanya menggambarkan posisi uang yang sebenarnya — bukan irisan yang sedang
+dilihat. Perbedaan ini harus dijelaskan di layar (lihat `docs/01` §5.6).
+
+Semua penjumlahan memakai agregat SQL (`sum()`, `count()`), bukan mengambil seluruh baris
+lalu menjumlahkan di JavaScript.
+
+### 6.3 Yang harus diuji
+
+Buat data uji dengan transaksi tepat di tanggal pertama dan tanggal terakhir rentang,
+lalu pastikan keduanya ikut terhitung. Kesalahan `<` versus `<=` di batas periode adalah
+galat paling sering di aplikasi keuangan, dan tidak akan terlihat sampai tutup buku.
+
+Uji juga minggu yang melintasi pergantian bulan dan tahun (misalnya 29 Desember 2025 –
+4 Januari 2026).
+
+## 7. Cetak
+
+Karena aplikasi berjalan di Electron, cetak memakai jalur asli browser — tanpa pustaka PDF
+tambahan.
+
+Rute `/cetak/[dokumen]` merender halaman bersih tanpa sidebar, dengan CSS cetak
+(`@page { size: A4; margin: 15mm }`), lalu memanggil `window.print()` saat siap.
+Di Electron, dialog cetak asli Windows muncul lengkap dengan pilihan **Microsoft Print to
+PDF**, sehingga pengguna bisa menyimpan PDF tanpa kode tambahan.
+
+| Dokumen | Isi | Orientasi |
+| --- | --- | --- |
+| `ringkas` | Kop, ringkasan, rincian per jenis, blok tanda tangan | Potret |
+| `buku-kas` | Kop, daftar seluruh catatan dalam rentang dengan kolom saldo berjalan | Lanskap |
+| `pemeriksaan` | Kop, hasil pemeriksaan kas, daftar perubahan dalam rentang, tanda tangan | Potret |
+
+Ketentuan:
+
+- Kop berisi nama STM, alamat, judul dokumen, dan kalimat rentang tanggal.
+- `thead { display: table-header-group }` supaya judul kolom berulang tiap halaman.
+- Nomor halaman di kanan bawah.
+- Blok tanda tangan memakai nama bendahara dan ketua dari Pengaturan; bila kosong, cetak
+  garis kosong — jangan pernah mencetak "null" atau "undefined".
+- Sediakan juga tombol **Simpan sebagai PDF** yang memanggil `webContents.printToPDF`
+  lewat IPC Electron, sehingga menghasilkan berkas langsung dengan nama deskriptif
+  (`Laporan-Ringkas-Januari-2026.pdf`). Nama berkas penting karena hasilnya akan dikirim
+  lewat WhatsApp.
+
+## 8. Cadangan data
+
+Ini fitur wajib, bukan tambahan. Seluruh pembukuan STM ada dalam satu berkas di satu
+laptop, dan laptop rusak atau hilang bukan kejadian langka.
+
+### 8.1 Cadangan otomatis
+
+Setiap kali aplikasi dibuka, jalankan `VACUUM INTO` ke
+`STM_DATA_DIR/cadangan/stm-YYYYMMDD-HHmm.db`, lalu sisakan 10 berkas terbaru.
+
+`VACUUM INTO` menghasilkan salinan yang konsisten walau database sedang dipakai, dan
+sekaligus memampatkannya — jauh lebih aman daripada menyalin berkas `.db` mentah yang bisa
+tertangkap di tengah penulisan WAL.
+
+### 8.2 Cadangan manual
+
+Tombol **Buat Cadangan Sekarang** di Pengaturan memanggil `VACUUM INTO` ke lokasi yang
+dipilih pengguna lewat dialog simpan Electron. Bila dijalankan di browser saat
+pengembangan, jatuh ke unduhan biasa lewat `/api/cadangan`.
+
+### 8.3 Pulihkan
+
+Memilih berkas `.db`, lalu:
+
+1. Verifikasi berkas dengan membukanya read-only dan memeriksa tabel `pengaturan` ada.
+2. Tampilkan ringkasan isinya — jumlah catatan, rentang tanggal, sisa kas — dan minta
+   konfirmasi.
+3. Cadangkan database yang sedang aktif ke `cadangan/sebelum-pulihkan-*.db`.
+4. Tutup koneksi, timpa berkas, lalu mulai ulang aplikasi.
+
+Langkah 2 penting. Memulihkan cadangan lama tanpa melihat isinya adalah cara paling mudah
+kehilangan sebulan pencatatan tanpa sadar.
+
+## 9. Berkas bukti
+
+Foto bukti disimpan di `STM_DATA_DIR/bukti/` dengan nama acak
+(`crypto.randomUUID()` + ekstensi asli), bukan di `public/` — folder `public` berada di
+dalam bundel aplikasi dan bersifat baca-saja setelah dipaket.
+
+Penyajiannya lewat `GET /api/bukti/[nama]`, yang membaca berkas dari folder data setelah
+memastikan nama berkas tidak mengandung `..` atau pemisah path. Kompres gambar di sisi
+klien (`canvas`, lebar maksimum 1600px, kualitas 0.8) sebelum dikirim, supaya folder data
+tidak membengkak dan cadangan tetap ringan.
+
+## 10. Kualitas kode
+
+- `strict: true` di TypeScript. Tidak ada `any` tanpa komentar alasan.
+- Semua Server Action diawali pemeriksaan sesi. Buat pembungkus
+  `aksiTerlindungi(fn)` supaya tidak ada yang lupa.
+- Semua Server Action mengembalikan bentuk seragam:
+  `{ ok: true, data } | { ok: false, pesan, field? }`.
+- `revalidatePath()` setelah setiap perubahan data.
+- Uang diformat hanya lewat `lib/rupiah.ts`. Tidak ada `toLocaleString` tersebar di komponen.
+- Tanggal diformat hanya lewat `lib/tanggal.ts` dengan locale `id`.
