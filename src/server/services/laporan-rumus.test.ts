@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import * as schema from '@/server/db/schema'
 import { rentangPeriode } from '@/lib/tanggal'
-import { grafikBulanan, rincianPerJenis, ringkasanPeriode } from './laporan-rumus'
+import { grafikBulanan, rekapPenyetor, rincianPerJenis, ringkasanPeriode } from './laporan-rumus'
 
 function dbUji() {
   const sqlite = new Database(':memory:')
@@ -93,4 +93,25 @@ test('grafik bulanan: 12 bulan, bulan kosong bernilai 0, tahun lain tidak ikut',
   assert.deepEqual(g[0], { bulan: '2026-01', masuk: 100, keluar: 0 })
   assert.deepEqual(g[11], { bulan: '2026-12', masuk: 0, keluar: 40 })
   assert.equal(g.reduce((a, b) => a + b.masuk, 0), 100)
+})
+
+test('rekap per penyetor: dikelompokkan, tanpa penyetor = Bendahara, mengikuti penyaring', () => {
+  const { db, catat, iuran, santunan } = dbUji()
+  const rahmat = db.insert(schema.anggota).values({ nama: 'Bpk. Rahmat', pengutip: true, dibuatPada: 0 }).returning().get().id
+  const sari = db.insert(schema.anggota).values({ nama: 'Ibu Sari', dibuatPada: 0 }).returning().get().id
+  catat('2026-02-01', 'masuk', iuran, 100, { penyetorAnggotaId: rahmat })
+  catat('2026-02-02', 'masuk', iuran, 200, { penyetorAnggotaId: rahmat })
+  catat('2026-02-03', 'masuk', iuran, 50, { penyetorAnggotaId: sari })
+  catat('2026-02-04', 'keluar', santunan, 30, { penyetorAnggotaId: rahmat })
+  catat('2026-02-05', 'masuk', iuran, 7)
+  const r = rekapPenyetor(db, rentangPeriode('bulanan', '2026-02-10'))
+  assert.deepEqual(r.map((b) => [b.nama, b.jumlah, b.masuk, b.keluar]), [
+    ['Bpk. Rahmat', 3, 300, 30],
+    ['Ibu Sari', 1, 50, 0],
+    ['Bendahara', 1, 7, 0],
+  ])
+  const hanyaRahmat = rekapPenyetor(db, rentangPeriode('bulanan', '2026-02-10'), { penyetor: rahmat })
+  assert.deepEqual(hanyaRahmat.map((b) => b.nama), ['Bpk. Rahmat'])
+  const bendahara = rekapPenyetor(db, rentangPeriode('bulanan', '2026-02-10'), { penyetor: 'bendahara' })
+  assert.deepEqual(bendahara.map((b) => [b.nama, b.masuk]), [['Bendahara', 7]])
 })

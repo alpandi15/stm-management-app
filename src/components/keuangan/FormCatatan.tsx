@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack, HandCoins } from 'lucide-react'
 import { simpanCatatan, ubahCatatan, type HasilSimpanCatatan } from '@/server/actions/transaksi'
 import type { Jenis, Transaksi } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
@@ -49,6 +49,7 @@ export function labelJenis(j: Pick<Jenis, 'nama' | 'nominalBawaan' | 'periode'>)
 export function FormCatatan({
   daftarJenis,
   daftarAnggota,
+  daftarPenyetor,
   awal,
   arahAwal,
   kodeJenisAwal,
@@ -56,6 +57,8 @@ export function FormCatatan({
 }: {
   daftarJenis: Jenis[]
   daftarAnggota: AnggotaUntukForm[]
+  /** Pilihan "Disetor oleh": anggota aktif, pengutip paling atas */
+  daftarPenyetor: Array<{ id: number; nama: string; nomor: string | null; pengutip: boolean }>
   /** Catatan yang diubah; kosong berarti catatan baru */
   awal?: Transaksi & { namaPihak: string | null }
   arahAwal?: 'masuk' | 'keluar'
@@ -79,6 +82,7 @@ export function FormCatatan({
   const jenisAwalDariKode = kodeJenisAwal ? daftarJenis.find((j) => j.kode === kodeJenisAwal && j.aktif) : undefined
   const anggotaAwal = anggotaIdAwal ? daftarAnggota.find((a) => a.id === anggotaIdAwal) : undefined
   const [anggotaKeluargaId, setAnggotaKeluargaId] = React.useState<number | null>(awal?.anggotaKeluargaId ?? null)
+  const [penyetorId, setPenyetorId] = React.useState<number | null>(awal?.penyetorAnggotaId ?? null)
 
   const form = useForm<NilaiForm>({
     resolver: zodResolver(skemaForm),
@@ -160,6 +164,7 @@ export function FormCatatan({
       if (pihak) fd.set('namaPihak', cocok ? cocok.nama : pihak)
       if (cocok) fd.set('anggotaId', String(cocok.id))
       if (cocok && anggotaKeluargaId && jenisTerpilih?.menandaiMeninggal) fd.set('anggotaKeluargaId', String(anggotaKeluargaId))
+      if (penyetorId) fd.set('penyetorAnggotaId', String(penyetorId))
       if (bukti) fd.set('bukti', bukti)
       if (bukti === null) fd.set('hapusBukti', '1')
       if (abaikanDuplikat) fd.set('abaikanDuplikat', '1')
@@ -358,6 +363,23 @@ export function FormCatatan({
           )}
         />
         <PesanGalat>{g.metode?.message}</PesanGalat>
+      </div>
+
+      {/* 7b. Disetor / diserahkan oleh — siapa yang membawa uangnya */}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="penyetorAnggotaId" className="flex items-center gap-2">
+          <HandCoins className="size-5 text-muted" /> {arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
+        </Label>
+        <PilihanCari<number>
+          id="penyetorAnggotaId"
+          nilai={penyetorId}
+          onUbah={setPenyetorId}
+          labelKosong="Bendahara (sendiri)"
+          placeholder="Bendahara (sendiri)"
+          placeholderCari="Ketik nama pengutip atau anggota…"
+          pilihan={daftarPenyetor.map((a) => ({ nilai: a.id, label: a.nama, keterangan: [a.pengutip ? 'pengutip' : null, a.nomor].filter(Boolean).join(' · ') || undefined, kelompok: a.pengutip ? 'Tim pengutip' : 'Anggota lain' }))}
+        />
+        <p className="text-ket text-muted">{arah === 'keluar' ? 'Siapa yang membawa uangnya ke penerima. Kosongkan bila bendahara sendiri.' : 'Siapa yang membawa uangnya ke bendahara — tim pengutip atau anggota lain. Kosongkan bila langsung ke bendahara.'}</p>
       </div>
 
       {/* 8. Foto bukti */}

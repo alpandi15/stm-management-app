@@ -446,6 +446,18 @@ delete melewati FK) sudah ditangani sejak Fase 8: pemakaian diperiksa eksplisit.
   popup terbuka saat hasil diklik, keterangan otomatis mengikuti jenis tapi tidak menimpa
   yang diketik sendiri, 360px tanpa geser samping (baris halaman dibuat membungkus).
 
+## Sisipan — Penyetor & tim pengutip (langkah 1 dari 3, 18 September 2026)
+
+Kolom `penyetor_anggota_id` di transaksi dan `pengutip` di anggota (migrasi 0002). Form
+catat mendapat kolom *Disetor oleh / Diserahkan oleh* (pilihan bisa cari, pengutip di
+kelompok teratas, bawaan *Bendahara (sendiri)*); kartu & Buku Kas menyebutnya; penyaring
+di Catatan Kas & Laporan; **Rekap per Penyetor** di Laporan dan cetak ringkas; riwayat
+membandingkan "Penyetor". Uji Electron 22 / Node 16: tandai pengutip → badge dan penyaring
+*Tim pengutip (1)*; catatan disetor Rahmat → kartu *Disetor oleh Bpk. Rahmat Hidayat*;
+label uang keluar *Diserahkan oleh*; penyaring `?penyetor=1` → 1 catatan; rekap Bendahara
+12 catatan / Rahmat 1; ubah penyetor → riwayat *Penyetor Bpk. Rahmat Hidayat → Bendahara*.
+Tes `rekapPenyetor` (38 tes). Langkah 2: setoran kolektif; langkah 3: detail anggota.
+
 ## Fase 9 — Electron
 
 Ikuti `docs/03` seluruhnya, dan `docs/05` untuk Windows 7.

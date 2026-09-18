@@ -17,21 +17,23 @@ function kondisiAnggota(f: FilterAnggota): SQL | undefined {
     f.saring === 'aktif' ? eq(anggota.aktif, true) : undefined,
     f.saring === 'nonaktif' ? eq(anggota.aktif, false) : undefined,
     f.saring === 'meninggal' ? eq(anggota.status, 'meninggal') : undefined,
+    f.saring === 'pengutip' ? eq(anggota.pengutip, true) : undefined,
   )
 }
 
 /** Jumlah anggota per keadaan — untuk tombol penyaring. */
-export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: number; meninggal: number } {
+export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number } {
   const r = db
     .select({
       semua: count(),
       aktif: sql<number>`sum(case when ${anggota.aktif} = 1 then 1 else 0 end)`,
       nonaktif: sql<number>`sum(case when ${anggota.aktif} = 0 then 1 else 0 end)`,
       meninggal: sql<number>`sum(case when ${anggota.status} = 'meninggal' then 1 else 0 end)`,
+      pengutip: sql<number>`sum(case when ${anggota.pengutip} = 1 then 1 else 0 end)`,
     })
     .from(anggota)
     .get()
-  return { semua: r?.semua ?? 0, aktif: Number(r?.aktif ?? 0), nonaktif: Number(r?.nonaktif ?? 0), meninggal: Number(r?.meninggal ?? 0) }
+  return { semua: r?.semua ?? 0, aktif: Number(r?.aktif ?? 0), nonaktif: Number(r?.nonaktif ?? 0), meninggal: Number(r?.meninggal ?? 0), pengutip: Number(r?.pengutip ?? 0) }
 }
 
 /**
@@ -61,6 +63,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       lat: anggota.lat,
       lng: anggota.lng,
       aktif: anggota.aktif,
+      pengutip: anggota.pengutip,
       status: anggota.status,
       tanggalMeninggal: anggota.tanggalMeninggal,
       ditandaiOlehTransaksiId: anggota.ditandaiOlehTransaksiId,

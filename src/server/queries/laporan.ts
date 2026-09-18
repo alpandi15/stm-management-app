@@ -9,6 +9,7 @@ export type ParameterLaporan = {
   rentang: Rentang
   jenisId?: number
   metode?: Metode
+  penyetor?: number | 'bendahara'
 }
 
 /**
@@ -20,6 +21,7 @@ export function bacaParameterLaporan(sp: Params): ParameterLaporan {
   const acuan = apakahISO(sp.acuan ?? '') ? (sp.acuan as string) : hariIni()
   const jenisId = Number(sp.jenis) || undefined
   const metode: Metode | undefined = sp.metode === 'tunai' || sp.metode === 'transfer' ? sp.metode : undefined
+  const penyetor: number | 'bendahara' | undefined = sp.penyetor === 'bendahara' ? 'bendahara' : Number(sp.penyetor) || undefined
 
   let rentang: Rentang
   if (periode === 'pilih') {
@@ -30,5 +32,5 @@ export function bacaParameterLaporan(sp: Params): ParameterLaporan {
   } else {
     rentang = rentangPeriode(periode, acuan)
   }
-  return { periode, acuan, rentang, jenisId, metode }
+  return { periode, acuan, rentang, jenisId, metode, penyetor }
 }

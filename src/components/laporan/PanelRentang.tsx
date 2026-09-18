@@ -22,7 +22,9 @@ export function PanelRentang({
   akhir,
   jenisId,
   metode,
+  penyetor,
   daftarJenis,
+  daftarPenyetor,
 }: {
   periode: Periode
   acuan: string
@@ -30,7 +32,9 @@ export function PanelRentang({
   akhir: string
   jenisId: string
   metode: string
+  penyetor: string
   daftarJenis: Jenis[]
+  daftarPenyetor: Array<{ id: number; nama: string; pengutip: boolean }>
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -81,7 +85,7 @@ export function PanelRentang({
           <PilihTanggal label="Tanggal acuan" nilai={acuan} onUbah={(v) => ubah({ acuan: v })} />
         </div>
       )}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <PilihanCari<string>
           label="Tampilkan jenis"
           nilai={jenisId || null}
@@ -101,6 +105,15 @@ export function PanelRentang({
             { nilai: 'tunai', label: 'Tunai saja' },
             { nilai: 'transfer', label: 'Transfer saja' },
           ]}
+        />
+        <PilihanCari<string>
+          label="Tampilkan penyetor"
+          nilai={penyetor || null}
+          onUbah={(v) => ubah({ penyetor: v ?? undefined })}
+          labelKosong="Semua penyetor"
+          placeholder="Semua penyetor"
+          placeholderCari="Ketik nama penyetor…"
+          pilihan={[{ nilai: 'bendahara', label: 'Bendahara (tanpa penyetor)' }, ...daftarPenyetor.map((a) => ({ nilai: String(a.id), label: a.nama, kelompok: a.pengutip ? 'Tim pengutip' : 'Anggota lain' }))]}
         />
       </div>
     </div>

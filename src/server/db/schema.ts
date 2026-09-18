@@ -79,6 +79,8 @@ export const anggota = sqliteTable(
     lat: real('lat'), // titik peta alamat (bukan uang — REAL boleh)
     lng: real('lng'),
     aktif: integer('aktif', { mode: 'boolean' }).notNull().default(true),
+    // Tim pengutip iuran: muncul paling atas di pilihan "Disetor oleh"
+    pengutip: integer('pengutip', { mode: 'boolean' }).notNull().default(false),
     status: text('status', { enum: STATUS_HIDUP }).notNull().default('aktif'),
     tanggalMeninggal: text('tanggal_meninggal'), // YYYY-MM-DD
     ditandaiOlehTransaksiId: integer('ditandai_oleh_transaksi_id'), // tanpa FK (Spec 2 §A3)
@@ -126,6 +128,8 @@ export const transaksi = sqliteTable(
     anggotaId: integer('anggota_id').references(() => anggota.id),
     // Siapa yang meninggal (Spec 2 §A1): kosong = anggotanya sendiri
     anggotaKeluargaId: integer('anggota_keluarga_id').references(() => anggotaKeluarga.id, { onDelete: 'set null' }),
+    // Siapa yang menyetor (masuk) / menyerahkan (keluar) uangnya; kosong = bendahara sendiri
+    penyetorAnggotaId: integer('penyetor_anggota_id').references(() => anggota.id),
     namaPihak: text('nama_pihak'),
     keterangan: text('keterangan').notNull(),
     metode: text('metode', { enum: METODE }).notNull().default('tunai'),
@@ -139,6 +143,7 @@ export const transaksi = sqliteTable(
     index('idx_trx_tanggal').on(t.tanggal),
     index('idx_trx_arah_tanggal').on(t.arah, t.tanggal),
     index('idx_trx_jenis').on(t.jenisId),
+    index('idx_trx_penyetor').on(t.penyetorAnggotaId),
   ],
 )
 

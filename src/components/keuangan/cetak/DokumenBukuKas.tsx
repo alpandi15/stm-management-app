@@ -44,6 +44,7 @@ export function DokumenBukuKas({ baris, sisaAwal, rentang, p }: { baris: BarisCa
                   {b.keterangan}
                   {b.namaPihak ? ` — ${b.namaPihak}` : ''}
                   {kalimatMeninggal(b) && <div style={{ fontSize: '8.5pt', color: '#6b7280' }}>Meninggal: {kalimatMeninggal(b)}</div>}
+                  {b.namaPenyetor && <div style={{ fontSize: '8.5pt', color: '#6b7280' }}>{b.arah === 'masuk' ? 'Disetor oleh' : 'Diserahkan oleh'}: {b.namaPenyetor}</div>}
                 </td>
                 <td>{b.namaJenis}</td>
                 <td className="angka">{b.arah === 'masuk' ? formatRupiah(b.jumlah) : ''}</td>

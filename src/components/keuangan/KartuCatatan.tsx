@@ -40,6 +40,11 @@ export function KartuCatatan({
           {catatan.namaPihak && ` · ${catatan.namaPihak}`}
         </p>
         {kalimatMeninggal(catatan) && <p className="text-ket font-medium text-keluar">Meninggal: {kalimatMeninggal(catatan)}</p>}
+        {catatan.namaPenyetor && (
+          <p className="text-ket text-muted">
+            {masuk ? 'Disetor oleh' : 'Diserahkan oleh'} <span className="font-medium text-text">{catatan.namaPenyetor}</span>
+          </p>
+        )}
         <p className="angka mt-1 text-ket text-muted">
           {formatTanggalPendek(catatan.tanggal)} · {catatan.metode === 'tunai' ? 'Tunai' : 'Transfer'} · {catatan.noBukti}
           {catatan.buktiFile && ' · ada foto'}

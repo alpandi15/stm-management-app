@@ -15,6 +15,13 @@
       "when": 1789730011674,
       "tag": "0001_keluarga_nominal_periode",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789738007038,
+      "tag": "0002_penyetor",
+      "breakpoints": true
     }
   ]
 }

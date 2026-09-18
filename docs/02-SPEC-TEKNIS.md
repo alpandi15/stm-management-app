@@ -417,6 +417,16 @@ memilih lanjut. Aturannya bergantung pada `jenis.periode` (Spec 2 §B4, `service
 | `tahunan` | anggota + jenis + tahun sama |
 | `sekali` | anggota + jenis, kapan pun |
 
+### 5.1a Penyetor dan tim pengutip
+
+Setiap catatan boleh menyebut **siapa yang membawa uangnya**: `transaksi.penyetorAnggotaId`
+(anggota terdaftar; kosong = bendahara sendiri). Label mengikuti arah: uang masuk *"Disetor
+oleh"*, uang keluar *"Diserahkan oleh"*. Anggota bertanda `pengutip` (tim pengutip iuran)
+muncul paling atas di pilihannya. Tampil di kartu, Buku Kas, riwayat perubahan
+("Penyetor"), jadi penyaring di Catatan Kas & Laporan (`penyetor=<id>|bendahara`), dan
+Laporan memuat **Rekap per Penyetor** (`rekapPenyetor()` di `laporan-rumus.ts`) — juga di
+dokumen cetak ringkas.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat

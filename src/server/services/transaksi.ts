@@ -55,18 +55,26 @@ function periksaIsi(input: InputCatatan, kecualiId?: number) {
   // Tanggungan hanya bermakna pada jenis penanda dan harus milik anggota yang dipilih (Spec 2 §A6)
   const anggotaKeluargaId = j.menandaiMeninggal ? periksaKeluargaMilik(db, input.anggotaKeluargaId, anggotaId) : null
 
+  // Penyetor: anggota terdaftar; kosong = bendahara sendiri
+  let penyetorAnggotaId: number | null = null
+  if (input.penyetorAnggotaId) {
+    const p = db.select({ id: anggota.id }).from(anggota).where(eq(anggota.id, input.penyetorAnggotaId)).get()
+    if (!p) throw new GalatPengguna('Penyetor yang dipilih tidak dikenali. Pilih ulang dari daftar.', 'penyetorAnggotaId')
+    penyetorAnggotaId = p.id
+  }
+
   // Nominal terkunci ditegakkan di server (Spec 2 §B4)
   periksaNominal(j, input.jumlah)
 
   // Kemungkinan duplikat (docs/02 §5.2 + Spec 2 §B4): per periode bila anggota terisi
   const duplikat = input.abaikanDuplikat ? null : cariDuplikat(db, { ...input, anggotaId, namaPihak: input.namaPihak }, j, kecualiId)
 
-  return { jenis: j, anggotaId, anggotaKeluargaId, duplikat }
+  return { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat }
 }
 
 export function buatCatatan(input: InputCatatan): HasilSimpan {
   pastikanTidakTerkunci(input.tanggal)
-  const { jenis: j, anggotaId, anggotaKeluargaId, duplikat } = periksaIsi(input)
+  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat } = periksaIsi(input)
   if (duplikat) return { perluKonfirmasi: true, ...duplikat }
 
   const sekarang = Date.now()
@@ -83,6 +91,7 @@ export function buatCatatan(input: InputCatatan): HasilSimpan {
         jenisId: j.id,
         anggotaId,
         anggotaKeluargaId,
+        penyetorAnggotaId,
         namaPihak: input.namaPihak?.trim() || null,
         keterangan: input.keterangan.trim(),
         metode: input.metode,
@@ -108,7 +117,7 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
   // Tanggal lama DAN baru sama-sama harus di luar periode terkunci
   pastikanTidakTerkunci(lama.tanggal)
   pastikanTidakTerkunci(input.tanggal)
-  const { jenis: j, anggotaId, anggotaKeluargaId, duplikat } = periksaIsi(input, id)
+  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat } = periksaIsi(input, id)
   if (duplikat) return { perluKonfirmasi: true, ...duplikat }
 
   // Nomor bukti tidak berubah walau arah/tahun berubah: nomornya sudah tertulis di kuitansi.
@@ -129,6 +138,7 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
         jenisId: j.id,
         anggotaId,
         anggotaKeluargaId,
+        penyetorAnggotaId,
         namaPihak: input.namaPihak?.trim() || null,
         keterangan: input.keterangan.trim(),
         metode: input.metode,

@@ -31,6 +31,7 @@ function validasi(input: InputAnggota) {
       alamat: d.alamat?.trim() || null,
       lat: d.lat ?? null,
       lng: d.lng ?? null,
+      pengutip: !!d.pengutip,
       status,
       tanggalMeninggal: status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
     },

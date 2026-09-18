@@ -22,7 +22,7 @@ import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { PetaPinDinamis } from './PetaPinDinamis'
 import { cn } from '@/lib/utils'
 
-type Form = { nomor: string; nama: string; noHp: string; alamat: string; lat: number | null; lng: number | null; status: 'aktif' | 'meninggal'; tanggalMeninggal: string }
+type Form = { nomor: string; nama: string; noHp: string; alamat: string; lat: number | null; lng: number | null; pengutip: boolean; status: 'aktif' | 'meninggal'; tanggalMeninggal: string }
 
 export function DaftarAnggota({
   baris,
@@ -38,7 +38,7 @@ export function DaftarAnggota({
   halaman: number
   cari: string
   saring: SaringAnggota
-  ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number }
+  ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number }
   saranNomor: string
 }) {
   const router = useRouter()
@@ -68,18 +68,18 @@ export function DaftarAnggota({
 
   const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN_ANGGOTA))
   const [panel, setPanel] = React.useState<{ mode: 'tambah' } | { mode: 'ubah'; id: number } | null>(null)
-  const [form, setForm] = React.useState<Form>({ nomor: '', nama: '', noHp: '', alamat: '', lat: null, lng: null, status: 'aktif', tanggalMeninggal: '' })
+  const [form, setForm] = React.useState<Form>({ nomor: '', nama: '', noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '' })
   const [galat, setGalat] = React.useState<{ pesan: string; field?: string } | null>(null)
   const [hapus, setHapus] = React.useState<BarisAnggota | null>(null)
   const [sedangKirim, mulai] = React.useTransition()
 
   function bukaTambah() {
-    setForm({ nomor: saranNomor, nama: '', noHp: '', alamat: '', lat: null, lng: null, status: 'aktif', tanggalMeninggal: '' })
+    setForm({ nomor: saranNomor, nama: '', noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '' })
     setGalat(null)
     setPanel({ mode: 'tambah' })
   }
   function bukaUbah(a: BarisAnggota) {
-    setForm({ nomor: a.nomor ?? '', nama: a.nama, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '' })
+    setForm({ nomor: a.nomor ?? '', nama: a.nama, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '' })
     setGalat(null)
     setPanel({ mode: 'ubah', id: a.id })
   }
@@ -95,6 +95,7 @@ export function DaftarAnggota({
         alamat: form.alamat || null,
         lat: form.lat,
         lng: form.lng,
+        pengutip: form.pengutip,
         status: form.status,
         tanggalMeninggal: form.status === 'meninggal' ? form.tanggalMeninggal || null : null,
       }
@@ -143,6 +144,7 @@ export function DaftarAnggota({
       {!a.aktif && <span className="rounded-badge bg-border px-2.5 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>}
       {a.status === 'meninggal' && <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>}
       {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-2.5 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
+      {a.pengutip && <span className="rounded-badge bg-warning-soft px-2.5 py-0.5 text-ket font-semibold text-warning">Pengutip</span>}
       {a.aktif && a.status === 'aktif' && !a.anggotaAsalId && <span className="rounded-badge bg-masuk-soft px-2.5 py-0.5 text-ket font-semibold text-masuk">Aktif</span>}
     </span>
   )
@@ -213,6 +215,7 @@ export function DaftarAnggota({
               ['aktif', `Aktif (${ringkasan.aktif})`],
               ['nonaktif', `Nonaktif (${ringkasan.nonaktif})`],
               ['meninggal', `Meninggal (${ringkasan.meninggal})`],
+              ['pengutip', `Tim pengutip (${ringkasan.pengutip})`],
             ] as const
           ).map(([nilai, label]) => (
             <button
@@ -368,6 +371,19 @@ export function DaftarAnggota({
               <Input id="alamat-anggota" value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} maxLength={255} placeholder="Contoh: Jl. Melati No. 12, Blok C" />
               <p className="text-ket text-muted">Titik di peta (boleh kosong) — klik peta atau seret pin. Peta butuh internet.</p>
               {panel && <PetaPinDinamis lat={form.lat} lng={form.lng} onUbah={(t) => setForm((f) => ({ ...f, lat: t?.lat ?? null, lng: t?.lng ?? null }))} />}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Tim pengutip iuran?</Label>
+              <PilihanGanda
+                label="Tim pengutip"
+                nilai={form.pengutip ? 'ya' : 'tidak'}
+                onPilih={(v) => setForm({ ...form, pengutip: v === 'ya' })}
+                pilihan={[
+                  { nilai: 'tidak', label: 'Bukan' },
+                  { nilai: 'ya', label: 'Ya, pengutip' },
+                ]}
+              />
+              <p className="text-ket text-muted">Pengutip muncul paling atas di pilihan “Disetor oleh” saat mencatat.</p>
             </div>
             <div className="flex flex-col gap-2">
               <Label>Status</Label>

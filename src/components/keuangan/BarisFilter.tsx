@@ -14,10 +14,12 @@ import type { PilihanRentang } from '@/lib/tanggal'
  * (searchParams) supaya halaman dirender di server dan bisa dibagikan/di-refresh.
  * Kata "filter" tidak muncul di layar — labelnya "Tampilkan".
  */
-export function BarisFilter({ daftarJenis, arah, jenisId, rentang, awal, akhir, cari }: {
+export function BarisFilter({ daftarJenis, daftarPenyetor, arah, jenisId, penyetor, rentang, awal, akhir, cari }: {
   daftarJenis: Jenis[]
+  daftarPenyetor: Array<{ id: number; nama: string; pengutip: boolean }>
   arah: string
   jenisId: string
+  penyetor: string
   rentang: PilihanRentang
   awal: string
   akhir: string
@@ -78,7 +80,7 @@ export function BarisFilter({ daftarJenis, arah, jenisId, rentang, awal, akhir, 
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <PilihanCari<string>
           label="Tampilkan jenis"
           nilai={arah || null}
@@ -98,6 +100,15 @@ export function BarisFilter({ daftarJenis, arah, jenisId, rentang, awal, akhir, 
           placeholder="Semua untuk apa"
           placeholderCari="Ketik nama jenis…"
           pilihan={jenisTersedia.map((j) => ({ nilai: String(j.id), label: j.nama, kelompok: arah ? undefined : j.arah === 'masuk' ? 'Uang Masuk' : 'Uang Keluar' }))}
+        />
+        <PilihanCari<string>
+          label="Tampilkan penyetor"
+          nilai={penyetor || null}
+          onUbah={(v) => ubah({ penyetor: v ?? undefined })}
+          labelKosong="Semua penyetor"
+          placeholder="Semua penyetor"
+          placeholderCari="Ketik nama penyetor…"
+          pilihan={[{ nilai: 'bendahara', label: 'Bendahara (tanpa penyetor)' }, ...daftarPenyetor.map((a) => ({ nilai: String(a.id), label: a.nama, kelompok: a.pengutip ? 'Tim pengutip' : 'Anggota lain' }))]}
         />
         <form
           className="relative"

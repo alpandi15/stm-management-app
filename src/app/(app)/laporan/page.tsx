@@ -1,6 +1,7 @@
 import { wajibSesi } from '@/server/auth/session'
 import { susunLaporan } from '@/server/services/laporan'
-import { daftarCatatan, daftarJenisAktif } from '@/server/queries/transaksi'
+import { daftarCatatan, daftarJenisAktif, daftarPenyetor } from '@/server/queries/transaksi'
+import { RekapPenyetor } from '@/components/laporan/RekapPenyetor'
 import { bacaParameterLaporan } from '@/server/queries/laporan'
 import { kalimatRentang } from '@/lib/tanggal'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
@@ -14,11 +15,11 @@ export const dynamic = 'force-dynamic'
 
 export default async function HalamanLaporan({ searchParams }: { searchParams: Record<string, string | undefined> }) {
   await wajibSesi()
-  const { periode, acuan, rentang, jenisId, metode } = bacaParameterLaporan(searchParams)
-  const penyaring = { jenisId, metode }
+  const { periode, acuan, rentang, jenisId, metode, penyetor } = bacaParameterLaporan(searchParams)
+  const penyaring = { jenisId, metode, penyetor }
 
   const laporan = susunLaporan(rentang, penyaring)
-  const { baris } = daftarCatatan({ rentang, jenisId }, 1)
+  const { baris } = daftarCatatan({ rentang, jenisId, penyetor }, 1)
   const daftarJenis = daftarJenisAktif()
   const r = laporan.ringkasan
 
@@ -33,7 +34,9 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
         akhir={rentang.akhir}
         jenisId={jenisId ? String(jenisId) : ''}
         metode={metode ?? ''}
+        penyetor={penyetor === 'bendahara' ? 'bendahara' : penyetor ? String(penyetor) : ''}
         daftarJenis={daftarJenis}
+        daftarPenyetor={daftarPenyetor()}
       />
 
       <p className="text-isi text-muted">
@@ -56,6 +59,8 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
         <RincianJenis judul="Rincian Uang Masuk per Jenis" baris={laporan.rincianMasuk} arah="masuk" />
         <RincianJenis judul="Rincian Uang Keluar per Jenis" baris={laporan.rincianKeluar} arah="keluar" />
       </div>
+
+      <RekapPenyetor baris={laporan.rekapPenyetor} />
 
       <section aria-label="Daftar Catatan" className="flex flex-col gap-3">
         <h2 className="text-judul-kartu font-semibold">Daftar Catatan</h2>

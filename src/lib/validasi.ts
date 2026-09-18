@@ -33,6 +33,7 @@ export const skemaCatatan = z.object({
     .max(255, 'Keterangan terlalu panjang. Maksimal 255 huruf.'),
   anggotaId: z.number().int().positive().nullable().optional(),
   anggotaKeluargaId: z.number({ error: 'Anggota keluarga yang dipilih tidak dikenali. Pilih ulang dari daftar.' }).int().positive().nullable().optional(),
+  penyetorAnggotaId: z.number({ error: 'Penyetor yang dipilih tidak dikenali. Pilih ulang dari daftar.' }).int().positive().nullable().optional(),
   namaPihak: z.string().trim().max(120, 'Nama terlalu panjang. Maksimal 120 huruf.').nullable().optional(),
   jumlah: skemaJumlah,
   metode: z.enum(METODE, { error: 'Pilih cara pembayarannya.' }),
@@ -69,6 +70,7 @@ export const skemaAnggota = z
     alamat: z.string().trim().max(255, 'Alamat terlalu panjang.').nullable().optional(),
     lat: z.number().min(-90).max(90).nullable().optional(),
     lng: z.number().min(-180).max(180).nullable().optional(),
+    pengutip: z.boolean().optional(),
     status: z.enum(STATUS_HIDUP, { error: 'Pilih dulu orang ini masih hidup atau sudah meninggal.' }).optional(),
     tanggalMeninggal: skemaTanggalOpsional,
   })

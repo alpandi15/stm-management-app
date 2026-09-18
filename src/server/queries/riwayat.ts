@@ -2,7 +2,7 @@ import 'server-only'
 import { and, asc, count, desc, gte, inArray, isNotNull, lte } from 'drizzle-orm'
 import { dariISO, type Rentang } from '@/lib/tanggal'
 import { db } from '@/server/db'
-import { anggotaKeluarga, jenis, log, transaksi, type AksiLog, type Transaksi } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, jenis, log, transaksi, type AksiLog, type Transaksi } from '@/server/db/schema'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggal } from '@/lib/tanggal'
 
@@ -39,7 +39,7 @@ function bacaJson(s: string | null): Transaksi | null {
  * Perbandingan Sebelum → Sesudah, hanya field yang berubah. Dihitung di sini (saat
  * menampilkan), bukan saat menyimpan — supaya cara membacanya bisa diubah di kemudian hari.
  */
-function hitungPerubahan(lama: Transaksi, baru: Transaksi, namaJenis: Map<number, string>, namaKeluarga: Map<number, string> = new Map()): Perubahan[] {
+function hitungPerubahan(lama: Transaksi, baru: Transaksi, namaJenis: Map<number, string>, namaKeluarga: Map<number, string> = new Map(), namaAnggota: Map<number, string> = new Map()): Perubahan[] {
   const hasil: Perubahan[] = []
   const banding = (label: string, a: string, b: string) => {
     if (a !== b) hasil.push({ label, sebelum: a, sesudah: b })
@@ -54,7 +54,13 @@ function hitungPerubahan(lama: Transaksi, baru: Transaksi, namaJenis: Map<number
   // Spec 2 §A7: potret log memuat siapa yang meninggal
   const meninggal = (t: Transaksi) => (t.anggotaKeluargaId ? (namaKeluarga.get(t.anggotaKeluargaId) ?? `#${t.anggotaKeluargaId}`) : 'anggota sendiri')
   if ((lama.anggotaKeluargaId ?? null) !== (baru.anggotaKeluargaId ?? null)) banding('Yang meninggal', meninggal(lama), meninggal(baru))
+  const penyetor = (t: Transaksi) => (t.penyetorAnggotaId ? (namaAnggota.get(t.penyetorAnggotaId) ?? `#${t.penyetorAnggotaId}`) : 'Bendahara')
+  if ((lama.penyetorAnggotaId ?? null) !== (baru.penyetorAnggotaId ?? null)) banding('Penyetor', penyetor(lama), penyetor(baru))
   return hasil
+}
+
+function petaNamaAnggota(): Map<number, string> {
+  return new Map(db.select({ id: anggota.id, nama: anggota.nama }).from(anggota).all().map((a) => [a.id, a.nama]))
 }
 
 function petaNamaKeluarga(): Map<number, string> {
@@ -80,6 +86,7 @@ export function daftarRiwayat(halaman = 1): { hari: HariRiwayat[]; total: number
 
   const namaJenis = new Map(db.select({ id: jenis.id, nama: jenis.nama }).from(jenis).all().map((j) => [j.id, j.nama]))
   const namaKeluarga = petaNamaKeluarga()
+  const namaAnggota = petaNamaAnggota()
 
   // Status terhapus saat ini untuk entri "hapus" — menentukan tombol Kembalikan
   const idHapus = [...new Set(baris.filter((b) => b.aksi === 'hapus' && b.transaksiId).map((b) => b.transaksiId as number))]
@@ -106,7 +113,7 @@ export function daftarRiwayat(halaman = 1): { hari: HariRiwayat[]; total: number
       noBukti: b.noBukti ?? '',
       ringkasan: ringkasanBaris(acuan, namaJenis),
       arah: acuan?.arah ?? null,
-      perubahan: b.aksi === 'ubah' && lama && baru ? hitungPerubahan(lama, baru, namaJenis, namaKeluarga) : [],
+      perubahan: b.aksi === 'ubah' && lama && baru ? hitungPerubahan(lama, baru, namaJenis, namaKeluarga, namaAnggota) : [],
       bisaDikembalikan: b.aksi === 'hapus' && b.transaksiId != null && masihTerhapus.has(b.transaksiId),
     }
   })
@@ -139,6 +146,7 @@ export function perubahanDalamRentang(rentang: Rentang): EntriRiwayat[] {
   const akhir = dariISO(rentang.akhir).getTime() + 24 * 60 * 60 * 1000 - 1
   const namaJenis = new Map(db.select({ id: jenis.id, nama: jenis.nama }).from(jenis).all().map((j) => [j.id, j.nama]))
   const namaKeluarga = petaNamaKeluarga()
+  const namaAnggota = petaNamaAnggota()
   return db
     .select()
     .from(log)
@@ -157,7 +165,7 @@ export function perubahanDalamRentang(rentang: Rentang): EntriRiwayat[] {
         noBukti: b.noBukti ?? '',
         ringkasan: ringkasanBaris(acuan, namaJenis),
         arah: acuan?.arah ?? null,
-        perubahan: b.aksi === 'ubah' && lama && baru ? hitungPerubahan(lama, baru, namaJenis, namaKeluarga) : [],
+        perubahan: b.aksi === 'ubah' && lama && baru ? hitungPerubahan(lama, baru, namaJenis, namaKeluarga, namaAnggota) : [],
         bisaDikembalikan: false,
       }
     })

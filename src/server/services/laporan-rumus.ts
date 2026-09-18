@@ -2,10 +2,12 @@
 // dengan SQLite in-memory. services/laporan.ts mengikatnya ke database sungguhan.
 import { and, count, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '@/server/db'
-import { jenis, transaksi, type Arah, type Metode } from '@/server/db/schema'
+import { anggota, jenis, transaksi, type Arah, type Metode } from '@/server/db/schema'
 import type { Rentang } from '@/lib/tanggal'
 
-export type PenyaringLaporan = { jenisId?: number; metode?: Metode; cari?: string }
+export type PenyaringLaporan = { jenisId?: number; metode?: Metode; cari?: string; penyetor?: number | 'bendahara' }
+
+export type RekapPenyetor = { penyetorId: number | null; nama: string; masuk: number; keluar: number; jumlah: number }
 
 export type RingkasanPeriode = {
   sisaAwal: number
@@ -28,6 +30,7 @@ function kondisiPenyaring(p?: PenyaringLaporan): SQL | undefined {
   return and(
     p.jenisId ? eq(transaksi.jenisId, p.jenisId) : undefined,
     p.metode ? eq(transaksi.metode, p.metode) : undefined,
+    p.penyetor === 'bendahara' ? isNull(transaksi.penyetorAnggotaId) : p.penyetor ? eq(transaksi.penyetorAnggotaId, p.penyetor) : undefined,
     cari ? or(like(transaksi.keterangan, `%${cari}%`), like(transaksi.namaPihak, `%${cari}%`)) : undefined,
   )
 }
@@ -108,4 +111,23 @@ export function grafikBulanan(db: Db, tahun: number): BulanGrafik[] {
     const b = peta.get(bulan)
     return { bulan, masuk: Number(b?.masuk ?? 0), keluar: Number(b?.keluar ?? 0) }
   })
+}
+
+/** Rekap per penyetor dalam rentang: siapa menyetor/menyerahkan berapa. null = bendahara sendiri. */
+export function rekapPenyetor(db: Db, rentang: Rentang, penyaring?: PenyaringLaporan): RekapPenyetor[] {
+  return db
+    .select({
+      penyetorId: transaksi.penyetorAnggotaId,
+      nama: anggota.nama,
+      masuk: jumlahArah('masuk'),
+      keluar: jumlahArah('keluar'),
+      jumlah: count(),
+    })
+    .from(transaksi)
+    .leftJoin(anggota, eq(anggota.id, transaksi.penyetorAnggotaId))
+    .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir), kondisiPenyaring(penyaring)))
+    .groupBy(transaksi.penyetorAnggotaId, anggota.nama)
+    .orderBy(sql`sum(${transaksi.jumlah}) desc`)
+    .all()
+    .map((r) => ({ penyetorId: r.penyetorId, nama: r.nama ?? 'Bendahara', masuk: Number(r.masuk), keluar: Number(r.keluar), jumlah: r.jumlah }))
 }

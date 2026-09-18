@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
-import { daftarCatatan, daftarJenisAktif, ringkasanCatatan, PER_HALAMAN, type FilterCatatan } from '@/server/queries/transaksi'
+import { daftarCatatan, daftarJenisAktif, daftarPenyetor, ringkasanCatatan, PER_HALAMAN, type FilterCatatan } from '@/server/queries/transaksi'
 import { hitungSisaKas } from '@/server/services/laporan'
 import { apakahPilihanRentang, kalimatRentang, tentukanRentang, type PilihanRentang } from '@/lib/tanggal'
 import { formatRupiah } from '@/lib/rupiah'
@@ -26,6 +26,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   const arah = satu(searchParams.arah)
   const jenisParam = satu(searchParams.jenis)
   const cari = satu(searchParams.cari)
+  const penyetorParam = satu(searchParams.penyetor)
   const halaman = Math.max(1, Number(satu(searchParams.hal)) || 1)
   const rentang = tentukanRentang(rentangPilihan, satu(searchParams.awal), satu(searchParams.akhir))
 
@@ -34,6 +35,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
     arah: arah === 'masuk' || arah === 'keluar' ? arah : undefined,
     jenisId: Number(jenisParam) || undefined,
     cari: cari || undefined,
+    penyetor: penyetorParam === 'bendahara' ? 'bendahara' : Number(penyetorParam) || undefined,
   }
 
   const daftarJenis = daftarJenisAktif()
@@ -41,7 +43,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   const ringkasan = ringkasanCatatan(filter)
   const sisaKas = hitungSisaKas()
   const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN))
-  const adaPenyaring = !!(filter.arah || filter.jenisId || filter.cari)
+  const adaPenyaring = !!(filter.arah || filter.jenisId || filter.cari || filter.penyetor)
 
   const tautanHalaman = (h: number) => {
     const p = new URLSearchParams()
@@ -68,6 +70,8 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
 
       <BarisFilter
         daftarJenis={daftarJenis}
+        daftarPenyetor={daftarPenyetor()}
+        penyetor={penyetorParam}
         rentang={rentangPilihan}
         awal={rentang.awal}
         akhir={rentang.akhir}

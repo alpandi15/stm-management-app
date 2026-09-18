@@ -50,6 +50,7 @@ function bacaForm(fd: FormData): { input: InputCatatan | null; galat?: { pesan: 
     keterangan: teks('keterangan'),
     anggotaId: angka('anggotaId') ?? null,
     anggotaKeluargaId: angka('anggotaKeluargaId') ?? null,
+    penyetorAnggotaId: angka('penyetorAnggotaId') ?? null,
     namaPihak: teks('namaPihak') ?? null,
     jumlah: angka('jumlah'),
     metode: teks('metode'),

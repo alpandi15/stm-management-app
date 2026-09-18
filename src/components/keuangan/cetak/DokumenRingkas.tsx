@@ -74,6 +74,34 @@ export function DokumenRingkas({ laporan, p }: { laporan: Laporan; p: Pengaturan
       </section>
       <Rincian judul="Rincian Uang Masuk per Jenis" baris={laporan.rincianMasuk} />
       <Rincian judul="Rincian Uang Keluar per Jenis" baris={laporan.rincianKeluar} />
+      <section style={{ marginTop: '14pt' }}>
+        <h2 style={{ fontSize: '12pt', margin: '0 0 6pt' }}>Rekap per Penyetor</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Penyetor</th>
+              <th className="angka" style={{ width: '12%' }}>Catatan</th>
+              <th className="angka" style={{ width: '24%' }}>Uang Masuk</th>
+              <th className="angka" style={{ width: '24%' }}>Uang Keluar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {laporan.rekapPenyetor.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: 'center', color: '#6b7280' }}>Tidak ada</td>
+              </tr>
+            )}
+            {laporan.rekapPenyetor.map((b) => (
+              <tr key={b.penyetorId ?? 'bendahara'}>
+                <td>{b.nama}</td>
+                <td className="angka">{b.jumlah}</td>
+                <td className="angka">{formatRupiah(b.masuk)}</td>
+                <td className="angka">{formatRupiah(b.keluar)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
       <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} />
     </>
   )

@@ -1,5 +1,6 @@
 import 'server-only'
 import { and, asc, count, desc, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/sqlite-core'
 import { db } from '@/server/db'
 import { anggota, anggotaKeluarga, jenis, transaksi, type Arah, type Jenis, type Transaksi } from '@/server/db/schema'
 import type { Rentang } from '@/lib/tanggal'
@@ -16,7 +17,12 @@ export type FilterCatatan = {
   arah?: Arah
   jenisId?: number
   cari?: string
+  /** Penyetor: id anggota, atau 'bendahara' untuk catatan tanpa penyetor */
+  penyetor?: number | 'bendahara'
 }
+
+/** Join kedua ke tabel anggota untuk penyetor. */
+const penyetor = alias(anggota, 'penyetor')
 
 /**
  * Baris catatan lengkap dengan nama jenis, siap tampil di kartu. Untuk jenis penanda
@@ -30,6 +36,8 @@ export type BarisCatatan = Transaksi & {
   namaMeninggal: string | null
   hubunganMeninggal: string | null
   namaAnggota: string | null
+  /** Nama penyetor/penyerah; null = bendahara sendiri */
+  namaPenyetor: string | null
 }
 
 const kolomBaris = {
@@ -53,6 +61,8 @@ const kolomBaris = {
   namaMeninggal: anggotaKeluarga.nama,
   hubunganMeninggal: anggotaKeluarga.hubungan,
   namaAnggota: anggota.nama,
+  penyetorAnggotaId: transaksi.penyetorAnggotaId,
+  namaPenyetor: penyetor.nama,
 }
 
 /** Sumber baris standar: transaksi ⋈ jenis, ⟕ keluarga (yang meninggal), ⟕ anggota. */
@@ -63,6 +73,7 @@ function dariCatatan() {
     .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
     .leftJoin(anggotaKeluarga, eq(anggotaKeluarga.id, transaksi.anggotaKeluargaId))
     .leftJoin(anggota, eq(anggota.id, transaksi.anggotaId))
+    .leftJoin(penyetor, eq(penyetor.id, transaksi.penyetorAnggotaId))
 }
 
 
@@ -75,6 +86,7 @@ function kondisi(f: FilterCatatan): SQL | undefined {
     lte(transaksi.tanggal, f.rentang.akhir),
     f.arah ? eq(transaksi.arah, f.arah) : undefined,
     f.jenisId ? eq(transaksi.jenisId, f.jenisId) : undefined,
+    f.penyetor === 'bendahara' ? isNull(transaksi.penyetorAnggotaId) : f.penyetor ? eq(transaksi.penyetorAnggotaId, f.penyetor) : undefined,
     cari
       ? or(
           like(transaksi.keterangan, `%${cari}%`),
@@ -134,6 +146,7 @@ export type AnggotaUntukForm = {
   id: number
   nama: string
   nomor: string | null
+  pengutip: boolean
   status: 'aktif' | 'meninggal'
   keluarga: Array<{ id: number; nama: string; hubungan: string; status: 'aktif' | 'meninggal' }>
 }
@@ -141,7 +154,7 @@ export type AnggotaUntukForm = {
 /** Anggota aktif untuk pilihan "Dari / Untuk siapa", beserta tanggungannya (Spec 2 §A5). */
 export function daftarAnggotaAktif(): AnggotaUntukForm[] {
   const daftar = db
-    .select({ id: anggota.id, nama: anggota.nama, nomor: anggota.nomor, status: anggota.status })
+    .select({ id: anggota.id, nama: anggota.nama, nomor: anggota.nomor, pengutip: anggota.pengutip, status: anggota.status })
     .from(anggota)
     .where(eq(anggota.aktif, true))
     .orderBy(asc(anggota.nama))
@@ -177,5 +190,15 @@ export function semuaCatatanDalamRentang(rentang: Rentang): BarisCatatan[] {
   return dariCatatan()
     .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir)))
     .orderBy(asc(transaksi.tanggal), asc(transaksi.id))
+    .all()
+}
+
+/** Pilihan penyetor: anggota aktif, pengutip paling atas. */
+export function daftarPenyetor(): Array<{ id: number; nama: string; nomor: string | null; pengutip: boolean }> {
+  return db
+    .select({ id: anggota.id, nama: anggota.nama, nomor: anggota.nomor, pengutip: anggota.pengutip })
+    .from(anggota)
+    .where(eq(anggota.aktif, true))
+    .orderBy(sql`${anggota.pengutip} desc`, asc(anggota.nama))
     .all()
 }

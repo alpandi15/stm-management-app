@@ -4,7 +4,7 @@ import { db } from '@/server/db'
 import { transaksi } from '@/server/db/schema'
 import { ambilPengaturan } from '@/server/queries/pengaturan'
 import { semuaLogUrut } from '@/server/queries/riwayat'
-import { grafikBulanan, rincianPerJenis, ringkasanPeriode, totalDalamRentang, type PenyaringLaporan, type RincianJenis, type RingkasanPeriode } from './laporan-rumus'
+import { grafikBulanan, rekapPenyetor, rincianPerJenis, ringkasanPeriode, totalDalamRentang, type PenyaringLaporan, type RekapPenyetor, type RincianJenis, type RingkasanPeriode } from './laporan-rumus'
 import { rentangBulanIni, rentangBulanLalu, type Rentang } from '@/lib/tanggal'
 
 // Satu-satunya tempat rumus keuangan hidup (docs/02 §6). Beranda, Laporan, Catatan Kas,
@@ -83,6 +83,7 @@ export type Laporan = {
   ringkasan: RingkasanPeriode
   rincianMasuk: RincianJenis[]
   rincianKeluar: RincianJenis[]
+  rekapPenyetor: RekapPenyetor[]
 }
 
 /** Laporan satu rentang (docs/02 §6): dipakai halaman Laporan dan dokumen cetak. */
@@ -93,6 +94,7 @@ export function susunLaporan(rentang: Rentang, penyaring?: PenyaringLaporan): La
     ringkasan: ringkasanPeriode(db, saldoAwal, rentang, penyaring),
     rincianMasuk: rincianPerJenis(db, rentang, 'masuk', penyaring),
     rincianKeluar: rincianPerJenis(db, rentang, 'keluar', penyaring),
+    rekapPenyetor: rekapPenyetor(db, rentang, penyaring),
   }
 }
 
