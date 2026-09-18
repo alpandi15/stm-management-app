@@ -8,8 +8,8 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 
 | Fase | Isi |
 | --- | --- |
-| 0 | Pemeriksaan awal |
-| 1 | Fondasi: dependensi, database, sistem desain |
+| 0 | Pemeriksaan awal — **selesai** |
+| 1 | Fondasi: dependensi, database, sistem desain — **selesai** |
 | 2 | Pengaturan awal & login PIN |
 | 3 | Kerangka aplikasi (sidebar, header, tema) |
 | 4 | Catatan kas — inti aplikasi |
@@ -30,6 +30,11 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 3. Baca `docs/01` dan `docs/02` seluruhnya.
 
 **Bukti selesai:** ringkasan versi yang terbaca dan konfirmasi App Router + strict mode.
+
+**Hasil (18 September 2026):** repo awal adalah `create-next-app` **JavaScript** (bukan
+TypeScript) dengan Next 16.3.5 / React 19.2.8, App Router, Node 24 di mesin. Karena target
+Windows 7 (`docs/05`), Next diturunkan ke 14.2.35 + React 18.3.1, seluruh berkas diubah ke
+TypeScript `strict: true`, dan mesin pengembangan memakai Node 20.20.2 via nvm.
 
 ---
 
@@ -64,6 +69,20 @@ npm run db:studio   # tabel terlihat, jenis bawaan berjumlah 19
 Serta unit test kecil untuk `terbilang`: `1250000` menghasilkan
 *"satu juta dua ratus lima puluh ribu"*, dan `0` menghasilkan *"nol"*.
 
+Ditambah, karena target Windows 7: **uji runtime Node 16** di `docs/05` §4 harus lolos
+sebelum fase berikutnya — kalau fondasinya tidak jalan di Node 16, semua fase setelahnya
+sia-sia.
+
+**Hasil (18 September 2026):** semua bukti dijalankan dan lolos —
+`db:generate` → `drizzle/0000_skema_awal.sql` (5 tabel, semua index); `db:migrate` dua kali
+→ 19 jenis, seed idempoten (0 ditambahkan pada pemanggilan kedua), `journal_mode = wal`;
+`npm test` → 12 tes lulus (`rupiah.test.ts`, `tanggal.test.ts`); `typecheck` dan `lint`
+bersih; `next build` standalone; server standalone berjalan di Electron 22.3.27 sebagai
+Node 16.17.1 dengan polyfill (`electron/polyfill-node16.js`) — halaman berbasis SQLite 200,
+Server Action berjalan, tampilan di Chromium 108 benar. Halaman `/` saat ini adalah halaman
+uji sementara (`src/app/page.tsx` + `src/server/actions/uji-fondasi.ts`) yang **digantikan
+layar kunci di Fase 2** — hapus keduanya saat itu.
+
 ---
 
 ## Fase 2 — Pengaturan awal & PIN
@@ -80,6 +99,10 @@ src/server/actions/setup.ts
 
 Ketentuan sesuai `docs/02` §4. Yang mudah terlewat:
 
+- `middleware.ts` di Next 14 berjalan di edge dan **tidak bisa membuka SQLite** — ia hanya
+  memeriksa cookie; pemeriksaan "sudah setup?" ada di layout/halaman (`docs/02` §4.1).
+- Next 14 memakai `useFormState` dari `react-dom` (bukan `useActionState`), dan `cookies()`
+  sinkron.
 - `/setup` hanya bisa dibuka saat baris pengaturan belum ada — sesudahnya dialihkan.
 - Penolakan PIN mudah ditebak (angka sama / berurutan).
 - Kode pemulihan memakai alfabet tanpa karakter rancu, ditampilkan sekali,
@@ -222,10 +245,10 @@ pastikan data kembali ke keadaan semula beserta cadangan otomatis "sebelum-pulih
 
 ## Fase 9 — Electron
 
-Ikuti `docs/03` seluruhnya.
+Ikuti `docs/03` seluruhnya, dan `docs/05` untuk Windows 7.
 
 ```
-electron/{main.js,preload.js,memuat.html}
+electron/{main.js,preload.js,memuat.html}       # jalankan-server.js & polyfill sudah ada sejak Fase 1
 scripts/salin-standalone.mjs
 build/icon.ico
 ```
@@ -238,7 +261,7 @@ Urutan yang disarankan:
 3. Terakhir `electron-builder`.
 
 **Bukti selesai:** seluruh daftar periksa di `docs/03` §9, terutama pemasangan di komputer
-bersih tanpa Node.js.
+bersih tanpa Node.js **dan di VM Windows 7 SP1 32-bit**.
 
 ---
 
@@ -277,6 +300,9 @@ Keempatnya bersih.
 1. **Jangan membuat pola baru** bila polanya sudah ada di berkas lain.
 2. **Jangan menambah dependensi** di luar `CLAUDE.md` tanpa menuliskan alasannya.
 3. **Jangan menjalankan `electron-rebuild` sebelum Fase 9** — akan merusak `npm run dev`.
-4. **Setiap akhir fase**, laporkan: berkas yang dibuat/diubah, bukti selesai yang
+   Untuk menguji di runtime Node 16, pakai salinan terpisah seperti di `docs/05` §4.
+4. **Jangan menaikkan versi yang dikunci di `docs/05` §2.** Setiap menaikkan versi paket
+   lain, ulangi uji `docs/05` §4.
+5. **Setiap akhir fase**, laporkan: berkas yang dibuat/diubah, bukti selesai yang
    dijalankan beserta hasilnya, dan hal yang sengaja ditunda.
-5. **Bila dokumen bertentangan dengan kenyataan kode, tanyakan.** Jangan menebak.
+6. **Bila dokumen bertentangan dengan kenyataan kode, tanyakan.** Jangan menebak.

@@ -4,18 +4,19 @@
 
 | Bagian | Pilihan | Kenapa |
 | --- | --- | --- |
-| Framework | Next.js App Router + TypeScript | Sudah ada di repo; Server Actions menghapus kebutuhan menulis API |
-| Database | SQLite via `better-sqlite3` | Satu berkas, tanpa server, mudah dicadangkan — cocok untuk aplikasi desktop |
+| Framework | Next.js **14.2** App Router + TypeScript, React **18.3** | Server Actions menghapus kebutuhan menulis API. Versi 14 karena harus jalan di Node 16 (`docs/05`) |
+| Database | SQLite via `better-sqlite3` **9.6.0** | Satu berkas, tanpa server, mudah dicadangkan. Versi 9.6.0 karena prebuild Electron 22 ia32 (`docs/05`) |
 | ORM | Drizzle ORM + Drizzle Kit | Ringan, migrasi berupa berkas SQL biasa, tidak membawa biner engine seperti Prisma |
 | Styling | Tailwind CSS 4 + shadcn/ui | Komponen disalin ke repo, bukan dependensi — bebas disesuaikan untuk target sentuh besar |
 | Ikon | lucide-react | |
 | Grafik | Recharts | Cukup untuk satu grafik batang |
 | Validasi | Zod | Satu skema dipakai di klien dan server |
 | Form | React Hook Form + `@hookform/resolvers` | |
-| Sesi | `jose` (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native |
+| Sesi | `jose` **4.x** (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native. 4.x karena 5.x butuh Node 18 |
 | Hash PIN | `bcryptjs` | Murni JavaScript — penting, lihat catatan di bawah |
 | Tanggal | `date-fns` + `date-fns/locale/id` | |
-| Desktop | Electron + electron-builder | Lihat `docs/03` |
+| Desktop | Electron **22.3.27** + electron-builder | Lihat `docs/03` dan `docs/05` — versi terakhir untuk Windows 7 |
+| Uji | `node --test` + `tsx` | Bawaan Node; `tsx` hanya untuk menjalankan `.ts` tanpa langkah kompilasi |
 
 **Catatan `bcryptjs`, bukan `bcrypt`.** Setiap modul native tambahan berarti satu lagi yang
 harus dikompilasi ulang untuk ABI Electron. `better-sqlite3` sudah tidak terhindarkan;
@@ -24,19 +25,37 @@ pada satu pengguna.
 
 ## 2. Setup dari nol
 
-Repo saat ini hanya hasil `create-next-app` kosong. Jalankan berurutan.
+Sudah dikerjakan pada Fase 1; ditinggalkan di sini sebagai catatan.
 
 ### 2.1 Dependensi
 
+Versi yang dikunci ada di `docs/05` §2 dan tercermin di `package.json`. Ringkasnya:
+
 ```bash
-npm i better-sqlite3 drizzle-orm zod react-hook-form @hookform/resolvers \
-      jose bcryptjs date-fns recharts lucide-react clsx tailwind-merge
-npm i -D drizzle-kit @types/better-sqlite3 @types/bcryptjs \
-      electron electron-builder @electron/rebuild cross-env
+nvm use    # Node 20
+npm i next@14.2 react@18.3.1 react-dom@18.3.1 better-sqlite3@9.6.0 jose@4 \
+      drizzle-orm zod react-hook-form @hookform/resolvers bcryptjs date-fns \
+      recharts lucide-react clsx tailwind-merge server-only
+npm i -D typescript @types/node@20 @types/react@18 @types/react-dom@18 \
+      @types/better-sqlite3 drizzle-kit tailwindcss @tailwindcss/postcss \
+      eslint@8 eslint-config-next@14.2 tsx electron@22.3.27
+# Fase 9: electron-builder @electron/rebuild cross-env
+```
+
+`bcryptjs` 3.x sudah membawa tipe sendiri, tidak perlu `@types/bcryptjs`. `server-only`
+dipakai di `src/server/db/index.ts` supaya impor tak sengaja dari komponen klien gagal
+saat build, bukan saat dijalankan.
+
+shadcn/ui dipasang saat komponennya mulai dibutuhkan (Fase 2–3):
+
+```bash
 npx shadcn@latest init
 npx shadcn@latest add button input label card dialog sheet select \
-      dropdown-menu badge separator sonner tabs switch alert
+      dropdown-menu badge separator sonner switch alert
 ```
+
+Setelah `init`, **kembalikan `globals.css` ke token kita** — shadcn menulis palet oklch
+yang tidak dikenal Chromium 108 (`docs/05` §5).
 
 ### 2.2 Struktur folder
 
@@ -78,23 +97,30 @@ src/
     rupiah.ts                        # format + terbilang
     tanggal.ts                       # rentang periode, format Indonesia
     validasi.ts                      # skema Zod bersama
+    utils.ts                         # cn()
   components/
     ui/                              # shadcn
     keuangan/                        # komponen domain
 electron/
-  main.js  preload.js
-drizzle/                             # hasil drizzle-kit
+  main.js  preload.js  memuat.html
+  jalankan-server.js  polyfill-node16.js   # pembungkus server untuk Node 16 (docs/05 §4)
+drizzle/                             # hasil drizzle-kit; ikut disalin ke bundel
 data/                                # database saat mode pengembangan (di .gitignore)
 ```
 
+Berkas uji diletakkan di sebelah berkas yang diuji (`src/lib/rupiah.test.ts`), dijalankan
+`npm test` (`node --test` lewat `tsx`).
+
 ### 2.3 Variabel lingkungan
 
-Hanya dua, dan keduanya punya nilai bawaan supaya aplikasi tetap jalan tanpa berkas `.env`.
+Semuanya punya nilai bawaan supaya aplikasi tetap jalan tanpa berkas `.env`.
 
 | Nama | Bawaan | Isi |
 | --- | --- | --- |
 | `STM_DATA_DIR` | `./data` | Folder database dan foto bukti. Diisi Electron ke `userData` saat terbundel |
+| `STM_MIGRATIONS_DIR` | `<cwd>/drizzle` | Folder berkas migrasi. Di bundel, `drizzle/` ikut ke `standalone/` sehingga bawaan sudah benar |
 | `STM_SESSION_SECRET` | dibuat sekali lalu disimpan di `STM_DATA_DIR/.secret` | Kunci penanda cookie sesi |
+| `STM_SERVER_JS` | `<cwd>/server.js` | Hanya untuk `electron/jalankan-server.js`: lokasi `server.js` standalone |
 
 Sengaja **tidak** memakai `.env` untuk rahasia sesi. Aplikasi terbundel tidak punya tempat
 aman menyimpan `.env`, dan pengguna tidak akan pernah mengisinya. Kunci dibuat sendiri
@@ -258,13 +284,26 @@ Administrasi Bank, `PK09` Sumbangan Sosial Keluar, `PK10` Pengeluaran Lain-lain.
 
 ### 4.1 Penentuan keadaan
 
-Middleware memeriksa dua hal pada setiap permintaan halaman:
+Dua pemeriksaan pada setiap permintaan halaman:
 
 1. Baris `pengaturan` id=1 belum ada → arahkan ke `/setup`.
 2. Sudah ada tapi cookie sesi tidak sah → arahkan ke `/` (layar kunci).
 
+**Pembagian tugasnya penting.** Di Next 14, `middleware.ts` selalu berjalan di edge
+runtime dan **tidak bisa membuka SQLite**. Karena itu:
+
+- `middleware.ts` hanya memeriksa **cookie sesi** dengan `jose` (murni JS, jalan di edge):
+  tidak ada/tidak sah → alihkan ke `/`. Rute `/`, `/setup`, `/api/*`, dan aset statis
+  dikecualikan dari pemeriksaan ini.
+- Pemeriksaan **"pengaturan sudah ada?"** dilakukan di Server Component:
+  `src/app/(app)/layout.tsx` dan `src/app/(auth)/page.tsx` memanggil
+  `queries/pengaturan.ts` lalu `redirect('/setup')` bila belum ada; `src/app/setup/page.tsx`
+  melakukan kebalikannya (`redirect('/')` bila sudah ada).
+
 Rute `/setup` hanya bisa diakses saat keadaan (1). Setelah pengaturan dibuat, membuka
 `/setup` langsung diarahkan ke `/` — supaya tidak ada jalan menimpa PIN lewat URL.
+Server Action `selesaikanSetup()` **juga** menolak bila baris sudah ada — pengalihan di
+halaman hanya kenyamanan, penolakan di server yang menentukan.
 
 ### 4.2 Pengaturan awal
 
@@ -525,6 +564,11 @@ tidak membengkak dan cadangan tetap ringan.
 ## 10. Kualitas kode
 
 - `strict: true` di TypeScript. Tidak ada `any` tanpa komentar alasan.
+- Kode server tidak memakai API yang baru ada di Node 18+ kecuali sudah ada di
+  `electron/polyfill-node16.js` (`docs/05` §4). Contoh yang **tidak boleh**: `File`/`Blob`
+  global (pakai `Buffer`), `fs.promises.cp`, `Array.prototype.toSorted`, `Object.groupBy`.
+  Contoh yang aman: `fetch` (lewat flag), `crypto.randomUUID()`, `AbortController`,
+  `stream/web`, `fs.promises`, `structuredClone` (polyfill).
 - Semua Server Action diawali pemeriksaan sesi. Buat pembungkus
   `aksiTerlindungi(fn)` supaya tidak ada yang lupa.
 - Semua Server Action mengembalikan bentuk seragam:

@@ -1,26 +1,128 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Sistem desain Aplikasi Kas STM (docs/01 §3).
+ * Semua warna, radius, dan ukuran ditulis di sini sebagai token — jangan menulis
+ * nilai mentah di komponen. Hijau dan merah HANYA untuk arah uang.
+ *
+ * Catatan kompatibilitas: aplikasi berjalan di Chromium 108 (Electron 22, Windows 7).
+ * Semua warna memakai hex, bukan oklch, supaya tidak bergantung pada fitur warna baru.
+ */
+
+/* Mode gelap: ikut sistem, bisa dipaksa lewat atribut data-tema di <html> (docs/01 §3). */
+@custom-variant dark (&:where([data-tema="gelap"], [data-tema="gelap"] *));
+
+@theme {
+  /* Hapus palet bawaan Tailwind (oklch) — hanya token kita yang boleh dipakai */
+  --color-*: initial;
+
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-border: #e6e8ec;
+  --color-text: #111827;
+  --color-muted: #6b7280;
+  --color-primary: #1d4ed8;
+  --color-primary-fg: #ffffff;
+  --color-masuk: #047857;
+  --color-keluar: #b91c1c;
+  --color-warning: #b45309;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+
+  /* Latar lembut untuk badge/banner arah uang dan peringatan */
+  --color-masuk-soft: #ecfdf5;
+  --color-keluar-soft: #fef2f2;
+  --color-warning-soft: #fffbeb;
+  --color-primary-soft: #eff6ff;
+
+  --font-sans: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
+
+  /* Tipografi (docs/01 §3): dasar 16px, teks form 17px, tidak ada di bawah 13px */
+  --text-ket: 13px;
+  --text-ket--line-height: 1.4;
+  --text-label: 15px;
+  --text-label--line-height: 1.4;
+  --text-isi: 16px;
+  --text-isi--line-height: 1.5;
+  --text-form: 17px;
+  --text-form--line-height: 1.5;
+  --text-judul-kartu: 18px;
+  --text-judul-kartu--line-height: 1.4;
+  --text-judul: 24px;
+  --text-judul--line-height: 1.3;
+  --text-saldo: 40px;
+  --text-saldo--line-height: 1.1;
+
+  /* Bentuk (docs/01 §3): kartu 16, input/tombol 12, badge penuh */
+  --radius-kartu: 16px;
+  --radius-input: 12px;
+  --radius-badge: 999px;
+
+  /* Satu tingkat bayangan saja */
+  --shadow-kartu: 0 1px 3px rgb(0 0 0 / 0.06);
+
+  /* Target sentuh (docs/01 P4) */
+  --spacing-sentuh: 48px;
+  --spacing-aksi: 56px;
+  --spacing-aksi-besar: 64px;
+  --spacing-sidebar: 240px;
+
+  --container-konten: 1200px;
+
+  --ease-tenang: ease-out;
+  --default-transition-duration: 150ms;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* Mode gelap (docs/01 §3) — nilai token ditimpa, kelas utilitas tetap sama */
+@layer base {
+  [data-tema="gelap"] {
+    --color-bg: #0f1115;
+    --color-surface: #171a21;
+    --color-border: #262a33;
+    --color-text: #f3f4f6;
+    --color-muted: #9ba3af;
+    --color-primary: #3b82f6;
+    --color-primary-fg: #ffffff;
+    --color-masuk: #34d399;
+    --color-keluar: #f87171;
+    --color-warning: #fbbf24;
+    --color-masuk-soft: #052e22;
+    --color-keluar-soft: #3b0d0d;
+    --color-warning-soft: #3b2506;
+    --color-primary-soft: #172554;
+    color-scheme: dark;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-isi);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Fokus keyboard harus selalu terlihat (docs/01 §6) */
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Hormati pengguna yang mematikan animasi */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility angka {
+  /* Semua nominal uang: kolom angka berbaris rapi */
+  font-variant-numeric: tabular-nums;
 }

@@ -10,8 +10,11 @@ organisasi warga yang mengumpulkan iuran anggota dan menyalurkannya sebagai sant
 Bentuk akhirnya adalah **aplikasi desktop Windows** (`.exe` installer dan portable),
 dipakai **satu orang** — bendahara — di satu komputer. Bukan aplikasi web multi-pengguna.
 
-Status repo saat ini: proyek Next.js baru hasil `create-next-app`, **belum ada fitur apa pun**.
-Seluruh aplikasi dibangun dari nol mengikuti dokumen di bawah.
+**Aplikasi harus bisa dijalankan di Windows 7 SP1, 32-bit maupun 64-bit.** Syarat ini
+mengunci beberapa versi dependensi (lihat `docs/05`). Jangan menaikkan versi yang dikunci.
+
+Status repo: Fase 0–1 selesai (fondasi: dependensi, database, sistem desain). Lihat
+`docs/04` untuk fase berikutnya.
 
 ## Dokumen (baca berurutan)
 
@@ -21,21 +24,24 @@ Seluruh aplikasi dibangun dari nol mengikuti dokumen di bawah.
 | `docs/02-SPEC-TEKNIS.md` | Stack, setup dari nol, skema database, login PIN, rumus laporan, cetak, backup |
 | `docs/03-ELECTRON-BUILD.md` | Menggabungkan Next.js ke Electron dan membuat `.exe` |
 | `docs/04-RENCANA-BUILD.md` | Urutan fase pengerjaan beserta bukti selesai |
+| `docs/05-DUKUNGAN-WINDOWS-7.md` | Kenapa versi tertentu dikunci, polyfill Node 16, cara mengujinya |
 
 `docs/02` adalah rujukan utama saat ragu soal perilaku. `docs/01` menang bila menyangkut
 tampilan dan kata-kata di layar.
 
 ## Stack yang sudah diputuskan
 
-Jangan menggantinya tanpa membahas dulu.
+Jangan menggantinya tanpa membahas dulu. Versi yang **dikunci** ditandai tebal —
+alasannya di `docs/05`.
 
-- Next.js (App Router) + TypeScript, `output: 'standalone'`
-- SQLite lewat **better-sqlite3** + **Drizzle ORM** + Drizzle Kit
-- Tailwind CSS 4 + shadcn/ui + lucide-react
+- Next.js **14.2** (App Router) + TypeScript, `output: 'standalone'`, React **18.3**
+- SQLite lewat **better-sqlite3 9.6.0** + Drizzle ORM + Drizzle Kit
+- Tailwind CSS 4 + shadcn/ui + lucide-react (token warna hex, tanpa oklch — Chromium 108)
 - Recharts untuk grafik
 - Zod + React Hook Form
-- `jose` untuk sesi, `bcryptjs` untuk PIN
-- Electron + electron-builder (target `nsis` dan `portable`)
+- **`jose` 4.x** untuk sesi, `bcryptjs` untuk PIN
+- **Electron 22.3.27** + electron-builder (target `nsis` dan `portable`, arch `ia32` + `x64`)
+- Node **20** di mesin pengembangan (`nvm use`); runtime pengguna adalah Node 16.17 di Electron
 
 ## Aturan kerja
 
@@ -59,6 +65,7 @@ Jangan menggantinya tanpa membahas dulu.
 ## Perintah
 
 ```bash
+nvm use                # Node 20 — wajib, lihat docs/05 §3
 npm run dev            # Next.js saja, di browser (paling cepat untuk membangun UI)
 npm run dev:electron   # Next dev + jendela Electron
 npm run db:generate    # Buat berkas migrasi dari perubahan skema Drizzle
@@ -67,11 +74,12 @@ npm run db:studio      # Lihat isi database
 npm run build          # Build Next standalone
 npm run dist:win       # Hasilkan installer .exe dan versi portable
 npm run lint && npm run typecheck
+npm test               # node --test lewat tsx
 ```
 
 ## Jebakan yang sudah diketahui
 
-Ketiganya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03`.
+Semuanya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03` dan `docs/05`.
 
 1. **better-sqlite3 adalah modul native.** Harus dikompilasi ulang untuk ABI Electron
    (`@electron/rebuild`), bukan ABI Node sistem.
@@ -79,3 +87,16 @@ Ketiganya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03`.
    `app.getPath('userData')`, dan path itu dikirim ke server Next lewat variabel lingkungan.
 3. **Aplikasi ini tidak bisa di-deploy ke Vercel.** SQLite butuh disk permanen.
    Kalau suatu saat perlu versi web, itu keputusan arsitektur terpisah.
+4. **Runtime pengguna adalah Node 16.17.** Next 14 butuh `electron/polyfill-node16.js`
+   dan flag `--experimental-fetch` untuk jalan di situ. Setiap menaikkan versi paket,
+   ulangi uji di `docs/05` §4. Jangan memakai API Node 18+ (`fetch` tanpa flag,
+   `Array.prototype.findLast`, `structuredClone`, `File`, `Blob` global) di kode server
+   tanpa memastikan ada di polyfill.
+5. **Jangan `npm install` di Node 22/24.** better-sqlite3 9.6.0 tidak punya prebuild untuk
+   itu dan akan gagal kompilasi. `.npmrc` memaksa `engine-strict`.
+6. **Beberapa terminal menyetel `ELECTRON_RUN_AS_NODE=1`.** Electron lalu berjalan sebagai
+   Node dan mengeluh `Cannot find module 'electron'`. Pakai `env -u ELECTRON_RUN_AS_NODE`.
+7. **Next 14, bukan 15/16.** Nama konfigurasinya berbeda: `next.config.mjs` (bukan `.ts`),
+   `experimental.serverComponentsExternalPackages` (bukan `serverExternalPackages`),
+   `middleware.ts` selalu edge runtime (tidak bisa membuka SQLite), `useFormState`
+   (bukan `useActionState`), `params` dan `cookies()` sinkron.

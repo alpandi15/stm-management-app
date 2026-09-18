@@ -8,6 +8,10 @@ lebih cepat, dan Electron hanya menambah lapisan yang memperlambat siklus coba-p
 Tapi bacalah lebih awal — beberapa keputusan di sini memengaruhi cara menulis kode sejak
 Fase 1.
 
+**Baca `docs/05` lebih dulu.** Target Windows 7 mengunci Electron di 22.3.27 (Node 16.17,
+Chromium 108) dan menambah satu lapisan: server Next dijalankan lewat
+`electron/jalankan-server.js`, bukan `server.js` langsung.
+
 ## 1. Cara kerjanya
 
 Next.js dengan Server Actions dan SQLite butuh proses Node yang hidup. Jadi ini **bukan**
@@ -16,8 +20,10 @@ aplikasi statis yang dibuka Electron; polanya:
 ```
 Electron (proses utama)
   ├─ cari port kosong
-  ├─ jalankan .next/standalone/server.js sebagai proses anak
-  │    dengan ELECTRON_RUN_AS_NODE=1 dan process.execPath
+  ├─ fork electron/jalankan-server.js sebagai proses anak
+  │    dengan ELECTRON_RUN_AS_NODE=1, execArgv ['--experimental-fetch'],
+  │    dan STM_SERVER_JS = <resources>/standalone/server.js
+  │    (pembungkus memasang polyfill Node 16 lalu require server.js — docs/05 §4)
   ├─ tunggu server siap (polling http://127.0.0.1:PORT)
   └─ BrowserWindow.loadURL('http://127.0.0.1:PORT')
 ```
@@ -28,12 +34,13 @@ Electron, bukan ABI Node yang terpasang di sistem.
 
 ## 2. Konfigurasi Next
 
-```ts
-// next.config.ts
+```js
+// next.config.mjs  (Next 14 belum mendukung next.config.ts)
 const nextConfig = {
   output: 'standalone',
-  // Modul native tidak boleh ikut dibundel — biarkan di-require saat berjalan
-  serverExternalPackages: ['better-sqlite3'],
+  // Modul native tidak boleh ikut dibundel — biarkan di-require saat berjalan.
+  // Di Next 14 namanya masih experimental.serverComponentsExternalPackages.
+  experimental: { serverComponentsExternalPackages: ['better-sqlite3'] },
   images: { unoptimized: true },  // pengoptimal gambar butuh sharp; tidak perlu di sini
 }
 ```
@@ -50,6 +57,10 @@ Skrip itu menyalin `.next/static` → `.next/standalone/.next/static` dan
 `public` → `.next/standalone/public`. Tanpa langkah ini aplikasi terpaket akan terbuka
 tanpa CSS sama sekali, dan gejalanya membingungkan karena di mode pengembangan semuanya
 normal.
+
+Folder `drizzle/` (berkas migrasi) sudah ikut terlacak ke `standalone/drizzle` oleh Next
+karena `src/server/db/index.ts` merujuknya lewat `process.cwd()`. Skrip salin tetap harus
+memastikannya ada — migrasi otomatis saat start bergantung padanya.
 
 ## 3. Proses utama Electron
 
@@ -82,13 +93,16 @@ async function jalankanServer() {
   const port = await portKosong()
   const serverPath = path.join(process.resourcesPath, 'standalone', 'server.js')
 
-  server = fork(serverPath, [], {
+  // Bukan server.js langsung: pembungkus memasang polyfill Node 16 dulu (docs/05 §4)
+  server = fork(path.join(__dirname, 'jalankan-server.js'), [], {
+    execArgv: ['--experimental-fetch'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
       PORT: String(port),
       HOSTNAME: '127.0.0.1',
       STM_DATA_DIR: dataDir,
+      STM_SERVER_JS: serverPath,
       ELECTRON_RUN_AS_NODE: '1',
     },
     cwd: path.dirname(serverPath),
@@ -116,6 +130,8 @@ Ketentuan lain di proses utama:
   hang.
 - **Menu bawaan dihapus** (`Menu.setApplicationMenu(null)`) — menu File/Edit/View bahasa
   Inggris tidak relevan dan membingungkan.
+- **Akselerasi GPU dimatikan** (`app.disableHardwareAcceleration()` sebelum `ready`) —
+  laptop tua Windows 7 dengan driver lama kadang menampilkan jendela kosong (`docs/05` §7).
 - **Tautan luar** dibuka di browser sistem lewat `setWindowOpenHandler` + `shell.openExternal`.
 - **Keamanan**: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
   Renderer hanya berbicara ke proses utama lewat `preload.js` dengan daftar kanal terbatas.
@@ -153,6 +169,11 @@ Penyelesaian:
 ```bash
 npx electron-rebuild -f -w better-sqlite3
 ```
+
+Untuk better-sqlite3 **9.6.0** dan Electron **22.3.27**, perintah ini tidak mengompilasi
+apa pun — ia mengunduh prebuild `electron-v110-<os>-<arch>` dari GitHub. Itulah alasan
+kedua versi dikunci (`docs/05` §2): dengan versi lain, membangun target Windows ia32 dari
+macOS mustahil.
 
 Jadikan langkah tetap:
 
@@ -193,10 +214,11 @@ berpindah antara dua mode tanpa tahu penyebabnya.
     { "from": ".next/standalone", "to": "standalone" }
   ],
   "asarUnpack": ["**/*.node"],
+  "electronVersion": "22.3.27",
   "win": {
     "target": [
-      { "target": "nsis", "arch": ["x64"] },
-      { "target": "portable", "arch": ["x64"] }
+      { "target": "nsis", "arch": ["ia32", "x64"] },
+      { "target": "portable", "arch": ["ia32", "x64"] }
     ],
     "icon": "build/icon.ico"
   },
@@ -221,6 +243,8 @@ Beberapa pilihan di atas sengaja:
   pembukuan bertahun-tahun. Ini keputusan yang tidak bisa ditawar.
 - **`installerLanguages` Indonesia** — installer berbahasa Inggris adalah gesekan pertama
   yang dialami pengguna, sebelum aplikasinya sempat terbuka.
+- **`arch: ["ia32", "x64"]`** — satu installer NSIS untuk kedua arsitektur; ia memilih
+  sendiri saat dipasang. Portable menghasilkan dua berkas (`docs/05` §6).
 
 ### Versi portable
 
@@ -266,8 +290,12 @@ kode. Bila suatu saat diperlukan, itu keputusan terpisah.
 
 ## 9. Daftar periksa sebelum rilis
 
-- [ ] `npm run dist:win` menghasilkan installer dan portable tanpa galat.
+- [ ] Uji runtime Node 16 di `docs/05` §4 lolos untuk build yang akan dirilis.
+- [ ] `npm run dist:win` menghasilkan installer (ia32+x64) dan dua portable tanpa galat.
 - [ ] Installer dijalankan di komputer **bersih** (tanpa Node.js terpasang) dan aplikasi terbuka.
+- [ ] Installer dijalankan di **VM Windows 7 SP1 32-bit** bersih: aplikasi terbuka, jendela
+      tidak kosong, font dan warna tampil, cetak ke PDF berfungsi.
+- [ ] Hal yang sama di **Windows 7 SP1 64-bit** (boleh VM) dan Windows 10/11.
 - [ ] Pengaturan awal berjalan, PIN tersimpan, aplikasi bisa dikunci dan dibuka lagi.
 - [ ] Menutup dan membuka ulang aplikasi menampilkan data yang sama.
 - [ ] Berkas database benar-benar berada di `%APPDATA%/Aplikasi Kas STM/data/`.

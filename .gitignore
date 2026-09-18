@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# data aplikasi saat pengembangan (database, foto bukti, cadangan, kunci sesi)
+/data
+
+# hasil electron-builder
+/release
