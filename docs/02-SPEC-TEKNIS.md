@@ -482,6 +482,11 @@ sudah punya jenis buatan sendiri. Migrasi 0004 memindahkan kode yang terlanjur b
   `ditandaiOlehTransaksiId`, bukan sasaran saat ini), `segarkan` (ubah). Sasaran yang sudah
   meninggal tidak disentuh; status manual (penanda kosong) tidak pernah dibatalkan.
 - `anggotaKeluargaId` wajib milik `anggotaId` — diperiksa di server (`periksaKeluargaMilik`).
+- `jenisKelamin` (`L`/`P`, boleh kosong) ada di `anggota` dan `anggota_keluarga`. Untuk
+  keluarga, **Istri selalu `P` dan Suami selalu `L`**: form menguncinya, dan action menimpa
+  nilai kiriman dengan `jenisKelaminDariHubungan(hubungan)` sehingga tidak bisa dilanggar
+  lewat klien. Anggota baru boleh membawa `keluarga[]` (`skemaAnggotaBaru`) yang disimpan
+  dalam transaksi yang sama.
 
 ### 5.3 Nomor bukti
 

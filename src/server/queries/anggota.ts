@@ -59,6 +59,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       id: anggota.id,
       nomor: anggota.nomor,
       nama: anggota.nama,
+      jenisKelamin: anggota.jenisKelamin,
       noHp: anggota.noHp,
       alamat: anggota.alamat,
       lat: anggota.lat,

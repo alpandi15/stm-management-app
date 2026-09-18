@@ -478,6 +478,21 @@ nominal harus dibandingkan per satuan untuk catatan gabungan; migrasi yang memba
 tabel butuh `PRAGMA foreign_keys=OFF` **sebelum** transaksi migrasi (diatur di `db/index.ts`,
 diperiksa `foreign_key_check` sesudahnya). Nama PM12 → "Iuran Duka / Kemalangan" (migrasi 0005).
 
+**Jenis kelamin & keluarga saat tambah anggota** (migrasi `0007_jenis_kelamin.sql`): kolom
+`jenis_kelamin` (`L`/`P`, boleh kosong) di `anggota` dan `anggota_keluarga`. Form Tambah
+Anggota memuat bagian *Keluarga / tanggungan* (nama, hubungan, jenis kelamin; disimpan
+satu transaksi bersama anggota lewat `skemaAnggotaBaru`); Ubah Anggota mengarahkan ke
+halaman Keluarga. Aturan: **Istri selalu perempuan, Suami selalu laki-laki** — pilihan
+terkunci di form (`PilihJenisKelamin`) dan dipaksa lagi di action (`jenisKelaminDariHubungan`),
+apa pun yang dikirim klien. Pecah KK membawa jenis kelamin tanggungan ke anggota baru. Uji
+Electron 22: anggota + 3 keluarga (Istri → P terkunci, Anak → P dipilih, Anak → kosong) →
+DB sesuai; ubah Siti (Istri) tombol terkunci; detail anggota menampilkan "Jenis kelamin".
+
+**Sidebar tablet & tombol Kembali**: di 768–1099px sidebar ikon melebar ke 240px saat
+kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)
+sehingga nama menu terbaca sebelum diklik. Halaman Catat dan Catat Iuran Kolektif memiliki
+tombol **Kembali** (`TombolKembali`, ke `/catatan`) di kepala halaman.
+
 **Langkah 3 — detail anggota** (`docs/02` §5.1c): `/anggota/[id]` dengan matriks periode dan
 riwayat; nama di daftar, popup peta, dan halaman keluarga menautkannya. Uji: setoran Eko
 Jul–Sep → matriks 2026 `––––––✓✓✓···` (Okt–Des "belum jatuh tempo"), Iuran Tahunan

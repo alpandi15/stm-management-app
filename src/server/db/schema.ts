@@ -25,6 +25,8 @@ export type StatusHidup = (typeof STATUS_HIDUP)[number]
 
 export const HUBUNGAN = ['Istri', 'Suami', 'Anak', 'Orang Tua', 'Mertua', 'Saudara', 'Lainnya'] as const
 export type Hubungan = (typeof HUBUNGAN)[number]
+export const JENIS_KELAMIN = ['L', 'P'] as const
+export type JenisKelamin = (typeof JENIS_KELAMIN)[number]
 
 /** Periode jenis uang (Spec 2 §B2): dipakai label dan deteksi duplikat. */
 export const PERIODE_JENIS = ['bebas', 'sekali', 'bulanan', 'tahunan'] as const
@@ -74,6 +76,7 @@ export const anggota = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     nomor: text('nomor'), // nomor anggota, mis. A-0001; unik bila terisi
     nama: text('nama').notNull(),
+    jenisKelamin: text('jenis_kelamin', { enum: JENIS_KELAMIN }), // boleh kosong
     noHp: text('no_hp'),
     alamat: text('alamat'),
     lat: real('lat'), // titik peta alamat (bukan uang — REAL boleh)
@@ -101,6 +104,7 @@ export const anggotaKeluarga = sqliteTable(
       .references(() => anggota.id, { onDelete: 'cascade' }),
     nama: text('nama').notNull(),
     hubungan: text('hubungan', { enum: HUBUNGAN }).notNull(),
+    jenisKelamin: text('jenis_kelamin', { enum: JENIS_KELAMIN }), // Istri selalu P, Suami selalu L (dipaksa di action)
     tanggalLahir: text('tanggal_lahir'),
     status: text('status', { enum: STATUS_HIDUP }).notNull().default('aktif'),
     tanggalMeninggal: text('tanggal_meninggal'),

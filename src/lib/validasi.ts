@@ -60,6 +60,18 @@ export const skemaNama = z
 
 export const STATUS_HIDUP = ['aktif', 'meninggal'] as const
 export const HUBUNGAN = ['Istri', 'Suami', 'Anak', 'Orang Tua', 'Mertua', 'Saudara', 'Lainnya'] as const
+export const JENIS_KELAMIN = ['L', 'P'] as const
+export type JenisKelamin = (typeof JENIS_KELAMIN)[number]
+export const LABEL_JENIS_KELAMIN: Record<JenisKelamin, string> = { L: 'Laki-laki', P: 'Perempuan' }
+
+/** Istri pasti perempuan, Suami pasti laki-laki; hubungan lain bebas (boleh kosong). */
+export function jenisKelaminDariHubungan(hubungan: string | null | undefined): JenisKelamin | null {
+  if (hubungan === 'Istri') return 'P'
+  if (hubungan === 'Suami') return 'L'
+  return null
+}
+
+const skemaJenisKelamin = z.enum(JENIS_KELAMIN, { error: 'Jenis kelamin tidak dikenali. Pilih Laki-laki atau Perempuan.' }).nullable().optional()
 export const PERIODE_JENIS = ['bebas', 'sekali', 'bulanan', 'tahunan'] as const
 
 const skemaTanggalOpsional = z
@@ -68,10 +80,11 @@ const skemaTanggalOpsional = z
   .optional()
   .refine((v) => !v || apakahISO(v), 'Tanggal belum terbaca. Pilih tanggalnya dari kalender.')
 
-export const skemaAnggota = z
+const objekAnggota = z
   .object({
     nomor: z.string().trim().max(30, 'Nomor anggota terlalu panjang. Maksimal 30 huruf.').nullable().optional(),
     nama: skemaNama,
+    jenisKelamin: skemaJenisKelamin,
     noHp: z.string().trim().max(30, 'Nomor HP terlalu panjang.').nullable().optional(),
     alamat: z.string().trim().max(255, 'Alamat terlalu panjang.').nullable().optional(),
     lat: z.number().min(-90).max(90).nullable().optional(),
@@ -80,7 +93,8 @@ export const skemaAnggota = z
     status: z.enum(STATUS_HIDUP, { error: 'Pilih dulu orang ini masih hidup atau sudah meninggal.' }).optional(),
     tanggalMeninggal: skemaTanggalOpsional,
   })
-  .refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, { message: 'Isi tanggal meninggalnya.', path: ['tanggalMeninggal'] })
+const aturanAnggota = { message: 'Isi tanggal meninggalnya.', path: ['tanggalMeninggal'] }
+export const skemaAnggota = objekAnggota.refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, aturanAnggota)
 export type InputAnggota = z.infer<typeof skemaAnggota>
 
 /** Tanggungan (Spec 2 §A2) — pesan wajib persis. */
@@ -92,12 +106,13 @@ export const skemaKeluarga = z
       .min(1, 'Nama anggota keluarga belum diisi.')
       .max(100, 'Nama terlalu panjang. Persingkat sampai 100 huruf.'),
     hubungan: z.enum(HUBUNGAN, { error: 'Hubungan yang dipilih tidak dikenali. Pilih ulang dari daftar.' }),
+    jenisKelamin: skemaJenisKelamin,
     tanggalLahir: z
       .string()
       .nullable()
       .optional()
       .refine((v) => !v || apakahISO(v), 'Tanggal lahir belum terbaca. Pilih tanggalnya dari kalender.'),
-    status: z.enum(STATUS_HIDUP, { error: 'Pilih dulu orang ini masih hidup atau sudah meninggal.' }),
+    status: z.enum(STATUS_HIDUP, { error: 'Pilih dulu orang ini masih hidup atau sudah meninggal.' }).default('aktif'),
     tanggalMeninggal: z
       .string()
       .nullable()
@@ -106,7 +121,13 @@ export const skemaKeluarga = z
     keterangan: z.string().trim().max(255, 'Keterangan terlalu panjang. Persingkat sampai 255 huruf.').nullable().optional(),
   })
   .refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, { message: 'Isi tanggal meninggalnya.', path: ['tanggalMeninggal'] })
-export type InputKeluarga = z.infer<typeof skemaKeluarga>
+export type InputKeluarga = z.input<typeof skemaKeluarga>
+
+/** Anggota baru boleh langsung membawa daftar keluarganya (tanggungan) dalam satu simpan. */
+export const skemaAnggotaBaru = objekAnggota
+  .extend({ keluarga: z.array(skemaKeluarga).max(50, 'Terlalu banyak anggota keluarga sekaligus. Maksimal 50.').optional() })
+  .refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, aturanAnggota)
+export type InputAnggotaBaru = z.input<typeof skemaAnggotaBaru>
 
 export const skemaJenis = z
   .object({

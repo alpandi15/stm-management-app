@@ -6,7 +6,7 @@ import { aksiTerlindungi } from '@/server/auth/session'
 import { and, isNull, ne } from 'drizzle-orm'
 import { sqlite } from '@/server/db'
 import { ambilAnggota } from '@/server/queries/anggota'
-import { skemaAnggota, skemaKeluarga, type InputAnggota, type InputKeluarga } from '@/lib/validasi'
+import { jenisKelaminDariHubungan, skemaAnggota, skemaAnggotaBaru, skemaKeluarga, type InputAnggota, type InputAnggotaBaru, type InputKeluarga } from '@/lib/validasi'
 import { hariIni } from '@/lib/tanggal'
 import { berhasil, gagal } from '@/lib/hasil'
 
@@ -21,20 +21,22 @@ function validasi(input: InputAnggota) {
     const isu = hasil.error.issues[0]
     return { galat: gagal(isu?.message ?? 'Isian belum lengkap.', isu?.path[0]?.toString()) }
   }
-  const d = hasil.data
+  return { data: rapikanAnggota(hasil.data) }
+}
+
+function rapikanAnggota(d: InputAnggota) {
   const status = d.status ?? 'aktif'
   return {
-    data: {
-      nomor: d.nomor?.trim() || null,
-      nama: d.nama,
-      noHp: d.noHp?.trim() || null,
-      alamat: d.alamat?.trim() || null,
-      lat: d.lat ?? null,
-      lng: d.lng ?? null,
-      pengutip: !!d.pengutip,
-      status,
-      tanggalMeninggal: status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
-    },
+    nomor: d.nomor?.trim() || null,
+    nama: d.nama,
+    jenisKelamin: d.jenisKelamin ?? null,
+    noHp: d.noHp?.trim() || null,
+    alamat: d.alamat?.trim() || null,
+    lat: d.lat ?? null,
+    lng: d.lng ?? null,
+    pengutip: !!d.pengutip,
+    status,
+    tanggalMeninggal: status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
   }
 }
 
@@ -47,11 +49,30 @@ function nomorKembar(nomor: string | null, kecualiId?: number): boolean {
     .get()
 }
 
-export const tambahAnggota = aksiTerlindungi(async (input: InputAnggota) => {
-  const v = validasi(input)
-  if (v.galat) return v.galat
-  if (nomorKembar(v.data!.nomor)) return gagal(`Nomor anggota ${v.data!.nomor} sudah dipakai anggota lain.`, 'nomor')
-  const baris = db.insert(schema.anggota).values({ ...v.data!, aktif: true, dibuatPada: Date.now() }).returning().get()
+/** Anggota baru beserta keluarganya (bila diisi) dalam satu transaksi SQLite. */
+export const tambahAnggota = aksiTerlindungi(async (input: InputAnggotaBaru) => {
+  const hasil = skemaAnggotaBaru.safeParse(input)
+  if (!hasil.success) {
+    const isu = hasil.error.issues[0]
+    const field = isu?.path[0]?.toString()
+    if (field === 'keluarga' && typeof isu?.path[1] === 'number') return gagal(`Keluarga ke-${isu.path[1] + 1}: ${isu.message}`, 'keluarga')
+    return gagal(isu?.message ?? 'Isian belum lengkap.', field)
+  }
+  const data = rapikanAnggota(hasil.data)
+  if (nomorKembar(data.nomor)) return gagal(`Nomor anggota ${data.nomor} sudah dipakai anggota lain.`, 'nomor')
+  const keluarga: DataKeluarga[] = []
+  for (const [i, k] of (hasil.data.keluarga ?? []).entries()) {
+    const v = validasiKeluarga(k)
+    if (v.galat) return gagal(`Keluarga ke-${i + 1}: ${v.galat.pesan}`, 'keluarga')
+    keluarga.push(v.data!)
+  }
+  const baris = sqlite.transaction(() => {
+    const a = db.insert(schema.anggota).values({ ...data, aktif: true, dibuatPada: Date.now() }).returning().get()
+    for (const k of keluarga) {
+      db.insert(schema.anggotaKeluarga).values({ ...k, anggotaId: a.id, dibuatPada: Date.now(), diubahPada: Date.now() }).run()
+    }
+    return a
+  })()
   segarkan()
   return berhasil(baris)
 })
@@ -76,6 +97,8 @@ export const ubahAnggota = aksiTerlindungi(async (id: number, input: InputAnggot
 
 // ---------- Tanggungan (Spec 2 §A2) ----------
 
+type DataKeluarga = NonNullable<ReturnType<typeof validasiKeluarga>['data']>
+
 function validasiKeluarga(input: InputKeluarga) {
   const hasil = skemaKeluarga.safeParse(input)
   if (!hasil.success) {
@@ -89,6 +112,8 @@ function validasiKeluarga(input: InputKeluarga) {
     data: {
       nama: d.nama,
       hubungan: d.hubungan,
+      // Istri/Suami dikunci di server, apa pun yang dikirim form
+      jenisKelamin: jenisKelaminDariHubungan(d.hubungan) ?? d.jenisKelamin ?? null,
       tanggalLahir: d.tanggalLahir || null,
       status: d.status,
       tanggalMeninggal: d.status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
@@ -150,7 +175,7 @@ export const pecahKeluarga = aksiTerlindungi(async (id: number) => {
   const baru = sqlite.transaction(() => {
     const a = db
       .insert(schema.anggota)
-      .values({ nama: k.nama, anggotaAsalId: k.anggotaId, tanggalBergabung: hariIni(), aktif: true, status: 'aktif', dibuatPada: Date.now() })
+      .values({ nama: k.nama, jenisKelamin: k.jenisKelamin, anggotaAsalId: k.anggotaId, tanggalBergabung: hariIni(), aktif: true, status: 'aktif', dibuatPada: Date.now() })
       .returning()
       .get()
     db.update(schema.anggotaKeluarga)

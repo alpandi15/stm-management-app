@@ -6,6 +6,7 @@ import { ambilAnggota, daftarKeluarga, matriksPeriode, riwayatAnggota, PER_HALAM
 import { ambilPengaturan } from '@/server/queries/pengaturan'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggal } from '@/lib/tanggal'
+import { LABEL_JENIS_KELAMIN } from '@/lib/validasi'
 import { Button } from '@/components/ui/button'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
@@ -62,6 +63,12 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
           {asal && <span className="rounded-badge bg-primary-soft px-3 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
         </div>
         <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 text-isi sm:grid-cols-[auto_1fr]">
+          {a.jenisKelamin && (
+            <>
+              <dt className="text-muted">Jenis kelamin</dt>
+              <dd>{LABEL_JENIS_KELAMIN[a.jenisKelamin]}</dd>
+            </>
+          )}
           {a.noHp && (
             <>
               <dt className="text-muted">Nomor HP</dt>

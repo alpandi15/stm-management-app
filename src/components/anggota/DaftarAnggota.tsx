@@ -2,11 +2,12 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users } from 'lucide-react'
+import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifAnggota, hapusAnggota, tambahAnggota, ubahAnggota } from '@/server/actions/anggota'
 import type { BarisAnggota } from '@/server/queries/anggota'
 import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
+import { HUBUNGAN, jenisKelaminDariHubungan, type JenisKelamin } from '@/lib/validasi'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggal, hariIni } from '@/lib/tanggal'
@@ -19,10 +20,28 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
+import { PilihanCari } from '@/components/ui/pilihan-cari'
 import { PetaPinDinamis } from './PetaPinDinamis'
+import { PilihJenisKelamin } from './PilihJenisKelamin'
 import { cn } from '@/lib/utils'
 
-type Form = { nomor: string; nama: string; noHp: string; alamat: string; lat: number | null; lng: number | null; pengutip: boolean; status: 'aktif' | 'meninggal'; tanggalMeninggal: string }
+type BarisKeluargaForm = { kunci: number; nama: string; hubungan: (typeof HUBUNGAN)[number] | null; jenisKelamin: JenisKelamin | null }
+type Form = {
+  nomor: string
+  nama: string
+  jenisKelamin: JenisKelamin | null
+  noHp: string
+  alamat: string
+  lat: number | null
+  lng: number | null
+  pengutip: boolean
+  status: 'aktif' | 'meninggal'
+  tanggalMeninggal: string
+  /** Hanya dipakai saat tambah — keluarga ikut tersimpan bersama anggota baru */
+  keluarga: BarisKeluargaForm[]
+}
+const formKosong: Form = { nomor: '', nama: '', jenisKelamin: null, noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '', keluarga: [] }
+let kunciKeluarga = 0
 
 export function DaftarAnggota({
   baris,
@@ -68,18 +87,18 @@ export function DaftarAnggota({
 
   const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN_ANGGOTA))
   const [panel, setPanel] = React.useState<{ mode: 'tambah' } | { mode: 'ubah'; id: number } | null>(null)
-  const [form, setForm] = React.useState<Form>({ nomor: '', nama: '', noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '' })
+  const [form, setForm] = React.useState<Form>(formKosong)
   const [galat, setGalat] = React.useState<{ pesan: string; field?: string } | null>(null)
   const [hapus, setHapus] = React.useState<BarisAnggota | null>(null)
   const [sedangKirim, mulai] = React.useTransition()
 
   function bukaTambah() {
-    setForm({ nomor: saranNomor, nama: '', noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '' })
+    setForm({ ...formKosong, nomor: saranNomor })
     setGalat(null)
     setPanel({ mode: 'tambah' })
   }
   function bukaUbah(a: BarisAnggota) {
-    setForm({ nomor: a.nomor ?? '', nama: a.nama, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '' })
+    setForm({ ...formKosong, nomor: a.nomor ?? '', nama: a.nama, jenisKelamin: a.jenisKelamin, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '' })
     setGalat(null)
     setPanel({ mode: 'ubah', id: a.id })
   }
@@ -91,6 +110,7 @@ export function DaftarAnggota({
       const input = {
         nomor: form.nomor || null,
         nama: form.nama,
+        jenisKelamin: form.jenisKelamin,
         noHp: form.noHp || null,
         alamat: form.alamat || null,
         lat: form.lat,
@@ -99,15 +119,32 @@ export function DaftarAnggota({
         status: form.status,
         tanggalMeninggal: form.status === 'meninggal' ? form.tanggalMeninggal || null : null,
       }
-      const hasil = panel.mode === 'tambah' ? await tambahAnggota(input) : await ubahAnggota(panel.id, input)
+      const keluarga = form.keluarga.map((k) => ({
+        nama: k.nama,
+        hubungan: k.hubungan as (typeof HUBUNGAN)[number],
+        jenisKelamin: jenisKelaminDariHubungan(k.hubungan) ?? k.jenisKelamin,
+      }))
+      const hasil = panel.mode === 'tambah' ? await tambahAnggota({ ...input, keluarga }) : await ubahAnggota(panel.id, input)
       if (!hasil.ok) {
         setGalat({ pesan: hasil.pesan, field: hasil.field })
         return
       }
-      toast.success(panel.mode === 'tambah' ? `${hasil.data.nama} ditambahkan.` : 'Perubahan tersimpan.')
+      toast.success(
+        panel.mode === 'tambah' ? `${hasil.data.nama} ditambahkan${keluarga.length ? ` bersama ${keluarga.length} anggota keluarga` : ''}.` : 'Perubahan tersimpan.',
+      )
       setPanel(null)
       router.refresh()
     })
+  }
+
+  function tambahBarisKeluarga() {
+    setForm((f) => ({ ...f, keluarga: [...f.keluarga, { kunci: ++kunciKeluarga, nama: '', hubungan: null, jenisKelamin: null }] }))
+  }
+  function ubahBarisKeluarga(kunci: number, ubahan: Partial<BarisKeluargaForm>) {
+    setForm((f) => ({ ...f, keluarga: f.keluarga.map((k) => (k.kunci === kunci ? { ...k, ...ubahan } : k)) }))
+  }
+  function hapusBarisKeluarga(kunci: number) {
+    setForm((f) => ({ ...f, keluarga: f.keluarga.filter((k) => k.kunci !== kunci) }))
   }
 
   function aturAktif(a: BarisAnggota) {
@@ -369,6 +406,7 @@ export function DaftarAnggota({
                 {galatField('nama')}
               </div>
             </div>
+            <PilihJenisKelamin nilai={form.jenisKelamin} onUbah={(v) => setForm({ ...form, jenisKelamin: v })} />
             <div className="flex flex-col gap-2">
               <Label htmlFor="hp-anggota">Nomor HP <span className="font-normal text-muted">(boleh kosong)</span></Label>
               <Input id="hp-anggota" inputMode="tel" value={form.noHp} onChange={(e) => setForm({ ...form, noHp: e.target.value })} maxLength={30} className="angka" />
@@ -412,7 +450,54 @@ export function DaftarAnggota({
                 </div>
               )}
             </div>
-            {galat && !['nomor', 'nama', 'tanggalMeninggal'].includes(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
+            {panel?.mode === 'tambah' ? (
+              <fieldset className="flex flex-col gap-3 rounded-kartu border border-border bg-bg p-4">
+                <legend className="px-1 text-label font-semibold uppercase tracking-wide text-muted">Keluarga / tanggungan (boleh kosong)</legend>
+                <p className="text-ket text-muted">Istri, suami, anak, atau orang tua yang ditanggung. Tanggal lahir dan data lain bisa dilengkapi nanti di halaman Keluarga.</p>
+                {form.keluarga.map((k, i) => (
+                  <div key={k.kunci} className="flex flex-col gap-3 rounded-input border border-border bg-surface p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-label font-semibold text-muted">Keluarga {i + 1}</span>
+                      <Button type="button" variant="halus" ukuran="ikon" aria-label={`Hapus keluarga ${i + 1}`} onClick={() => hapusBarisKeluarga(k.kunci)}>
+                        <X />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor={`nama-keluarga-${k.kunci}`}>Nama</Label>
+                        <Input id={`nama-keluarga-${k.kunci}`} value={k.nama} onChange={(e) => ubahBarisKeluarga(k.kunci, { nama: e.target.value })} maxLength={100} autoFocus />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor={`hubungan-${k.kunci}`}>Hubungan</Label>
+                        <PilihanCari
+                          id={`hubungan-${k.kunci}`}
+                          nilai={k.hubungan}
+                          onUbah={(v) => ubahBarisKeluarga(k.kunci, { hubungan: v, jenisKelamin: jenisKelaminDariHubungan(v) ?? k.jenisKelamin })}
+                          pilihan={HUBUNGAN.map((h) => ({ nilai: h, label: h }))}
+                          placeholder="Pilih hubungan…"
+                        />
+                      </div>
+                    </div>
+                    <PilihJenisKelamin nilai={k.jenisKelamin} hubungan={k.hubungan} onUbah={(v) => ubahBarisKeluarga(k.kunci, { jenisKelamin: v })} />
+                  </div>
+                ))}
+                <Button type="button" variant="sekunder" onClick={tambahBarisKeluarga}>
+                  <Plus /> {form.keluarga.length ? 'Tambah keluarga lagi' : 'Tambah anggota keluarga'}
+                </Button>
+                {galatField('keluarga')}
+              </fieldset>
+            ) : (
+              panel && (
+                <p className="text-ket text-muted">
+                  Keluarga / tanggungan diatur di{' '}
+                  <Link href={`/anggota/${panel.id}/keluarga`} className="font-semibold text-primary underline-offset-4 hover:underline">
+                    halaman Keluarga
+                  </Link>
+                  .
+                </p>
+              )
+            )}
+            {galat && !['nomor', 'nama', 'tanggalMeninggal', 'keluarga'].includes(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
             <Button type="submit" ukuran="aksi" className="w-full" disabled={sedangKirim}>
               {sedangKirim ? 'Menyimpan…' : 'Simpan'}
             </Button>
