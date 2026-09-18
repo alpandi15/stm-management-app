@@ -7,12 +7,10 @@ export type HasilJembatan<T = undefined> = { ok: true; data: T } | { ok: false; 
 export type JembatanStm = {
   /** printToPDF halaman aktif lalu dialog simpan dengan nama bawaan */
   cetakPdf(namaBerkas: string): Promise<HasilJembatan<{ path: string }>>
-  /** Dialog simpan, lalu VACUUM INTO ke lokasi pilihan */
-  simpanCadangan(namaBerkas: string): Promise<HasilJembatan<{ path: string }>>
-  /** Dialog buka berkas .db; mengembalikan path untuk diverifikasi server */
+  /** Dialog simpan; mengembalikan path tujuan. Server lalu VACUUM INTO ke sana (cadangkanKeLokasi). */
+  pilihLokasiCadangan(namaBawaan: string): Promise<HasilJembatan<{ path: string }>>
+  /** Dialog buka berkas .db; mengembalikan path untuk diperiksa server */
   pilihBerkasPulihkan(): Promise<HasilJembatan<{ path: string }>>
-  /** Mulai ulang aplikasi setelah pulihkan */
-  mulaiUlang(): Promise<void>
   bukaFolderData(): Promise<void>
   versi(): Promise<{ versi: string; dataDir: string }>
 }

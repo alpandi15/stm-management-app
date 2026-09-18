@@ -31,7 +31,7 @@ export function PilihanTema({ pilihan }: { pilihan: Tema }) {
   }
 
   return (
-    <div role="radiogroup" aria-label="Tampilan" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div role="radiogroup" aria-label="Tampilan" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {PILIHAN.map(({ nilai, label, Ikon }) => {
         const aktif = nilai === pilihan
         return (

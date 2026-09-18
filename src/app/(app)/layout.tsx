@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/kerangka/Sidebar'
 import { BilahBawah } from '@/components/kerangka/BilahBawah'
 import { Header } from '@/components/kerangka/Header'
 import { Toaster } from '@/components/kerangka/Toaster'
+import { cadanganOtomatisSaatBuka } from '@/server/services/cadangan'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,8 @@ export default async function LayoutAplikasi({ children }: { children: React.Rea
   const p = ambilPengaturan()
   if (!p) redirect('/setup')
   await wajibSesi()
+  // Cadangan otomatis setiap aplikasi dibuka (docs/02 §8.1) — sekali per proses server
+  cadanganOtomatisSaatBuka()
 
   return (
     <div className="flex min-h-dvh bg-bg">

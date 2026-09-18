@@ -574,7 +574,13 @@ Memilih berkas `.db`, lalu:
 2. Tampilkan ringkasan isinya — jumlah catatan, rentang tanggal, sisa kas — dan minta
    konfirmasi.
 3. Cadangkan database yang sedang aktif ke `cadangan/sebelum-pulihkan-*.db`.
-4. Tutup koneksi, timpa berkas, lalu mulai ulang aplikasi.
+4. Tutup koneksi, buang `-wal`/`-shm` lama, timpa berkas, buka ulang koneksi.
+
+Langkah 4 tidak perlu mulai ulang aplikasi: `src/server/db/index.ts` mengekspor `db` dan
+`sqlite` sebagai Proxy ke koneksi yang sedang aktif, jadi `tutupKoneksi()` +
+`bukaUlangKoneksi()` cukup. Sumber berkas: di Electron path dari dialog buka
+(`window.stm.pilihBerkasPulihkan`), di browser unggahan lewat Server Action yang disimpan
+sebagai `cadangan/unggah-*.db`, atau salah satu berkas di daftar cadangan.
 
 Langkah 2 penting. Memulihkan cadangan lama tanpa melihat isinya adalah cara paling mudah
 kehilangan sebulan pencatatan tanpa sadar.

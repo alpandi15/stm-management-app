@@ -1,20 +1,17 @@
 import { wajibSesi } from '@/server/auth/session'
+import { daftarAnggota } from '@/server/queries/anggota'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
-import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
+import { DaftarAnggota } from '@/components/anggota/DaftarAnggota'
 
 export const dynamic = 'force-dynamic'
 
-// Kerangka Fase 3; isi sungguhan menyusul sesuai docs/04.
-export default async function Halaman() {
+// Anggota (docs/01 §5.8): kartu sederhana, tambah/ubah lewat panel geser dari kanan.
+export default async function HalamanAnggota() {
   await wajibSesi()
   return (
     <div className="flex flex-col gap-6">
       <JudulHalaman>Anggota</JudulHalaman>
-      <KeadaanKosong
-        judul="Belum ada anggota"
-        kalimat="Daftar anggota memudahkan mencatat iuran. Anda juga bisa mengetik nama bebas saat mencatat."
-        tombol={{ label: 'Ke Beranda', href: '/beranda' }}
-      />
+      <DaftarAnggota baris={daftarAnggota()} />
     </div>
   )
 }

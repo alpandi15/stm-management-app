@@ -16,7 +16,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 5 | Riwayat & log — **selesai** |
 | 6 | Laporan — **selesai** |
 | 7 | Cetak — **selesai** |
-| 8 | Anggota, jenis, pengaturan, cadangan |
+| 8 | Anggota, jenis, pengaturan, cadangan — **selesai** |
 | 9 | Electron & pembuatan `.exe` |
 | 10 | Pengujian, penyisiran UI, panduan pengguna |
 
@@ -353,6 +353,29 @@ Ketentuan:
 
 **Bukti selesai:** buat cadangan, tambah beberapa catatan, pulihkan cadangan tadi, dan
 pastikan data kembali ke keadaan semula beserta cadangan otomatis "sebelum-pulihkan".
+
+**Hasil (18 September 2026):** 26 langkah di Electron 22 / Node 16 (mode browser, tanpa
+`window.stm`): cadangan otomatis `stm-YYYYMMDD-HHmm.db` tercipta saat aplikasi dibuka;
+anggota ditambah lewat panel geser, validasi nama pendek, catatan atas nama anggota
+menaikkan *Total iuran* di kartunya; jenis baru "Arisan Bulanan" ditambah, tombol Hapus
+hanya ada untuk jenis buatan sendiri, hapus jenis yang sudah dipakai ditolak dengan
+kalimat yang menyarankan nonaktifkan (galat kunci asing ditangkap), nonaktifkan berhasil;
+ganti PIN dengan PIN lama salah ditolak, PIN mudah ditebak ditolak, PIN benar diganti dan
+membuka kunci; tutup pembukuan sampai 31 Agustus → catatan 15 Agustus ditolak dengan pesan
+docs/02 §5.5, buka penguncian; **Buat Cadangan Sekarang** membuat `manual-*.db` + unduhan
+`/api/cadangan`; tambah 2 catatan (8 → 10); Pulihkan dari daftar menampilkan ringkasan
+(nama STM, jumlah catatan, rentang, sisa kas) → 8 catatan lagi, `sebelum-pulihkan-*.db`
+tercipta, Pemeriksaan Kas Cocok; saldo awal 1.500.000 langsung mengubah sisa kas Beranda.
+
+Keputusan: koneksi database dipegang lewat Proxy (`db/index.ts`) sehingga pulihkan cukup
+menutup dan membuka ulang koneksi tanpa mulai ulang proses — berlaku di browser maupun
+Electron. Di Electron, alur cadangan: `window.stm.pilihLokasiCadangan()` → path →
+`cadangkanKeLokasi(path)` (VACUUM INTO tetap di server); pulihkan:
+`pilihBerkasPulihkan()` → `periksaBerkasPulihkan(path)` → dialog → `pulihkanDari(path)`.
+Di browser: unduhan `/api/cadangan` dan unggah berkas lewat Server Action. Kartu **Tutup
+Pembukuan** ditambahkan di Pengaturan (dibutuhkan docs/02 §5.5, belum tercantum di
+tabel docs/01 §5.9). Jenis: kode buatan pengguna melanjutkan PMxx/PKxx; arah jenis tidak
+bisa diubah setelah dibuat.
 
 ---
 

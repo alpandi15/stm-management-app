@@ -319,6 +319,7 @@ Satu halaman, beberapa kartu bertumpuk. Tanpa tab.
 | **Saldo Awal** | Uang kas sebelum aplikasi ini dipakai, dengan peringatan bahwa mengubahnya mengubah semua laporan |
 | **Jenis Uang Masuk & Keluar** | Daftar jenis, bisa tambah/ubah/nonaktifkan. Jenis bawaan tidak bisa dihapus |
 | **Keamanan** | Ganti PIN, buat ulang kode pemulihan, kunci otomatis setelah 15 menit |
+| **Tutup Pembukuan** | Tutup catatan sampai tanggal tertentu (penguncian periode, `docs/02` §5.5), bisa dibuka lagi |
 | **Cadangan Data** | Buat cadangan sekarang, pulihkan dari berkas, daftar cadangan otomatis |
 | **Tentang** | Versi aplikasi, lokasi berkas data, tombol buka foldernya |
 
