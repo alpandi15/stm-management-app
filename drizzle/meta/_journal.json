@@ -36,6 +36,13 @@
       "when": 1789739687553,
       "tag": "0004_kode_jenis_pengguna",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789742084582,
+      "tag": "0005_nama_iuran_duka",
+      "breakpoints": true
     }
   ]
 }

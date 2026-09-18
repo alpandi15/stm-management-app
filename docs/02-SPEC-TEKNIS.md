@@ -289,7 +289,7 @@ Uang masuk — `PM01` Iuran Wajib Anggota (bulanan), `PM02` Iuran Sukarela, `PM0
 Pangkal Anggota Baru (sekali), `PM04` Sumbangan / Donasi, `PM05` Denda Anggota, `PM06`
 Hasil Usaha & Kegiatan, `PM07` Pengembalian Pinjaman, `PM08` Jasa / Bunga Bank, `PM09`
 Penerimaan Lain-lain, `PM10` Iuran Tahunan (tahunan), `PM11` Uang Pangkal Anggota Pecah dari
-Orang Tua (sekali), `PM12` Iuran Duka. Total **22** jenis. `PK01` berperiode sekali dan satu-satunya yang
+Orang Tua (sekali), `PM12` Iuran Duka / Kemalangan. Total **22** jenis. `PK01` berperiode sekali dan satu-satunya yang
 `menandaiMeninggal`. Seed tidak pernah menulis nominal — itu milik pengurus.
 
 Uang keluar — `PK01` Santunan Duka / Kemalangan, `PK02` Bantuan Sakit / Rawat Inap,
