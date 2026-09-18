@@ -11,7 +11,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 0 | Pemeriksaan awal — **selesai** |
 | 1 | Fondasi: dependensi, database, sistem desain — **selesai** |
 | 2 | Pengaturan awal & login PIN — **selesai** |
-| 3 | Kerangka aplikasi (sidebar, header, tema) |
+| 3 | Kerangka aplikasi (sidebar, header, tema) — **selesai** |
 | 4 | Catatan kas — inti aplikasi |
 | 5 | Riwayat & log |
 | 6 | Laporan |
@@ -151,6 +151,21 @@ Kunci di header, mode gelap mengikuti sistem.
 
 **Bukti selesai:** buka di lebar 360px, 800px, dan 1440px — navigasi berfungsi di ketiganya
 tanpa geser samping. Mode gelap tidak menghasilkan teks berkontras rendah.
+
+**Hasil (18 September 2026):** skrip Electron 22 menavigasi keenam rute di 1440/800/360px
+lewat tautan yang benar-benar terlihat (sidebar penuh / sidebar ikon / bilah bawah + ikon
+header) — 18/18 tanpa geser samping dan tepat satu item aktif; label bilah bawah tidak
+terpotong di 360px; pilihan Gelap di Pengaturan menerapkan `data-tema`, menampilkan toast
+*"Tampilan diubah."*, dan bertahan setelah muat ulang; "Ikuti komputer" mengikuti perubahan
+tema sistem. Kontras seluruh pasangan token dihitung (WCAG): semua ≥ 4.5:1 setelah tiga
+token disesuaikan (`primary-fg` dan `arah-fg` gelap di mode gelap, `primary-soft`).
+
+Dua temuan: (1) `tailwind-merge` membuang `text-primary-fg`/`text-arah-fg` karena mengira
+bentrok dengan ukuran font kustom (`text-form`) — `cn()` kini didaftari token kita, ada
+tesnya di `lib/utils.test.ts`; (2) di bilah bawah hanya lima item yang muat di 360px,
+Pengaturan pindah ke ikon header (`docs/01` §4). Berkas: `components/kerangka/*`,
+`components/ui/{keadaan-kosong,judul-halaman}.tsx`, `actions/pengaturan.ts` (baru
+`aturTema`), halaman kerangka keenam rute, skrip tema inline di `app/layout.tsx`.
 
 ---
 

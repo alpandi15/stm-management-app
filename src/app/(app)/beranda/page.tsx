@@ -1,19 +1,37 @@
+import Link from 'next/link'
+import { Minus, Plus } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
-import { ambilPengaturan } from '@/server/queries/pengaturan'
+import { Button } from '@/components/ui/button'
+import { JudulHalaman } from '@/components/ui/judul-halaman'
+import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 
 export const dynamic = 'force-dynamic'
 
-// Kerangka kosong; isi sungguhan (sisa kas, grafik, catatan terakhir) dibuat di Fase 6.
+// Kerangka Beranda (docs/01 §5.3). Kartu sisa kas, statistik, grafik, dan catatan terakhir
+// diisi di Fase 6 memakai services/laporan.ts.
 export default async function HalamanBeranda() {
   await wajibSesi()
-  const p = ambilPengaturan()
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-judul font-bold">Beranda</h1>
-      <section className="rounded-kartu border border-border bg-surface p-6 shadow-kartu">
-        <p className="text-isi text-muted">Halo, {p?.namaBendahara}. Pengaturan awal selesai dan aplikasi terbuka.</p>
-        <p className="mt-2 text-ket text-muted">Fitur pencatatan akan tersedia pada fase berikutnya.</p>
-      </section>
+      <JudulHalaman>Beranda</JudulHalaman>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Button asChild variant="masuk" ukuran="besar">
+          <Link href="/catatan/baru?jenis=masuk">
+            <Plus className="size-6" /> Catat Uang Masuk
+          </Link>
+        </Button>
+        <Button asChild variant="keluar" ukuran="besar">
+          <Link href="/catatan/baru?jenis=keluar">
+            <Minus className="size-6" /> Catat Uang Keluar
+          </Link>
+        </Button>
+      </div>
+
+      <KeadaanKosong
+        judul="Belum ada catatan"
+        kalimat="Sisa uang kas, grafik, dan catatan terakhir akan tampil di sini setelah Anda mencatat uang masuk atau keluar yang pertama."
+      />
     </div>
   )
 }

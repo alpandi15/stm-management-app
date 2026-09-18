@@ -26,6 +26,7 @@
   --color-primary-fg: #ffffff;
   --color-masuk: #047857;
   --color-keluar: #b91c1c;
+  --color-arah-fg: #ffffff; /* teks di atas tombol masuk/keluar */
   --color-warning: #b45309;
   --color-white: #ffffff;
   --color-black: #000000;
@@ -35,7 +36,7 @@
   --color-masuk-soft: #ecfdf5;
   --color-keluar-soft: #fef2f2;
   --color-warning-soft: #fffbeb;
-  --color-primary-soft: #eff6ff;
+  --color-primary-soft: #f3f8ff;
 
   --font-sans: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
 
@@ -84,15 +85,17 @@
     --color-text: #f3f4f6;
     --color-muted: #9ba3af;
     --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-primary-fg: #ffffff;
+    --color-primary-hover: #60a5fa;
+    /* Teks gelap di atas biru terang: putih hanya 3.7:1, gelap 5.1:1 (docs/01 §6) */
+    --color-primary-fg: #0f1115;
     --color-masuk: #34d399;
     --color-keluar: #f87171;
+    --color-arah-fg: #0f1115; /* hijau/merah terang butuh teks gelap: 10:1 dan 6.9:1 */
     --color-warning: #fbbf24;
     --color-masuk-soft: #052e22;
     --color-keluar-soft: #3b0d0d;
     --color-warning-soft: #3b2506;
-    --color-primary-soft: #172554;
+    --color-primary-soft: #0b1734;
     color-scheme: dark;
   }
 

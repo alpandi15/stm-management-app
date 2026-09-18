@@ -103,6 +103,18 @@ lewat kelas utilitas. Jangan menulis nilai warna mentah di komponen.
 | `--color-keluar` | `#B91C1C` | `#F87171` | Uang keluar |
 | `--color-warning` | `#B45309` | `#FBBF24` | Peringatan |
 
+Token turunan (ditambahkan saat implementasi, sudah lolos kontras 4.5:1 di kedua mode):
+
+| Token | Terang | Gelap | Untuk |
+| --- | --- | --- | --- |
+| `--color-primary-fg` | `#FFFFFF` | `#0F1115` | Teks di atas tombol primary — putih di atas `#3B82F6` hanya 3.7:1 |
+| `--color-arah-fg` | `#FFFFFF` | `#0F1115` | Teks di atas tombol masuk/keluar — putih di atas hijau/merah terang < 2:1 |
+| `--color-primary-hover` | `#1E40AF` | `#60A5FA` | Hover tombol utama (tanpa `color-mix`, lihat `docs/05` §5) |
+| `--color-primary-soft` | `#F3F8FF` | `#0B1734` | Latar item menu aktif, kotak kode pemulihan |
+| `--color-masuk-soft` | `#ECFDF5` | `#052E22` | Latar badge/banner uang masuk |
+| `--color-keluar-soft` | `#FEF2F2` | `#3B0D0D` | Latar badge/banner uang keluar |
+| `--color-warning-soft` | `#FFFBEB` | `#3B2506` | Latar banner peringatan |
+
 Satu warna aksen saja. Hijau dan merah **hanya** dipakai untuk arah uang, tidak pernah
 untuk hal lain — supaya maknanya tidak kabur.
 
@@ -143,7 +155,9 @@ tidak ada parallax, tidak ada skeleton yang berkedip lama. Hormati
 ## 4. Kerangka aplikasi
 
 **Sidebar kiri tetap** selebar 240px, menciut jadi ikon saja di bawah 1100px, dan menjadi
-menu bawah (bottom bar) di bawah 768px.
+menu bawah (bottom bar) di bawah 768px. Di menu bawah hanya lima item pertama yang muat
+dengan label 13px pada lebar 360px; **Pengaturan pindah ke ikon roda gigi di header**
+(di sebelah tombol Kunci) pada lebar itu.
 
 Isi menu — enam item, tidak lebih:
 
