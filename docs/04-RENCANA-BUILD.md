@@ -456,7 +456,17 @@ membandingkan "Penyetor". Uji Electron 22 / Node 16: tandai pengutip → badge d
 *Tim pengutip (1)*; catatan disetor Rahmat → kartu *Disetor oleh Bpk. Rahmat Hidayat*;
 label uang keluar *Diserahkan oleh*; penyaring `?penyetor=1` → 1 catatan; rekap Bendahara
 12 catatan / Rahmat 1; ubah penyetor → riwayat *Penyetor Bpk. Rahmat Hidayat → Bendahara*.
-Tes `rekapPenyetor` (38 tes). Langkah 2: setoran kolektif; langkah 3: detail anggota.
+Tes `rekapPenyetor` (38 tes).
+
+**Langkah 2 — setoran kolektif** (`docs/02` §5.1b): migrasi 0003 (`periode`, `setoranId`,
+tabel `setoran`, isi periode catatan lama). Uji Electron 22 / Node 16: PM01 terkunci
+50.000, periode Oktober, penyetor Rahmat, 4 anggota dicentang (Eko 3 bulan) → ringkasan
+*4 anggota · 6 catatan · Rp 300.000*, `SI-2026-0001`, Eko mendapat KM-0010/0011/0012 untuk
+Okt/Nov/Des; Budi yang bayar September tampil *Sudah bayar September 2026 · KM-2026-0007*
+hanya saat periode September; mengulang Oktober → 4 abu-abu, November → Eko abu-abu;
+tanda terima 12 baris → PDF; Buku Kas: subjudul *Setoran SI-2026-0001 · disetor oleh …*
++ subtotal; hapus setoran → 0 catatan hidup, 6 entri Dihapus di Riwayat dengan Kembalikan;
+360px tanpa geser samping. 40 tes (periode eksplisit, tambahBulan). Langkah 3: detail anggota.
 
 ## Fase 9 — Electron
 

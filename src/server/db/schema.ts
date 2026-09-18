@@ -130,6 +130,11 @@ export const transaksi = sqliteTable(
     anggotaKeluargaId: integer('anggota_keluarga_id').references(() => anggotaKeluarga.id, { onDelete: 'set null' }),
     // Siapa yang menyetor (masuk) / menyerahkan (keluar) uangnya; kosong = bendahara sendiri
     penyetorAnggotaId: integer('penyetor_anggota_id').references(() => anggota.id),
+    // Periode yang dibayar untuk jenis bulanan ('2026-10') / tahunan ('2026'); null untuk jenis bebas/sekali.
+    // Eksplisit, bukan diturunkan dari tanggal: tanggal setor bisa membayar bulan lain.
+    periode: text('periode'),
+    // Setoran kolektif yang membuat catatan ini (docs/04 sisipan setoran)
+    setoranId: integer('setoran_id').references((): AnySQLiteColumn => setoran.id),
     namaPihak: text('nama_pihak'),
     keterangan: text('keterangan').notNull(),
     metode: text('metode', { enum: METODE }).notNull().default('tunai'),
@@ -144,7 +149,31 @@ export const transaksi = sqliteTable(
     index('idx_trx_arah_tanggal').on(t.arah, t.tanggal),
     index('idx_trx_jenis').on(t.jenisId),
     index('idx_trx_penyetor').on(t.penyetorAnggotaId),
+    index('idx_trx_periode').on(t.jenisId, t.anggotaId, t.periode),
+    index('idx_trx_setoran').on(t.setoranId),
   ],
+)
+
+/** Setoran kolektif: satu kejadian pengutip menyetor iuran banyak anggota sekaligus. */
+export const setoran = sqliteTable(
+  'setoran',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    nomor: text('nomor').notNull().unique(), // SI-2026-0001
+    tanggal: text('tanggal').notNull(), // tanggal setor = tanggal semua catatannya
+    jenisId: integer('jenis_id')
+      .notNull()
+      .references(() => jenis.id),
+    periode: text('periode'), // periode awal yang dibayar ('2026-10' / '2026'); null bila jenis tanpa periode
+    penyetorAnggotaId: integer('penyetor_anggota_id').references(() => anggota.id),
+    keterangan: text('keterangan').notNull(),
+    metode: text('metode', { enum: METODE }).notNull().default('tunai'),
+    buktiFile: text('bukti_file'),
+    dihapusPada: integer('dihapus_pada'),
+    dibuatPada: integer('dibuat_pada').notNull(),
+    diubahPada: integer('diubah_pada').notNull(),
+  },
+  (t) => [index('idx_setoran_tanggal').on(t.tanggal)],
 )
 
 /** Riwayat perubahan. Tanpa FK ke transaksi agar tetap ada setelah hapus permanen. */
@@ -168,3 +197,4 @@ export type Anggota = typeof anggota.$inferSelect
 export type AnggotaKeluarga = typeof anggotaKeluarga.$inferSelect
 export type Transaksi = typeof transaksi.$inferSelect
 export type Log = typeof log.$inferSelect
+export type Setoran = typeof setoran.$inferSelect

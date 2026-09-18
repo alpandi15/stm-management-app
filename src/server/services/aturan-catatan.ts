@@ -1,10 +1,10 @@
 // Aturan catatan yang bergantung pada jenis (Spec 2 §A6, §B4) — murni, menerima Db.
-import { and, eq, isNull, like, ne, type SQL } from 'drizzle-orm'
+import { and, eq, isNull, ne, type SQL } from 'drizzle-orm'
 import type { Db } from '@/server/db'
 import { anggotaKeluarga, transaksi, type Jenis } from '@/server/db/schema'
 import { GalatPengguna } from '@/server/galat'
 import { formatRupiah } from '@/lib/rupiah'
-import { formatBulan, formatTanggal } from '@/lib/tanggal'
+import { formatPeriode, formatTanggal, periodeUntuk } from '@/lib/tanggal'
 
 export type CatatanMirip = { noBukti: string; keterangan: string; tanggal: string }
 
@@ -16,7 +16,7 @@ export type HasilDuplikat = { mirip: CatatanMirip[]; kalimat: string }
  */
 export function cariDuplikat(
   db: Db,
-  input: { tanggal: string; jenisId: number; jumlah: number; anggotaId: number | null; namaPihak?: string | null },
+  input: { tanggal: string; jenisId: number; jumlah: number; anggotaId: number | null; namaPihak?: string | null; periode?: string | null },
   j: Pick<Jenis, 'nama' | 'periode'>,
   kecualiId?: number,
 ): HasilDuplikat | null {
@@ -28,12 +28,13 @@ export function cariDuplikat(
   const nama = input.namaPihak ?? 'Anggota ini'
   if (input.anggotaId && j.periode !== 'bebas') {
     dasar.push(eq(transaksi.anggotaId, input.anggotaId))
-    if (j.periode === 'bulanan') {
-      kondisi = and(...dasar, like(transaksi.tanggal, `${input.tanggal.slice(0, 7)}-%`))
-      kalimat = `Sepertinya ${nama} sudah membayar ${j.nama} untuk ${formatBulan(input.tanggal)}`
-    } else if (j.periode === 'tahunan') {
-      kondisi = and(...dasar, like(transaksi.tanggal, `${input.tanggal.slice(0, 4)}-%`))
-      kalimat = `Sepertinya ${nama} sudah membayar ${j.nama} untuk tahun ${input.tanggal.slice(0, 4)}`
+    const periode = periodeUntuk(j.periode, input.tanggal, input.periode)
+    if (j.periode === 'bulanan' && periode) {
+      kondisi = and(...dasar, eq(transaksi.periode, periode))
+      kalimat = `Sepertinya ${nama} sudah membayar ${j.nama} untuk ${formatPeriode(periode)}`
+    } else if (j.periode === 'tahunan' && periode) {
+      kondisi = and(...dasar, eq(transaksi.periode, periode))
+      kalimat = `Sepertinya ${nama} sudah membayar ${j.nama} untuk tahun ${periode}`
     } else {
       kondisi = and(...dasar)
       kalimat = `${nama} sudah pernah membayar ${j.nama}`
@@ -84,4 +85,18 @@ export function periksaKeluargaMilik(db: Db, anggotaKeluargaId: number | null | 
     throw new GalatPengguna('Anggota keluarga itu bukan tanggungan nama yang dipilih. Pilih ulang dari daftar.', 'anggotaKeluargaId')
   }
   return k.id
+}
+
+/** Peta anggota → nomor bukti yang sudah membayar jenis+periode ini (untuk daftar centang setoran). */
+export function sudahBayar(db: Db, jenisId: number, periode: string | null): Map<number, string> {
+  if (!periode) return new Map()
+  return new Map(
+    db
+      .select({ anggotaId: transaksi.anggotaId, noBukti: transaksi.noBukti })
+      .from(transaksi)
+      .where(and(eq(transaksi.jenisId, jenisId), eq(transaksi.periode, periode), isNull(transaksi.dihapusPada)))
+      .all()
+      .filter((r) => r.anggotaId != null)
+      .map((r) => [r.anggotaId as number, r.noBukti]),
+  )
 }

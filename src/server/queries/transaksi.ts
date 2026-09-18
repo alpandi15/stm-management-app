@@ -2,7 +2,7 @@ import 'server-only'
 import { and, asc, count, desc, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { db } from '@/server/db'
-import { anggota, anggotaKeluarga, jenis, transaksi, type Arah, type Jenis, type Transaksi } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, jenis, setoran, transaksi, type Arah, type Jenis, type Transaksi } from '@/server/db/schema'
 import type { Rentang } from '@/lib/tanggal'
 
 /**
@@ -38,6 +38,7 @@ export type BarisCatatan = Transaksi & {
   namaAnggota: string | null
   /** Nama penyetor/penyerah; null = bendahara sendiri */
   namaPenyetor: string | null
+  nomorSetoran: string | null
 }
 
 const kolomBaris = {
@@ -62,11 +63,14 @@ const kolomBaris = {
   hubunganMeninggal: anggotaKeluarga.hubungan,
   namaAnggota: anggota.nama,
   penyetorAnggotaId: transaksi.penyetorAnggotaId,
+  periode: transaksi.periode,
+  setoranId: transaksi.setoranId,
   namaPenyetor: penyetor.nama,
+  nomorSetoran: setoran.nomor,
 }
 
-/** Sumber baris standar: transaksi ⋈ jenis, ⟕ keluarga (yang meninggal), ⟕ anggota. */
-function dariCatatan() {
+/** Sumber baris standar: transaksi ⋈ jenis, ⟕ keluarga (yang meninggal), ⟕ anggota, ⟕ penyetor, ⟕ setoran. */
+export function dariCatatan() {
   return db
     .select(kolomBaris)
     .from(transaksi)
@@ -74,6 +78,7 @@ function dariCatatan() {
     .leftJoin(anggotaKeluarga, eq(anggotaKeluarga.id, transaksi.anggotaKeluargaId))
     .leftJoin(anggota, eq(anggota.id, transaksi.anggotaId))
     .leftJoin(penyetor, eq(penyetor.id, transaksi.penyetorAnggotaId))
+    .leftJoin(setoran, eq(setoran.id, transaksi.setoranId))
 }
 
 

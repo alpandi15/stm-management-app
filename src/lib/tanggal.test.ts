@@ -35,3 +35,16 @@ test('apakahISO menolak tanggal yang tidak ada', () => {
   assert.equal(apakahISO('2026-1-5'), false)
   assert.equal(apakahISO('2026-01-05'), true)
 })
+
+test('periode: tambah bulan melintasi tahun, periodeUntuk memakai nilai eksplisit', async () => {
+  const { tambahBulan, periodeUntuk, formatPeriode } = await import('./tanggal')
+  assert.equal(tambahBulan('2026-11', 2), '2027-01')
+  assert.equal(tambahBulan('2026-01', -1), '2025-12')
+  assert.equal(periodeUntuk('bulanan', '2026-09-18'), '2026-09')
+  assert.equal(periodeUntuk('bulanan', '2026-09-18', '2026-10'), '2026-10')
+  assert.equal(periodeUntuk('tahunan', '2026-09-18'), '2026')
+  assert.equal(periodeUntuk('tahunan', '2026-09-18', '2027'), '2027')
+  assert.equal(periodeUntuk('sekali', '2026-09-18', '2026-10'), null)
+  assert.equal(formatPeriode('2026-10'), 'Oktober 2026')
+  assert.equal(formatPeriode('2026'), '2026')
+})

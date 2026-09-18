@@ -22,6 +22,13 @@
       "when": 1789738007038,
       "tag": "0002_penyetor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789738445231,
+      "tag": "0003_setoran_periode",
+      "breakpoints": true
     }
   ]
 }

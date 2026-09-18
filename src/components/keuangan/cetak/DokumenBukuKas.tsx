@@ -1,3 +1,4 @@
+import React from 'react'
 import type { BarisCatatan } from '@/server/queries/transaksi'
 import { kalimatMeninggal } from '@/lib/catatan'
 import type { Pengaturan } from '@/server/db/schema'
@@ -35,8 +36,20 @@ export function DokumenBukuKas({ baris, sisaAwal, rentang, p }: { baris: BarisCa
           </tr>
           {baris.map((b, i) => {
             saldo += b.arah === 'masuk' ? b.jumlah : -b.jumlah
+            // Kelompok setoran kolektif: subjudul di baris pertama, subtotal setelah baris terakhir
+            const awalSetoran = b.setoranId && (i === 0 || baris[i - 1].setoranId !== b.setoranId)
+            const akhirSetoran = b.setoranId && (i === baris.length - 1 || baris[i + 1].setoranId !== b.setoranId)
+            const anggotaSetoran = b.setoranId ? baris.filter((x) => x.setoranId === b.setoranId) : []
             return (
-              <tr key={b.id}>
+              <React.Fragment key={b.id}>
+              {awalSetoran && (
+                <tr style={{ background: '#eef2ff' }}>
+                  <td colSpan={8} style={{ fontWeight: 600 }}>
+                    Setoran {b.nomorSetoran}{b.namaPenyetor ? ` · disetor oleh ${b.namaPenyetor}` : ''} · {anggotaSetoran.length} catatan
+                  </td>
+                </tr>
+              )}
+              <tr>
                 <td className="tengah">{i + 1}</td>
                 <td className="rapat">{formatTanggalPendek(b.tanggal)}</td>
                 <td className="rapat">{b.noBukti}</td>
@@ -51,6 +64,15 @@ export function DokumenBukuKas({ baris, sisaAwal, rentang, p }: { baris: BarisCa
                 <td className="angka">{b.arah === 'keluar' ? formatRupiah(b.jumlah) : ''}</td>
                 <td className="angka">{formatRupiah(saldo)}</td>
               </tr>
+              {akhirSetoran && (
+                <tr style={{ background: '#f9fafb' }}>
+                  <td colSpan={5} style={{ textAlign: 'right', fontStyle: 'italic' }}>Subtotal setoran {b.nomorSetoran}</td>
+                  <td className="angka" style={{ fontStyle: 'italic' }}>{formatRupiah(anggotaSetoran.reduce((t, x) => t + (x.arah === 'masuk' ? x.jumlah : 0), 0))}</td>
+                  <td className="angka" style={{ fontStyle: 'italic' }}>{formatRupiah(anggotaSetoran.reduce((t, x) => t + (x.arah === 'keluar' ? x.jumlah : 0), 0))}</td>
+                  <td />
+                </tr>
+              )}
+              </React.Fragment>
             )
           })}
           <tr className="total">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
 import { daftarCatatan, daftarJenisAktif, daftarPenyetor, ringkasanCatatan, PER_HALAMAN, type FilterCatatan } from '@/server/queries/transaksi'
 import { hitungSisaKas } from '@/server/services/laporan'
@@ -11,6 +11,7 @@ import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 import { BarisFilter } from '@/components/keuangan/BarisFilter'
 import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
 import { BannerKasMinus } from '@/components/keuangan/BannerKasMinus'
+import { TautanCatatanSetoran } from '@/components/setoran/TautanCatatanSetoran'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -56,16 +57,24 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
     <div className="flex flex-col gap-5">
       <JudulHalaman
         aksi={
-          <Button asChild ukuran="aksi" className="hidden sm:inline-flex">
-            <Link href="/catatan/baru">
-              <Plus /> Catat
-            </Link>
-          </Button>
+          <div className="hidden gap-2 sm:flex">
+            <Button asChild variant="sekunder" ukuran="aksi">
+              <Link href="/catatan/setoran/baru">
+                <Users /> Catat Iuran Kolektif
+              </Link>
+            </Button>
+            <Button asChild ukuran="aksi">
+              <Link href="/catatan/baru">
+                <Plus /> Catat
+              </Link>
+            </Button>
+          </div>
         }
       >
         Catatan Kas
       </JudulHalaman>
 
+      <TautanCatatanSetoran aktif="catatan" />
       <BannerKasMinus sisaKas={sisaKas} />
 
       <BarisFilter

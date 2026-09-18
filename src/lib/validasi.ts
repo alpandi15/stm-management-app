@@ -34,6 +34,12 @@ export const skemaCatatan = z.object({
   anggotaId: z.number().int().positive().nullable().optional(),
   anggotaKeluargaId: z.number({ error: 'Anggota keluarga yang dipilih tidak dikenali. Pilih ulang dari daftar.' }).int().positive().nullable().optional(),
   penyetorAnggotaId: z.number({ error: 'Penyetor yang dipilih tidak dikenali. Pilih ulang dari daftar.' }).int().positive().nullable().optional(),
+  /** 'YYYY-MM' untuk jenis bulanan, 'YYYY' untuk tahunan; kosong = mengikuti tanggal */
+  periode: z
+    .string()
+    .nullable()
+    .optional()
+    .refine((v) => !v || /^\d{4}(-\d{2})?$/.test(v), 'Periode tidak dikenali. Pilih ulang dari daftar.'),
   namaPihak: z.string().trim().max(120, 'Nama terlalu panjang. Maksimal 120 huruf.').nullable().optional(),
   jumlah: skemaJumlah,
   metode: z.enum(METODE, { error: 'Pilih cara pembayarannya.' }),

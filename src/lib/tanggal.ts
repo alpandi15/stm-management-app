@@ -138,3 +138,27 @@ export function tentukanRentang(pilihan: PilihanRentang, awal: string, akhir: st
       return rentangBulanIni()
   }
 }
+
+/** Periode bulanan 'YYYY-MM' dari tanggal. */
+export function bulanDari(t: TanggalISO): string {
+  return t.slice(0, 7)
+}
+
+/** Menambah n bulan ke periode 'YYYY-MM'. */
+export function tambahBulan(periode: string, n: number): string {
+  const [y, m] = periode.split('-').map(Number)
+  const total = y * 12 + (m - 1) + n
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`
+}
+
+/** 'YYYY-MM' → 'Oktober 2026'; 'YYYY' → '2026'. */
+export function formatPeriode(periode: string): string {
+  return periode.length === 7 ? formatBulan(`${periode}-01`) : periode
+}
+
+/** Periode yang dibayar oleh sebuah catatan berdasarkan periode jenisnya; null bila bebas/sekali. */
+export function periodeUntuk(periodeJenis: 'bebas' | 'sekali' | 'bulanan' | 'tahunan', tanggal: TanggalISO, eksplisit?: string | null): string | null {
+  if (periodeJenis === 'bulanan') return eksplisit && /^\d{4}-\d{2}$/.test(eksplisit) ? eksplisit : bulanDari(tanggal)
+  if (periodeJenis === 'tahunan') return eksplisit && /^\d{4}$/.test(eksplisit) ? eksplisit : tanggal.slice(0, 4)
+  return null
+}

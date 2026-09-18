@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Minus, Plus } from 'lucide-react'
+import { Minus, Plus, Users } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
 import { dataBeranda } from '@/server/services/laporan'
 import { catatanTerakhir } from '@/server/queries/transaksi'
@@ -45,6 +45,12 @@ export default async function HalamanBeranda() {
           </Link>
         </Button>
       </div>
+
+      <Button asChild variant="sekunder" className="w-full sm:w-fit">
+        <Link href="/catatan/setoran/baru">
+          <Users /> Catat Iuran Kolektif
+        </Link>
+      </Button>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <KartuAngka label="Uang Masuk Bulan Ini" nilai={d.bulanIni.masuk} warna="masuk" keterangan={kalimatBanding(d.bulanIni.masuk, d.bulanLalu.masuk)} />

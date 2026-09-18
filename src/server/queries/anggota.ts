@@ -136,3 +136,21 @@ export function daftarKeluarga(anggotaId: number): { aktif: BarisKeluarga[]; pec
     pecah: semua.filter((k) => k.dihapusPada && k.pindahKeAnggotaId),
   }
 }
+
+/** Anggota dan tanggungan berstatus meninggal — untuk keterangan Iuran Duka. */
+export function daftarAlmarhum(): Array<{ label: string; nama: string }> {
+  const a = db
+    .select({ nama: anggota.nama, tanggal: anggota.tanggalMeninggal })
+    .from(anggota)
+    .where(eq(anggota.status, 'meninggal'))
+    .all()
+    .map((x) => ({ nama: x.nama, label: `${x.nama} · anggota${x.tanggal ? ` · ${x.tanggal}` : ''}` }))
+  const k = db
+    .select({ nama: anggotaKeluarga.nama, hubungan: anggotaKeluarga.hubungan, induk: anggota.nama, tanggal: anggotaKeluarga.tanggalMeninggal })
+    .from(anggotaKeluarga)
+    .innerJoin(anggota, eq(anggota.id, anggotaKeluarga.anggotaId))
+    .where(and(eq(anggotaKeluarga.status, 'meninggal'), isNull(anggotaKeluarga.dihapusPada)))
+    .all()
+    .map((x) => ({ nama: x.nama, label: `${x.nama} · ${x.hubungan} dari ${x.induk}${x.tanggal ? ` · ${x.tanggal}` : ''}` }))
+  return [...a, ...k].sort((x, y) => x.nama.localeCompare(y.nama))
+}

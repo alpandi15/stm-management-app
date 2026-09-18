@@ -40,9 +40,21 @@ export function KartuCatatan({
           {catatan.namaPihak && ` · ${catatan.namaPihak}`}
         </p>
         {kalimatMeninggal(catatan) && <p className="text-ket font-medium text-keluar">Meninggal: {kalimatMeninggal(catatan)}</p>}
-        {catatan.namaPenyetor && (
+        {(catatan.namaPenyetor || catatan.nomorSetoran) && (
           <p className="text-ket text-muted">
-            {masuk ? 'Disetor oleh' : 'Diserahkan oleh'} <span className="font-medium text-text">{catatan.namaPenyetor}</span>
+            {catatan.namaPenyetor && (
+              <>
+                {masuk ? 'Disetor oleh' : 'Diserahkan oleh'} <span className="font-medium text-text">{catatan.namaPenyetor}</span>
+              </>
+            )}
+            {catatan.nomorSetoran && catatan.setoranId && (
+              <>
+                {catatan.namaPenyetor && ' · '}
+                <Link href={`/catatan/setoran/${catatan.setoranId}`} className="angka font-medium text-primary hover:underline">
+                  Setoran {catatan.nomorSetoran}
+                </Link>
+              </>
+            )}
           </p>
         )}
         <p className="angka mt-1 text-ket text-muted">

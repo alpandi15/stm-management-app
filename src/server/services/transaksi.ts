@@ -9,7 +9,7 @@ import { pastikanTidakTerkunci } from './penguncian'
 import { catatLog } from './log'
 import { cariDuplikat, periksaKeluargaMilik, periksaNominal, type CatatanMirip } from './aturan-catatan'
 import * as penanda from './penanda-meninggal'
-import { hariIni, formatTanggal } from '@/lib/tanggal'
+import { hariIni, formatTanggal, periodeUntuk } from '@/lib/tanggal'
 import type { InputCatatan } from '@/lib/validasi'
 
 /**
@@ -67,14 +67,15 @@ function periksaIsi(input: InputCatatan, kecualiId?: number) {
   periksaNominal(j, input.jumlah)
 
   // Kemungkinan duplikat (docs/02 §5.2 + Spec 2 §B4): per periode bila anggota terisi
-  const duplikat = input.abaikanDuplikat ? null : cariDuplikat(db, { ...input, anggotaId, namaPihak: input.namaPihak }, j, kecualiId)
+  const periode = periodeUntuk(j.periode, input.tanggal, input.periode)
+  const duplikat = input.abaikanDuplikat ? null : cariDuplikat(db, { ...input, anggotaId, namaPihak: input.namaPihak, periode }, j, kecualiId)
 
-  return { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat }
+  return { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat }
 }
 
-export function buatCatatan(input: InputCatatan): HasilSimpan {
+export function buatCatatan(input: InputCatatan, ekstra: { setoranId?: number } = {}): HasilSimpan {
   pastikanTidakTerkunci(input.tanggal)
-  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat } = periksaIsi(input)
+  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat } = periksaIsi(input)
   if (duplikat) return { perluKonfirmasi: true, ...duplikat }
 
   const sekarang = Date.now()
@@ -92,6 +93,8 @@ export function buatCatatan(input: InputCatatan): HasilSimpan {
         anggotaId,
         anggotaKeluargaId,
         penyetorAnggotaId,
+        periode,
+        setoranId: ekstra.setoranId ?? null,
         namaPihak: input.namaPihak?.trim() || null,
         keterangan: input.keterangan.trim(),
         metode: input.metode,
@@ -117,7 +120,7 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
   // Tanggal lama DAN baru sama-sama harus di luar periode terkunci
   pastikanTidakTerkunci(lama.tanggal)
   pastikanTidakTerkunci(input.tanggal)
-  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, duplikat } = periksaIsi(input, id)
+  const { jenis: j, anggotaId, anggotaKeluargaId, penyetorAnggotaId, periode, duplikat } = periksaIsi(input, id)
   if (duplikat) return { perluKonfirmasi: true, ...duplikat }
 
   // Nomor bukti tidak berubah walau arah/tahun berubah: nomornya sudah tertulis di kuitansi.
@@ -139,6 +142,7 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
         anggotaId,
         anggotaKeluargaId,
         penyetorAnggotaId,
+        periode,
         namaPihak: input.namaPihak?.trim() || null,
         keterangan: input.keterangan.trim(),
         metode: input.metode,

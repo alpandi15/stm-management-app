@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PilihanCari } from '@/components/ui/pilihan-cari'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
+import { PilihPeriode } from '@/components/ui/pilih-periode'
+import { bulanDari, periodeUntuk } from '@/lib/tanggal'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
@@ -83,6 +85,7 @@ export function FormCatatan({
   const anggotaAwal = anggotaIdAwal ? daftarAnggota.find((a) => a.id === anggotaIdAwal) : undefined
   const [anggotaKeluargaId, setAnggotaKeluargaId] = React.useState<number | null>(awal?.anggotaKeluargaId ?? null)
   const [penyetorId, setPenyetorId] = React.useState<number | null>(awal?.penyetorAnggotaId ?? null)
+  const [periode, setPeriode] = React.useState<string | null>(awal?.periode ?? null)
 
   const form = useForm<NilaiForm>({
     resolver: zodResolver(skemaForm),
@@ -104,6 +107,10 @@ export function FormCatatan({
   const jenisTerpilih = daftarJenis.find((j) => j.id === jenisId)
   const anggotaTerpilih = daftarAnggota.find((a) => a.nama.toLowerCase() === pihak.trim().toLowerCase())
   const nominalTerkunci = !!jenisTerpilih?.nominalDikunci && jenisTerpilih.nominalBawaan != null
+  const tanggal = watch('tanggal')
+  const jenisPeriode = jenisTerpilih?.periode === 'bulanan' || jenisTerpilih?.periode === 'tahunan' ? jenisTerpilih.periode : null
+  // Periode yang dibayar: bawaan mengikuti tanggal; direset saat jenis berganti
+  const periodeTampil = jenisPeriode ? periodeUntuk(jenisPeriode, tanggal || bulanDari(hariIni()) + '-01', periode) : null
 
   // Jenis harus sesuai arah: ganti arah → kosongkan pilihan yang tidak lagi cocok
   React.useEffect(() => {
@@ -125,6 +132,7 @@ export function FormCatatan({
       if (!sekarang || namaJenisLama.includes(sekarang)) setValue('keterangan', j.nama, { shouldValidate: !!sekarang })
     }
     setAnggotaKeluargaId(null) // tanggungan milik jenis/anggota lama tidak boleh terbawa (Spec 2 §A5)
+    setPeriode(null)
   }, [jenisId, daftarJenis, setValue, getValues])
   const anggotaSebelumnya = React.useRef<number | undefined>(anggotaTerpilih?.id)
   React.useEffect(() => {
@@ -165,6 +173,7 @@ export function FormCatatan({
       if (cocok) fd.set('anggotaId', String(cocok.id))
       if (cocok && anggotaKeluargaId && jenisTerpilih?.menandaiMeninggal) fd.set('anggotaKeluargaId', String(anggotaKeluargaId))
       if (penyetorId) fd.set('penyetorAnggotaId', String(penyetorId))
+      if (jenisPeriode && periodeTampil) fd.set('periode', periodeTampil)
       if (bukti) fd.set('bukti', bukti)
       if (bukti === null) fd.set('hapusBukti', '1')
       if (abaikanDuplikat) fd.set('abaikanDuplikat', '1')
@@ -261,6 +270,15 @@ export function FormCatatan({
         />
         <PesanGalat>{g.jenisId?.message}</PesanGalat>
       </div>
+
+      {/* 3b. Periode yang dibayar (jenis bulanan/tahunan) */}
+      {jenisPeriode && periodeTampil && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="periode">{jenisPeriode === 'bulanan' ? 'Untuk bulan' : 'Untuk tahun'}</Label>
+          <PilihPeriode id="periode" jenisPeriode={jenisPeriode} nilai={periodeTampil} onUbah={setPeriode} />
+          <p className="text-ket text-muted">Bawaan mengikuti tanggal catatan. Ubah bila membayar untuk {jenisPeriode === 'bulanan' ? 'bulan' : 'tahun'} lain.</p>
+        </div>
+      )}
 
       {/* 4. Keterangan */}
       <div className="flex flex-col gap-2">

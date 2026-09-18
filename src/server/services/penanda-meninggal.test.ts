@@ -21,11 +21,16 @@ function dbUji() {
   const lain = db.insert(schema.anggota).values({ nama: 'Orang Lain', dibuatPada: 0 }).returning().get()
   const cahyo = db.insert(schema.anggotaKeluarga).values({ anggotaId: lain.id, nama: 'Cahyo', hubungan: 'Anak', dibuatPada: 0, diubahPada: 0 }).returning().get()
   let n = 0
-  const catat = (v: Partial<typeof schema.transaksi.$inferInsert> & { jenisId: number }) =>
-    db.insert(schema.transaksi)
-      .values({ noBukti: `X-${++n}`, tanggal: '2026-03-10', arah: 'keluar', keterangan: 'uji', jumlah: 1000, dibuatPada: 0, diubahPada: 0, ...v })
+  const catat = (v: Partial<typeof schema.transaksi.$inferInsert> & { jenisId: number }) => {
+    const j = db.select().from(schema.jenis).where(eq(schema.jenis.id, v.jenisId)).get()!
+    const tanggal = v.tanggal ?? '2026-03-10'
+    const periode = v.periode ?? (j.periode === 'bulanan' ? tanggal.slice(0, 7) : j.periode === 'tahunan' ? tanggal.slice(0, 4) : null)
+    return db
+      .insert(schema.transaksi)
+      .values({ noBukti: `X-${++n}`, tanggal, arah: 'keluar', keterangan: 'uji', jumlah: 1000, dibuatPada: 0, diubahPada: 0, ...v, periode })
       .returning()
       .get()
+  }
   const statusBudi = () => db.select().from(schema.anggota).where(eq(schema.anggota.id, budi.id)).get()!
   const statusAni = () => db.select().from(schema.anggotaKeluarga).where(eq(schema.anggotaKeluarga.id, ani.id)).get()!
   return { db, kode, budi, ani, lain, cahyo, catat, statusBudi, statusAni }
@@ -134,4 +139,13 @@ test('duplikat per periode: bulanan, tahunan, sekali, bebas, dan nama lepas', ()
   assert.equal(cariDuplikat(db, { tanggal: '2026-09-03', jenisId: pm02.id, jumlah: 20000, anggotaId: null }, pm02), null)
   // Periode bulanan tapi nama lepas → aturan lama juga
   assert.equal(cariDuplikat(db, { tanggal: '2026-09-20', jenisId: pm01.id, jumlah: 50000, anggotaId: null }, pm01), null)
+})
+
+test('periode eksplisit: setoran 18 Sep untuk Oktober tidak dianggap duplikat September, tapi duplikat Oktober', () => {
+  const { db, kode, budi, catat } = dbUji()
+  const pm01 = kode('PM01')
+  catat({ jenisId: pm01.id, anggotaId: budi.id, arah: 'masuk', tanggal: '2026-09-18', periode: '2026-10', jumlah: 50000 })
+  assert.equal(cariDuplikat(db, { tanggal: '2026-09-25', jenisId: pm01.id, jumlah: 50000, anggotaId: budi.id }, pm01), null)
+  const okt = cariDuplikat(db, { tanggal: '2026-09-25', jenisId: pm01.id, jumlah: 50000, anggotaId: budi.id, periode: '2026-10', namaPihak: 'Budi' }, pm01)
+  assert.ok(okt && /untuk Oktober 2026/.test(okt.kalimat))
 })

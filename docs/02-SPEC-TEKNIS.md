@@ -427,6 +427,26 @@ muncul paling atas di pilihannya. Tampil di kartu, Buku Kas, riwayat perubahan
 Laporan memuat **Rekap per Penyetor** (`rekapPenyetor()` di `laporan-rumus.ts`) — juga di
 dokumen cetak ringkas.
 
+### 5.1b Periode eksplisit dan setoran kolektif
+
+`transaksi.periode` menyimpan periode yang dibayar (`'2026-10'` bulanan, `'2026'` tahunan;
+null untuk jenis bebas/sekali) — **eksplisit, bukan diturunkan dari tanggal**, karena
+tanggal setor 18 September bisa membayar Oktober. Form catat memilih "Untuk bulan/tahun"
+(bawaan mengikuti tanggal). Deteksi duplikat per periode (`cariDuplikat`) dan daftar
+"sudah bayar" (`sudahBayar`) memakai kolom ini; migrasi 0003 mengisinya untuk catatan lama.
+
+**Setoran kolektif** (`setoran` + `transaksi.setoranId`, `services/setoran.ts`): satu
+kejadian pengutip menyetor iuran banyak anggota. Satu catatan per anggota **per periode**
+(baris boleh membayar n bulan/tahun sekaligus → n catatan, keterangan ditambah nama
+periode), semuanya dalam satu transaksi SQLite lewat `buatCatatan()` — nomor bukti
+berurutan, log, kunci nominal, penanda, dan penguncian berlaku otomatis. Nomor setoran
+`SI-2026-0001` per tahun. Hanya untuk uang masuk. Hapus setoran = hapus lunak semua
+catatannya lewat service (masing-masing bisa dikembalikan dari Riwayat). Halaman:
+`/catatan/setoran` (daftar), `/catatan/setoran/baru` (daftar centang; yang sudah bayar
+periode itu abu-abu dengan nomor buktinya), `/catatan/setoran/[id]` (detail + hapus),
+`/cetak/setoran/[id]` (tanda terima untuk pengutip). Buku Kas mengelompokkan baris satu
+setoran dengan subjudul dan subtotal.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat
