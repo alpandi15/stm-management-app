@@ -451,6 +451,11 @@ penulisan tercatat. `dataLama` dan `dataBaru` disimpan sebagai JSON utuh dari ba
 transaksi; perbandingan field dihitung saat menampilkan, bukan saat menyimpan — supaya
 bisa dibaca ulang dengan cara berbeda di kemudian hari.
 
+**Pemeriksaan Kas** (`services/laporan.ts` → `periksaKas()`) membandingkan dua jalur:
+rumus dari tabel `transaksi` melawan pemutaran ulang seluruh log (buat +jumlah, hapus
+−jumlah, kembalikan +jumlah, ubah selisih baru−lama). Karena itu log **tidak boleh
+dihapus atau dipangkas** — ia adalah pembanding independen bagi tabel transaksi.
+
 ## 6. Laporan
 
 Seluruh rumus hidup di `src/server/services/laporan.ts`. Beranda, halaman Laporan, dan

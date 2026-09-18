@@ -13,7 +13,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 2 | Pengaturan awal & login PIN — **selesai** |
 | 3 | Kerangka aplikasi (sidebar, header, tema) — **selesai** |
 | 4 | Catatan kas — inti aplikasi — **selesai** |
-| 5 | Riwayat & log |
+| 5 | Riwayat & log — **selesai** |
 | 6 | Laporan |
 | 7 | Cetak |
 | 8 | Anggota, jenis, pengaturan, cadangan |
@@ -237,6 +237,21 @@ Kembalikan untuk entri terhapus, dan kartu Pemeriksaan Kas di bagian atas.
 **Bukti selesai:** ubah satu catatan lalu pastikan hanya field yang benar-benar berubah
 yang muncul. Hapus dan kembalikan satu catatan, lalu pastikan Pemeriksaan Kas kembali
 berstatus Cocok.
+
+**Hasil (18 September 2026):** di Electron 22 / Node 16 dengan data Fase 4 — linimasa
+per hari terbaru dulu (Dibuat, Dihapus, Diubah, …); entri Diubah KM-2026-0002 hanya
+menampilkan satu baris *Jumlah Rp 500.000 → Rp 750.000*; tombol Kembalikan pada entri
+Dihapus KK-2026-0002 → toast, entri baru *Dikembalikan*, tombol hilang, KK-2026-0002
+tampil lagi di Catatan Kas; Pemeriksaan Kas **Cocok** (Rp 855.000 = Rp 855.000). Uji
+ketahanan: angka KM-2026-0001 diubah langsung lewat sqlite3 tanpa aplikasi → **Tidak
+Cocok**; dipulihkan → Cocok lagi.
+
+Pemeriksaan Kas dibuat sebagai pemeriksaan sungguhan: rumus dari tabel `transaksi`
+(saldo awal + Σ masuk − Σ keluar) dibandingkan dengan **pemutaran ulang seluruh log**
+(buat +, hapus −, kembalikan +, ubah selisih) — dua jalur hitung yang terpisah, sehingga
+"Tidak Cocok" berarti ada baris yang berubah di luar aplikasi atau log yang hilang.
+Berkas: `queries/riwayat.ts`, `services/laporan.ts` (`periksaKas`),
+`components/riwayat/{KartuPemeriksaan,EntriRiwayat}.tsx`, halaman riwayat berhalaman 50.
 
 ---
 
