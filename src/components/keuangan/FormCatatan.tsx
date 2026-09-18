@@ -5,9 +5,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack } from 'lucide-react'
 import { simpanCatatan, ubahCatatan, type HasilSimpanCatatan } from '@/server/actions/transaksi'
 import type { Jenis, Transaksi } from '@/server/db/schema'
+import type { AnggotaUntukForm } from '@/server/queries/transaksi'
 import { skemaJumlah, skemaTanggal } from '@/lib/validasi'
 import { formatRupiah } from '@/lib/rupiah'
 import { hariIni, kemarin } from '@/lib/tanggal'
@@ -36,23 +37,38 @@ type NilaiForm = z.infer<typeof skemaForm>
 
 type ModeTanggal = 'hari-ini' | 'kemarin' | 'pilih'
 
+/** Label opsi jenis (Spec 2 §B6): nama · Rp X / bulan */
+export function labelJenis(j: Pick<Jenis, 'nama' | 'nominalBawaan' | 'periode'>): string {
+  let l = j.nama
+  if (j.nominalBawaan != null) l += ` · ${formatRupiah(j.nominalBawaan)}`
+  if (j.periode === 'bulanan') l += ' / bulan'
+  if (j.periode === 'tahunan') l += ' / tahun'
+  return l
+}
+
 export function FormCatatan({
   daftarJenis,
   daftarAnggota,
   awal,
   arahAwal,
+  kodeJenisAwal,
+  anggotaIdAwal,
 }: {
   daftarJenis: Jenis[]
-  daftarAnggota: Array<{ id: number; nama: string }>
+  daftarAnggota: AnggotaUntukForm[]
   /** Catatan yang diubah; kosong berarti catatan baru */
   awal?: Transaksi & { namaPihak: string | null }
   arahAwal?: 'masuk' | 'keluar'
+  /** Dari ?tipe=PM11 (Spec 2 §C2) */
+  kodeJenisAwal?: string
+  /** Dari ?anggota=<id> */
+  anggotaIdAwal?: number
 }) {
   const router = useRouter()
   const modeUbah = !!awal
   const [sedangKirim, setSedangKirim] = React.useState(false)
   const [bukti, setBukti] = React.useState<File | null | undefined>(undefined)
-  const [konfirmasi, setKonfirmasi] = React.useState<Array<{ noBukti: string; keterangan: string }> | null>(null)
+  const [konfirmasi, setKonfirmasi] = React.useState<{ mirip: Array<{ noBukti: string; keterangan: string; tanggal: string }>; kalimat: string } | null>(null)
   const [galatUmum, setGalatUmum] = React.useState<string | null>(null)
 
   const tanggalAwal = awal?.tanggal ?? hariIni()
@@ -60,27 +76,60 @@ export function FormCatatan({
     tanggalAwal === hariIni() ? 'hari-ini' : tanggalAwal === kemarin() ? 'kemarin' : 'pilih',
   )
 
+  const jenisAwalDariKode = kodeJenisAwal ? daftarJenis.find((j) => j.kode === kodeJenisAwal && j.aktif) : undefined
+  const anggotaAwal = anggotaIdAwal ? daftarAnggota.find((a) => a.id === anggotaIdAwal) : undefined
+  const [anggotaKeluargaId, setAnggotaKeluargaId] = React.useState<number | null>(awal?.anggotaKeluargaId ?? null)
+
   const form = useForm<NilaiForm>({
     resolver: zodResolver(skemaForm),
     defaultValues: {
-      arah: awal?.arah ?? arahAwal,
+      arah: awal?.arah ?? jenisAwalDariKode?.arah ?? arahAwal,
       tanggal: tanggalAwal,
-      jenisId: awal?.jenisId,
-      keterangan: awal?.keterangan ?? '',
-      pihak: awal?.namaPihak ?? '',
-      jumlah: awal?.jumlah,
+      jenisId: awal?.jenisId ?? jenisAwalDariKode?.id,
+      keterangan: awal?.keterangan ?? (jenisAwalDariKode ? jenisAwalDariKode.nama : ''),
+      pihak: awal?.namaPihak ?? anggotaAwal?.nama ?? '',
+      jumlah: awal?.jumlah ?? jenisAwalDariKode?.nominalBawaan ?? undefined,
       metode: awal?.metode ?? 'tunai',
     },
   })
   const { register, control, handleSubmit, watch, setValue, setError, formState } = form
   const arah = watch('arah')
   const jenisId = watch('jenisId')
+  const pihak = watch('pihak')
   const jenisTersedia = daftarJenis.filter((j) => j.arah === arah)
+  const jenisTerpilih = daftarJenis.find((j) => j.id === jenisId)
+  const anggotaTerpilih = daftarAnggota.find((a) => a.nama.toLowerCase() === pihak.trim().toLowerCase())
+  const nominalTerkunci = !!jenisTerpilih?.nominalDikunci && jenisTerpilih.nominalBawaan != null
 
   // Jenis harus sesuai arah: ganti arah → kosongkan pilihan yang tidak lagi cocok
   React.useEffect(() => {
     if (jenisId && !jenisTersedia.some((j) => j.id === jenisId)) setValue('jenisId', undefined as unknown as number)
   }, [arah, jenisId, jenisTersedia, setValue])
+
+  // Prefill nominal (Spec 2 §B4): jenis berganti → jumlah diisi ulang dari jenis baru
+  const jenisSebelumnya = React.useRef<number | undefined>(jenisId)
+  React.useEffect(() => {
+    if (jenisSebelumnya.current === jenisId) return
+    jenisSebelumnya.current = jenisId
+    const j = daftarJenis.find((x) => x.id === jenisId)
+    if (j?.nominalBawaan != null) setValue('jumlah', j.nominalBawaan, { shouldValidate: true })
+    else if (j) setValue('jumlah', undefined as unknown as number)
+    setAnggotaKeluargaId(null) // tanggungan milik jenis/anggota lama tidak boleh terbawa (Spec 2 §A5)
+  }, [jenisId, daftarJenis, setValue])
+  const anggotaSebelumnya = React.useRef<number | undefined>(anggotaTerpilih?.id)
+  React.useEffect(() => {
+    if (anggotaSebelumnya.current === anggotaTerpilih?.id) return
+    anggotaSebelumnya.current = anggotaTerpilih?.id
+    setAnggotaKeluargaId(null)
+  }, [anggotaTerpilih?.id])
+
+  // Siapa yang meninggal (Spec 2 §A5): hanya bila jenis penanda + anggota terdaftar
+  const tampilkanMeninggal = !!jenisTerpilih?.menandaiMeninggal && !!anggotaTerpilih
+  const sasaran = tampilkanMeninggal
+    ? anggotaKeluargaId
+      ? anggotaTerpilih!.keluarga.find((k) => k.id === anggotaKeluargaId)
+      : { nama: anggotaTerpilih!.nama, status: anggotaTerpilih!.status }
+    : undefined
 
   function pilihModeTanggal(m: ModeTanggal) {
     setModeTanggal(m)
@@ -104,6 +153,7 @@ export function FormCatatan({
       const cocok = daftarAnggota.find((a) => a.nama.toLowerCase() === pihak.toLowerCase())
       if (pihak) fd.set('namaPihak', cocok ? cocok.nama : pihak)
       if (cocok) fd.set('anggotaId', String(cocok.id))
+      if (cocok && anggotaKeluargaId && jenisTerpilih?.menandaiMeninggal) fd.set('anggotaKeluargaId', String(anggotaKeluargaId))
       if (bukti) fd.set('bukti', bukti)
       if (bukti === null) fd.set('hapusBukti', '1')
       if (abaikanDuplikat) fd.set('abaikanDuplikat', '1')
@@ -117,7 +167,7 @@ export function FormCatatan({
       }
       const data: HasilSimpanCatatan = hasil.data
       if (data.perluKonfirmasi) {
-        setKonfirmasi(data.mirip)
+        setKonfirmasi({ mirip: data.mirip, kalimat: data.kalimat })
         return
       }
       toast.success(`${modeUbah ? 'Perubahan tersimpan' : 'Tersimpan'}. ${data.catatan.noBukti} · ${formatRupiah(data.catatan.jumlah)}`)
@@ -190,7 +240,7 @@ export function FormCatatan({
               id="jenisId"
               nilai={field.value ?? null}
               onUbah={(v) => field.onChange(v ?? undefined)}
-              pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: j.nama, keterangan: j.keterangan ?? undefined }))}
+              pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: labelJenis(j), keterangan: j.keterangan ?? undefined }))}
               placeholder={arah ? 'Pilih dari daftar…' : 'Pilih dulu Uang Masuk atau Uang Keluar'}
               placeholderCari="Ketik nama jenis…"
               galat={!!g.jenisId}
@@ -219,7 +269,7 @@ export function FormCatatan({
               id="pihak"
               nilai={field.value || null}
               onUbah={(v) => field.onChange(v ?? '')}
-              pilihan={daftarAnggota.map((a) => ({ nilai: a.nama, label: a.nama }))}
+              pilihan={daftarAnggota.map((a) => ({ nilai: a.nama, label: a.nama, keterangan: [a.nomor, a.status === 'meninggal' ? 'meninggal dunia' : null].filter(Boolean).join(' · ') || undefined }))}
               placeholder="Pilih anggota atau ketik nama (boleh dikosongkan)"
               placeholderCari="Ketik nama anggota atau nama bebas…"
               labelKosong="Tanpa nama"
@@ -228,7 +278,40 @@ export function FormCatatan({
           )}
         />
         <PesanGalat>{g.pihak?.message}</PesanGalat>
+        {jenisTerpilih?.menandaiMeninggal && pihak.trim() && !anggotaTerpilih && (
+          <p className="text-ket text-muted">Nama di atas belum terdaftar sebagai anggota, jadi tidak ada status yang bisa ditandai. Catatan kasnya tetap tersimpan seperti biasa.</p>
+        )}
       </div>
+
+      {/* Siapa yang meninggal? (Spec 2 §A5) */}
+      {tampilkanMeninggal && anggotaTerpilih && (
+        <div className="flex flex-col gap-3 rounded-input border border-warning bg-warning-soft p-4">
+          <Label htmlFor="anggotaKeluargaId" className="flex items-center gap-2 text-warning">
+            <HeartCrack className="size-5" /> Siapa yang meninggal?
+          </Label>
+          <PilihanCari<number>
+            id="anggotaKeluargaId"
+            nilai={anggotaKeluargaId}
+            onUbah={setAnggotaKeluargaId}
+            labelKosong={`${anggotaTerpilih.nama} (anggota sendiri)`}
+            placeholder={`${anggotaTerpilih.nama} (anggota sendiri)`}
+            placeholderCari="Ketik nama tanggungan…"
+            pilihan={anggotaTerpilih.keluarga.map((k) => ({ nilai: k.id, label: k.nama, keterangan: `${k.hubungan}${k.status === 'meninggal' ? ' · sudah bertanda meninggal' : ''}` }))}
+            galat={!!galatUmum && galatUmum.includes('keluarga')}
+          />
+          {sasaran && sasaran.status === 'meninggal' ? (
+            <p className="text-isi font-medium text-keluar">
+              <span className="font-bold">{sasaran.nama}</span> sudah bertanda meninggal dunia. Periksa dulu, jangan sampai santunannya terbayar dua kali.
+            </p>
+          ) : (
+            sasaran && (
+              <p className="text-isi text-warning">
+                Menyimpan catatan ini akan menandai <span className="font-bold">{sasaran.nama}</span> meninggal dunia. Menghapus catatannya akan mengembalikan statusnya seperti semula.
+              </p>
+            )
+          )}
+        </div>
+      )}
 
       {/* 6. Jumlah */}
       <div className="flex flex-col gap-2">
@@ -236,7 +319,16 @@ export function FormCatatan({
         <Controller
           control={control}
           name="jumlah"
-          render={({ field }) => <InputRupiah id="jumlah" nilai={field.value ?? null} onUbah={(n) => field.onChange(n ?? undefined)} galat={!!g.jumlah} />}
+          render={({ field }) => (
+            <InputRupiah
+              id="jumlah"
+              nilai={field.value ?? null}
+              onUbah={(n) => field.onChange(n ?? undefined)}
+              galat={!!g.jumlah}
+              hanyaBaca={nominalTerkunci}
+              petunjuk={nominalTerkunci ? 'Nominal ditetapkan pengurus. Ubah di Pengaturan › Jenis Uang bila memang berubah.' : jenisTerpilih?.nominalBawaan != null ? 'Terisi otomatis dari nominal jenis ini; boleh diubah.' : undefined}
+            />
+          )}
         />
         <PesanGalat>{g.jumlah?.message}</PesanGalat>
       </div>
@@ -283,11 +375,9 @@ export function FormCatatan({
       {/* Kemungkinan duplikat (docs/02 §5.2): bukan penolakan */}
       <Dialog open={konfirmasi !== null} onOpenChange={(o) => !o && setKonfirmasi(null)}>
         <DialogContent judul="Catatan serupa sudah ada">
-          <DialogDescription className="text-isi text-muted">
-            Ada catatan lain dengan tanggal, jenis, dan jumlah yang sama persis. Kalau memang dua kejadian berbeda, lanjutkan saja.
-          </DialogDescription>
+          <DialogDescription className="text-isi">{konfirmasi?.kalimat}</DialogDescription>
           <ul className="flex flex-col gap-2">
-            {konfirmasi?.map((m) => (
+            {konfirmasi?.mirip.map((m) => (
               <li key={m.noBukti} className="rounded-input border border-border px-4 py-3">
                 <span className="angka font-semibold">{m.noBukti}</span>
                 <span className="text-muted"> · {m.keterangan}</span>
@@ -299,7 +389,7 @@ export function FormCatatan({
               Tetap Simpan
             </Button>
             <Button variant="sekunder" ukuran="aksi" className="sm:flex-1" onClick={() => setKonfirmasi(null)}>
-              Periksa Dulu
+              Batal, Saya Periksa Dulu
             </Button>
           </div>
         </DialogContent>

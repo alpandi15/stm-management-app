@@ -391,6 +391,46 @@ cari "santun" → satu hasil, nama bebas "Ibu Marni" tersimpan sebagai `nama_pih
 kalender memilih 2 September dan mengunci tanggal setelah hari ini, penyaring Catatan Kas
 dan Laporan bekerja lewat combobox/kalender, 360px tanpa geser samping.
 
+## Sisipan — Spesifikasi Pembaruan 2 (`docs/STM_KEUANGAN_SPEC_2.md`), 18 September 2026
+
+Spec 2 ditulis untuk repo Laravel `stm-management-lite`; diterjemahkan ke arsitektur ini
+dengan aturan bisnis yang sama. Pemetaan:
+
+| Spec 2 | Di repo ini |
+| --- | --- |
+| `keuangan_anggota_keluarga` | tabel `anggota_keluarga` (migrasi `0001_keluarga_nominal_periode.sql`) |
+| kolom `status`, `tanggal_meninggal`, `ditandai_oleh_transaksi_id` | kolom sama di `anggota` dan `anggota_keluarga`; `anggota_asal_id`, `tanggal_bergabung`, `pindah_ke_anggota_id` (Bagian C) |
+| `keuangan_tipe.menandai_meninggal`, `nominal_bawaan`, `nominal_dikunci`, `periode` | kolom sama di `jenis`; nominal INTEGER rupiah penuh |
+| `PenandaMeninggalService` + `TransaksiObserver` | `services/penanda-meninggal.ts` (murni, menerima Db) dipanggil dari `services/transaksi.ts` pada buat/ubah/hapus/kembalikan — bukan dari Server Action |
+| `TransaksiRequest::after()` | `services/aturan-catatan.ts`: `periksaKeluargaMilik`, `periksaNominal`, `cariDuplikat` per periode |
+| Route keluarga | halaman `/anggota/[id]/keluarga` + aksi `tambahKeluarga/ubahKeluarga/hapusKeluarga/pecahKeluarga` |
+| `?jenis=masuk&tipe=PM11&anggota=` | dibaca `catatan/baru/page.tsx` sebagai nilai awal form |
+| Permission | tidak ada (aplikasi satu pengguna) |
+| Test §A8, §B7 | `services/penanda-meninggal.test.ts` (9 tes: penanda, batal, manual tak tersentuh, pindah sasaran, ganti jenis, kepemilikan, kunci nominal, duplikat per periode, seed 21) |
+
+Tambahan atas permintaan: **nomor anggota** (`anggota.nomor`, unik, disarankan `A-0001`
+berurutan tapi bisa diubah) dan **alamat dengan pin peta** (Leaflet + ubin OpenStreetMap,
+pusat bawaan 3.5916998, 98.7858193; `anggota.lat/lng` REAL). Peta adalah **pengecualian
+aturan tanpa internet**: ubin butuh koneksi; tanpa koneksi peta kosong tapi pin dan
+koordinat tetap tersimpan. Marker memakai SVG inline supaya tidak bergantung berkas Leaflet.
+
+**Hasil uji (Electron 22 / Node 16, 30 langkah):** PM01 nominal 50.000 + kunci → form
+mengisi 50.000, `readOnly`, petunjuk; iuran kedua bulan sama → dialog *"Sepertinya Budi
+Santoso sudah membayar Iuran Wajib Anggota untuk September 2026 (nomor bukti KM-2026-0006).
+Tetap simpan?"*; sakelar penanda hanya tampil untuk uang keluar; label opsi *Iuran Wajib
+Anggota · Rp 50.000 / bulan*; nomor anggota disarankan A-0001; klik peta → koordinat
+tersimpan; tiga tanggungan (satu meninggal manual); santunan untuk Ani → kotak *"Siapa yang
+meninggal?"*, kalimat penegas, kartu catatan *Meninggal: Ani Santoso · Istri*, DB Ani
+meninggal dengan penanda; santunan kedua → peringatan santunan ganda; hapus → Ani aktif
+lagi, Nenek (manual) tetap meninggal; santunan tanpa tanggungan menandai Budi sendiri;
+pecah Cahyo → anggota baru "Pecah KK, bergabung 18 September 2026", induk menampilkan
+*Sudah jadi anggota sendiri*, diarahkan ke `/catatan/baru?jenis=masuk&tipe=PM11&anggota=3`
+dengan jenis dan nama terisi; tombol pecah tidak tampil untuk yang meninggal; 360px tanpa
+geser samping.
+
+Jebakan E1 (tanggal sebagai UTC) tidak berlaku: semua tanggal `TEXT 'YYYY-MM-DD'`. E2 (soft
+delete melewati FK) sudah ditangani sejak Fase 8: pemakaian diperiksa eksplisit.
+
 ## Fase 9 — Electron
 
 Ikuti `docs/03` seluruhnya, dan `docs/05` untuk Windows 7.

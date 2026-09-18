@@ -13,12 +13,17 @@ export function InputRupiah({
   onUbah,
   galat,
   autoFocus,
+  hanyaBaca,
+  petunjuk,
 }: {
   id: string
   nilai: number | null
   onUbah: (n: number | null) => void
   galat?: boolean
   autoFocus?: boolean
+  /** Nominal terkunci (Spec 2 §B4): tampil tapi tidak bisa diubah */
+  hanyaBaca?: boolean
+  petunjuk?: string
 }) {
   const [teks, setTeks] = React.useState(nilai ? formatAngka(nilai) : '')
 
@@ -46,16 +51,19 @@ export function InputRupiah({
           value={teks}
           onChange={ubah}
           placeholder="0"
+          readOnly={hanyaBaca}
           aria-invalid={galat || undefined}
           className={cn(
             'angka flex min-h-aksi w-full rounded-input border border-border bg-surface pl-14 pr-4 text-judul font-bold text-text placeholder:text-muted',
             'focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary aria-[invalid=true]:border-keluar',
+            hanyaBaca && 'bg-bg text-muted',
           )}
         />
       </div>
       <p className="min-h-5 text-label text-muted" aria-live="polite">
         {nilai ? terbilangRupiah(nilai) : ''}
       </p>
+      {petunjuk && <p className="text-ket text-muted">{petunjuk}</p>}
     </div>
   )
 }

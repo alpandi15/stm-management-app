@@ -15,6 +15,7 @@
 | Sesi | `jose` **4.x** (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native. 4.x karena 5.x butuh Node 18 |
 | Hash PIN | `bcryptjs` | Murni JavaScript — penting, lihat catatan di bawah |
 | Tanggal | `date-fns` + `date-fns/locale/id` | |
+| Peta alamat | `leaflet` + ubin OpenStreetMap | Pin alamat anggota (permintaan pengguna). Satu-satunya fitur yang butuh internet; tanpa koneksi pin/koordinat tetap bekerja |
 | Pilihan & kalender | `cmdk` + `react-day-picker` | Komponen Combobox dan Calendar shadcn/ui: semua pilihan bisa dicari (pengganti `<select>`), pemilih tanggal berbahasa Indonesia dengan dropdown bulan/tahun. Keduanya hanya berjalan di klien |
 | Desktop | Electron **22.3.27** + electron-builder | Lihat `docs/03` dan `docs/05` — versi terakhir untuk Windows 7 |
 | Uji | `node --test` + `tsx` | Bawaan Node; `tsx` hanya untuk menjalankan `.ts` tanpa langkah kompilasi |
@@ -283,9 +284,12 @@ diri sendiri saat dibuka.
 
 Seed 19 jenis bawaan (`bawaan = true`, idempoten berdasarkan `kode`):
 
-Uang masuk — `PM01` Iuran Wajib Anggota, `PM02` Iuran Sukarela, `PM03` Uang Pangkal Anggota
-Baru, `PM04` Sumbangan / Donasi, `PM05` Denda Anggota, `PM06` Hasil Usaha & Kegiatan,
-`PM07` Pengembalian Pinjaman, `PM08` Jasa / Bunga Bank, `PM09` Penerimaan Lain-lain.
+Uang masuk — `PM01` Iuran Wajib Anggota (bulanan), `PM02` Iuran Sukarela, `PM03` Uang
+Pangkal Anggota Baru (sekali), `PM04` Sumbangan / Donasi, `PM05` Denda Anggota, `PM06`
+Hasil Usaha & Kegiatan, `PM07` Pengembalian Pinjaman, `PM08` Jasa / Bunga Bank, `PM09`
+Penerimaan Lain-lain, `PM10` Iuran Tahunan (tahunan), `PM11` Uang Pangkal Anggota Pecah dari
+Orang Tua (sekali). Total **21** jenis. `PK01` berperiode sekali dan satu-satunya yang
+`menandaiMeninggal`. Seed tidak pernah menulis nominal — itu milik pengurus.
 
 Uang keluar — `PK01` Santunan Duka / Kemalangan, `PK02` Bantuan Sakit / Rawat Inap,
 `PK03` Bantuan Pernikahan, `PK04` Konsumsi Rapat & Kegiatan, `PK05` Transportasi &
@@ -401,10 +405,30 @@ laporan bisa salah arah tanpa terlihat, dan dropdown di klien tidak bisa diperca
 
 ### 5.2 Kemungkinan duplikat
 
-Saat menyimpan, cari catatan lain yang belum terhapus dengan `tanggal` + `jenisId` +
-`jumlah` sama. Bila ada, **jangan tolak** — duplikat asli memang terjadi. Kembalikan
-status `perluKonfirmasi` beserta nomor bukti yang mirip, tampilkan dialog, dan simpan
-ulang dengan tanda `abaikanDuplikat: true` bila pengguna memilih lanjut.
+Saat menyimpan, cari catatan lain yang belum terhapus. Bila ada, **jangan tolak** — duplikat
+asli memang terjadi. Kembalikan status `perluKonfirmasi` beserta kalimat dan nomor bukti
+yang mirip, tampilkan dialog, dan simpan ulang dengan `abaikanDuplikat: true` bila pengguna
+memilih lanjut. Aturannya bergantung pada `jenis.periode` (Spec 2 §B4, `services/aturan-catatan.ts`):
+
+| `periode` | Dianggap duplikat bila ada catatan lain dengan |
+| --- | --- |
+| `bebas`, atau nama lepas tanpa anggota | tanggal + jenis + jumlah sama |
+| `bulanan` | anggota + jenis + bulan & tahun sama |
+| `tahunan` | anggota + jenis + tahun sama |
+| `sekali` | anggota + jenis, kapan pun |
+
+### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
+
+- `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat
+  kolom `readOnly` **dan** server menolak `jumlah ≠ nominal` (`periksaNominal`). Mengubah
+  nominal tidak mengubah catatan lama. Label opsi: `Iuran Wajib Anggota · Rp 50.000 / bulan`.
+- `jenis.menandaiMeninggal` (hanya uang keluar, dipaksa false untuk uang masuk): mencatat
+  jenis ini atas nama anggota menandai sasarannya meninggal — `anggotaKeluargaId` bila
+  terisi, kalau tidak anggotanya sendiri, kalau nama lepas tidak ada yang ditandai.
+  `services/penanda-meninggal.ts`: `terapkan` (buat, kembalikan), `batalkan` (hapus, lewat
+  `ditandaiOlehTransaksiId`, bukan sasaran saat ini), `segarkan` (ubah). Sasaran yang sudah
+  meninggal tidak disentuh; status manual (penanda kosong) tidak pernah dibatalkan.
+- `anggotaKeluargaId` wajib milik `anggotaId` — diperiksa di server (`periksaKeluargaMilik`).
 
 ### 5.3 Nomor bukti
 

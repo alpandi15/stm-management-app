@@ -9,7 +9,7 @@ import { berhasil, gagal, type HasilAksi } from '@/lib/hasil'
 import type { Transaksi } from '@/server/db/schema'
 
 export type HasilSimpanCatatan =
-  | { perluKonfirmasi: true; mirip: Array<{ noBukti: string; keterangan: string }> }
+  | { perluKonfirmasi: true; mirip: Array<{ noBukti: string; keterangan: string; tanggal: string }>; kalimat: string }
   | { perluKonfirmasi: false; catatan: Transaksi }
 
 function segarkan() {
@@ -17,6 +17,7 @@ function segarkan() {
   revalidatePath('/beranda')
   revalidatePath('/laporan')
   revalidatePath('/riwayat')
+  revalidatePath('/anggota')
 }
 
 /** Mengubah galat service menjadi hasil seragam; galat lain dilempar ke aksiTerlindungi. */
@@ -48,6 +49,7 @@ function bacaForm(fd: FormData): { input: InputCatatan | null; galat?: { pesan: 
     jenisId: angka('jenisId'),
     keterangan: teks('keterangan'),
     anggotaId: angka('anggotaId') ?? null,
+    anggotaKeluargaId: angka('anggotaKeluargaId') ?? null,
     namaPihak: teks('namaPihak') ?? null,
     jumlah: angka('jumlah'),
     metode: teks('metode'),

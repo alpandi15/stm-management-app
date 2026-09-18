@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { ArrowDownLeft, ArrowUpRight, Image as ImageIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import type { BarisCatatan } from '@/server/queries/transaksi'
+import { kalimatMeninggal } from '@/lib/catatan'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggalPendek } from '@/lib/tanggal'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -38,6 +39,7 @@ export function KartuCatatan({
           {catatan.keterangan}
           {catatan.namaPihak && ` · ${catatan.namaPihak}`}
         </p>
+        {kalimatMeninggal(catatan) && <p className="text-ket font-medium text-keluar">Meninggal: {kalimatMeninggal(catatan)}</p>}
         <p className="angka mt-1 text-ket text-muted">
           {formatTanggalPendek(catatan.tanggal)} · {catatan.metode === 'tunai' ? 'Tunai' : 'Transfer'} · {catatan.noBukti}
           {catatan.buktiFile && ' · ada foto'}

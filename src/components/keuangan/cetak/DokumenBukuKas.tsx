@@ -1,4 +1,5 @@
 import type { BarisCatatan } from '@/server/queries/transaksi'
+import { kalimatMeninggal } from '@/lib/catatan'
 import type { Pengaturan } from '@/server/db/schema'
 import type { Rentang } from '@/lib/tanggal'
 import { formatRupiah } from '@/lib/rupiah'
@@ -42,6 +43,7 @@ export function DokumenBukuKas({ baris, sisaAwal, rentang, p }: { baris: BarisCa
                 <td>
                   {b.keterangan}
                   {b.namaPihak ? ` — ${b.namaPihak}` : ''}
+                  {kalimatMeninggal(b) && <div style={{ fontSize: '8.5pt', color: '#6b7280' }}>Meninggal: {kalimatMeninggal(b)}</div>}
                 </td>
                 <td>{b.namaJenis}</td>
                 <td className="angka">{b.arah === 'masuk' ? formatRupiah(b.jumlah) : ''}</td>

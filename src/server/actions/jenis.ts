@@ -21,6 +21,23 @@ function kodeBerikutnya(arah: 'masuk' | 'keluar'): string {
   return `${awalan}${String(n + 1).padStart(2, '0')}`
 }
 
+/**
+ * Nilai turunan yang ditegakkan di server (Spec 2 §A4, §B5): penanda meninggal hanya untuk
+ * uang keluar (uang masuk dipaksa false walau dikirim paksa), kunci nominal dipaksa false
+ * bila nominal kosong.
+ */
+function nilaiJenis(d: InputJenis) {
+  const nominalBawaan = d.nominalBawaan ?? null
+  return {
+    nama: d.nama,
+    keterangan: d.keterangan?.trim() || null,
+    nominalBawaan,
+    nominalDikunci: nominalBawaan != null && !!d.nominalDikunci,
+    periode: d.periode ?? 'bebas',
+    menandaiMeninggal: d.arah === 'keluar' && !!d.menandaiMeninggal,
+  }
+}
+
 export const tambahJenis = aksiTerlindungi(async (input: InputJenis) => {
   const hasil = skemaJenis.safeParse(input)
   if (!hasil.success) {
@@ -30,27 +47,26 @@ export const tambahJenis = aksiTerlindungi(async (input: InputJenis) => {
   const urutan = (db.select({ m: max(schema.jenis.urutan) }).from(schema.jenis).get()?.m ?? 0) + 1
   const baris = db
     .insert(schema.jenis)
-    .values({ kode: kodeBerikutnya(hasil.data.arah), nama: hasil.data.nama, arah: hasil.data.arah, keterangan: hasil.data.keterangan?.trim() || null, urutan, aktif: true, bawaan: false })
+    .values({ kode: kodeBerikutnya(hasil.data.arah), arah: hasil.data.arah, ...nilaiJenis(hasil.data), urutan, aktif: true, bawaan: false })
     .returning()
     .get()
   segarkan()
   return berhasil(baris)
 })
 
-/** Ubah nama/keterangan. Arah tidak bisa diubah: catatan lama menyalin arah dari jenis ini. */
-export const ubahJenis = aksiTerlindungi(async (id: number, input: { nama: string; keterangan?: string | null }) => {
-  const hasil = skemaJenis.pick({ nama: true, keterangan: true }).safeParse(input)
+/**
+ * Ubah nama, keterangan, nominal, kunci, periode, penanda. Arah tidak bisa diubah: catatan
+ * lama menyalin arah dari jenis ini. Mengubah nominal TIDAK mengubah catatan yang sudah ada.
+ */
+export const ubahJenis = aksiTerlindungi(async (id: number, input: Omit<InputJenis, 'arah'>) => {
+  const lama = db.select().from(schema.jenis).where(eq(schema.jenis.id, id)).get()
+  if (!lama) return gagal('Jenis tidak ditemukan.')
+  const hasil = skemaJenis.safeParse({ ...input, arah: lama.arah })
   if (!hasil.success) {
     const isu = hasil.error.issues[0]
     return gagal(isu?.message ?? 'Isian belum lengkap.', isu?.path[0]?.toString())
   }
-  const baris = db
-    .update(schema.jenis)
-    .set({ nama: hasil.data.nama, keterangan: hasil.data.keterangan?.trim() || null })
-    .where(eq(schema.jenis.id, id))
-    .returning()
-    .get()
-  if (!baris) return gagal('Jenis tidak ditemukan.')
+  const baris = db.update(schema.jenis).set(nilaiJenis(hasil.data)).where(eq(schema.jenis.id, id)).returning().get()
   segarkan()
   return berhasil(baris)
 })

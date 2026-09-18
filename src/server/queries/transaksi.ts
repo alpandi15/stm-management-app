@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, asc, count, desc, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { anggota, jenis, transaksi, type Arah, type Jenis, type Transaksi } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, jenis, transaksi, type Arah, type Jenis, type Transaksi } from '@/server/db/schema'
 import type { Rentang } from '@/lib/tanggal'
 
 /**
@@ -18,8 +18,19 @@ export type FilterCatatan = {
   cari?: string
 }
 
-/** Baris catatan lengkap dengan nama jenis, siap tampil di kartu. */
-export type BarisCatatan = Transaksi & { namaJenis: string }
+/**
+ * Baris catatan lengkap dengan nama jenis, siap tampil di kartu. Untuk jenis penanda
+ * meninggal (Spec 2 §A5) ikut nama & hubungan yang meninggal: nama di kolom pihak adalah
+ * PENERIMA uang, belum tentu yang meninggal.
+ */
+export type BarisCatatan = Transaksi & {
+  namaJenis: string
+  menandaiMeninggal: boolean
+  /** Nama tanggungan yang meninggal; null = anggotanya sendiri (lihat namaAnggota) atau bukan penanda */
+  namaMeninggal: string | null
+  hubunganMeninggal: string | null
+  namaAnggota: string | null
+}
 
 const kolomBaris = {
   id: transaksi.id,
@@ -28,6 +39,7 @@ const kolomBaris = {
   arah: transaksi.arah,
   jenisId: transaksi.jenisId,
   anggotaId: transaksi.anggotaId,
+  anggotaKeluargaId: transaksi.anggotaKeluargaId,
   namaPihak: transaksi.namaPihak,
   keterangan: transaksi.keterangan,
   metode: transaksi.metode,
@@ -37,7 +49,23 @@ const kolomBaris = {
   dibuatPada: transaksi.dibuatPada,
   diubahPada: transaksi.diubahPada,
   namaJenis: jenis.nama,
+  menandaiMeninggal: jenis.menandaiMeninggal,
+  namaMeninggal: anggotaKeluarga.nama,
+  hubunganMeninggal: anggotaKeluarga.hubungan,
+  namaAnggota: anggota.nama,
 }
+
+/** Sumber baris standar: transaksi ⋈ jenis, ⟕ keluarga (yang meninggal), ⟕ anggota. */
+function dariCatatan() {
+  return db
+    .select(kolomBaris)
+    .from(transaksi)
+    .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
+    .leftJoin(anggotaKeluarga, eq(anggotaKeluarga.id, transaksi.anggotaKeluargaId))
+    .leftJoin(anggota, eq(anggota.id, transaksi.anggotaId))
+}
+
+
 
 function kondisi(f: FilterCatatan): SQL | undefined {
   const cari = f.cari?.trim()
@@ -63,10 +91,7 @@ export const PER_HALAMAN = 50
 export function daftarCatatan(f: FilterCatatan, halaman = 1): { baris: BarisCatatan[]; total: number } {
   const where = kondisi(f)
   const total = db.select({ n: count() }).from(transaksi).where(where).get()?.n ?? 0
-  const baris = db
-    .select(kolomBaris)
-    .from(transaksi)
-    .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
+  const baris = dariCatatan()
     .where(where)
     .orderBy(desc(transaksi.tanggal), desc(transaksi.id))
     .limit(PER_HALAMAN)
@@ -92,26 +117,12 @@ export function ringkasanCatatan(f: FilterCatatan): { masuk: number; keluar: num
 }
 
 export function ambilCatatan(id: number): BarisCatatan | null {
-  return (
-    db
-      .select(kolomBaris)
-      .from(transaksi)
-      .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
-      .where(and(eq(transaksi.id, id), belumDihapus()))
-      .get() ?? null
-  )
+  return dariCatatan().where(and(eq(transaksi.id, id), belumDihapus())).get() ?? null
 }
 
 /** Lima catatan terakhir untuk Beranda. */
 export function catatanTerakhir(n = 5): BarisCatatan[] {
-  return db
-    .select(kolomBaris)
-    .from(transaksi)
-    .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
-    .where(belumDihapus())
-    .orderBy(desc(transaksi.tanggal), desc(transaksi.id))
-    .limit(n)
-    .all()
+  return dariCatatan().where(belumDihapus()).orderBy(desc(transaksi.tanggal), desc(transaksi.id)).limit(n).all()
 }
 
 /** Jenis aktif untuk pilihan di form dan penyaring, urut sesuai `urutan`. */
@@ -119,14 +130,32 @@ export function daftarJenisAktif(): Jenis[] {
   return db.select().from(jenis).where(eq(jenis.aktif, true)).orderBy(asc(jenis.urutan), asc(jenis.nama)).all()
 }
 
-/** Anggota aktif untuk pilihan "Dari / Untuk siapa". */
-export function daftarAnggotaAktif(): Array<{ id: number; nama: string }> {
-  return db
-    .select({ id: anggota.id, nama: anggota.nama })
+export type AnggotaUntukForm = {
+  id: number
+  nama: string
+  nomor: string | null
+  status: 'aktif' | 'meninggal'
+  keluarga: Array<{ id: number; nama: string; hubungan: string; status: 'aktif' | 'meninggal' }>
+}
+
+/** Anggota aktif untuk pilihan "Dari / Untuk siapa", beserta tanggungannya (Spec 2 §A5). */
+export function daftarAnggotaAktif(): AnggotaUntukForm[] {
+  const daftar = db
+    .select({ id: anggota.id, nama: anggota.nama, nomor: anggota.nomor, status: anggota.status })
     .from(anggota)
     .where(eq(anggota.aktif, true))
     .orderBy(asc(anggota.nama))
     .all()
+  const keluarga = db
+    .select({ id: anggotaKeluarga.id, anggotaId: anggotaKeluarga.anggotaId, nama: anggotaKeluarga.nama, hubungan: anggotaKeluarga.hubungan, status: anggotaKeluarga.status })
+    .from(anggotaKeluarga)
+    .where(isNull(anggotaKeluarga.dihapusPada))
+    .orderBy(asc(anggotaKeluarga.nama))
+    .all()
+  return daftar.map((a) => ({
+    ...a,
+    keluarga: keluarga.filter((k) => k.anggotaId === a.id).map((k) => ({ id: k.id, nama: k.nama, hubungan: k.hubungan, status: k.status })),
+  }))
 }
 
 /** Dipakai pemeriksaan kas & laporan: Σ per arah tanpa penyaring apa pun. */
@@ -145,10 +174,7 @@ export function totalSemua(): { masuk: number; keluar: number } {
 
 /** Seluruh catatan dalam rentang, urut naik (tanggal, id) — untuk Buku Kas dengan saldo berjalan. */
 export function semuaCatatanDalamRentang(rentang: Rentang): BarisCatatan[] {
-  return db
-    .select(kolomBaris)
-    .from(transaksi)
-    .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
+  return dariCatatan()
     .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir)))
     .orderBy(asc(transaksi.tanggal), asc(transaksi.id))
     .all()

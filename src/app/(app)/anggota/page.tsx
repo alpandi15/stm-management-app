@@ -1,5 +1,5 @@
 import { wajibSesi } from '@/server/auth/session'
-import { daftarAnggota } from '@/server/queries/anggota'
+import { daftarAnggota, saranNomorAnggota } from '@/server/queries/anggota'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { DaftarAnggota } from '@/components/anggota/DaftarAnggota'
 
@@ -11,7 +11,7 @@ export default async function HalamanAnggota() {
   return (
     <div className="flex flex-col gap-6">
       <JudulHalaman>Anggota</JudulHalaman>
-      <DaftarAnggota baris={daftarAnggota()} />
+      <DaftarAnggota baris={daftarAnggota()} saranNomor={saranNomorAnggota()} />
     </div>
   )
 }

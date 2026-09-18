@@ -26,6 +26,7 @@ untuk fase berikutnya.
 | `docs/03-ELECTRON-BUILD.md` | Menggabungkan Next.js ke Electron dan membuat `.exe` |
 | `docs/04-RENCANA-BUILD.md` | Urutan fase pengerjaan beserta bukti selesai |
 | `docs/05-DUKUNGAN-WINDOWS-7.md` | Kenapa versi tertentu dikunci, polyfill Node 16, cara mengujinya |
+| `docs/STM_KEUANGAN_SPEC_2.md` | Keluarga & status meninggal, nominal/periode per jenis, pecah dari orang tua (ditulis untuk Laravel; pemetaannya di `docs/04`) |
 
 `docs/02` adalah rujukan utama saat ragu soal perilaku. `docs/01` menang bila menyangkut
 tampilan dan kata-kata di layar.
@@ -43,6 +44,7 @@ alasannya di `docs/05`.
 - Zod + React Hook Form
 - `cmdk` + `react-day-picker` untuk pilihan-bisa-cari dan kalender (klien saja); tidak ada
   `<select>`/`<input type="date">` mentah di aplikasi
+- `leaflet` untuk pin peta alamat anggota (klien saja, dimuat dinamis tanpa SSR)
 - **`jose` 4.x** untuk sesi, `bcryptjs` untuk PIN
 - **Electron 22.3.27** + electron-builder (target `nsis` dan `portable`, arch `ia32` + `x64`)
 - Node **20** di mesin pengembangan (`nvm use`); runtime pengguna adalah Node 16.17 di Electron
@@ -61,6 +63,8 @@ alasannya di `docs/05`.
    dalam laporan fase.
 6. **Jangan memakai fitur yang butuh server eksternal.** Tidak ada email, OAuth, API
    pihak ketiga, atau upload ke cloud. Aplikasi ini harus berjalan penuh tanpa internet.
+   Satu pengecualian atas permintaan pemilik: pin peta alamat anggota memakai ubin
+   OpenStreetMap (Leaflet) — tanpa internet peta kosong, koordinat tetap tersimpan.
 7. **Kerjakan satu fase per sesi** sesuai `docs/04`, lalu laporkan berkas yang dibuat dan
    bukti selesai yang benar-benar dijalankan.
 8. **Bila dokumen bertentangan dengan kode yang ada, tanyakan.** Jangan menebak.

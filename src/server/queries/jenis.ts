@@ -17,6 +17,10 @@ export function semuaJenis(): BarisJenis[] {
       urutan: jenis.urutan,
       aktif: jenis.aktif,
       bawaan: jenis.bawaan,
+      menandaiMeninggal: jenis.menandaiMeninggal,
+      nominalBawaan: jenis.nominalBawaan,
+      nominalDikunci: jenis.nominalDikunci,
+      periode: jenis.periode,
       dipakai: sql<number>`count(${transaksi.id})`,
     })
     .from(jenis)
