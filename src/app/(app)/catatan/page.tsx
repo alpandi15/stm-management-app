@@ -96,13 +96,13 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
       )}
 
       {totalHalaman > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="Halaman">
+        <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Halaman">
           <Button asChild variant="sekunder" className={cn(halaman <= 1 && 'pointer-events-none opacity-50')}>
             <Link href={tautanHalaman(halaman - 1)} aria-disabled={halaman <= 1}>
               Sebelumnya
             </Link>
           </Button>
-          <span className="text-isi text-muted">
+          <span className="order-first w-full text-center text-isi text-muted sm:order-none sm:w-auto">
             Halaman {halaman} dari {totalHalaman}
           </span>
           <Button asChild variant="sekunder" className={cn(halaman >= totalHalaman && 'pointer-events-none opacity-50')}>

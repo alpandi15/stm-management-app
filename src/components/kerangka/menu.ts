@@ -1,6 +1,6 @@
-import { FileText, History, House, NotebookPen, Settings, Users, type LucideIcon } from 'lucide-react'
+import { FileText, History, House, NotebookPen, Settings, Tags, Users, type LucideIcon } from 'lucide-react'
 
-/** Enam item menu, tidak lebih (docs/01 §4). */
+/** Tujuh item menu (docs/01 §4; Jenis Uang dipisah dari Pengaturan atas permintaan pemilik). */
 export type ItemMenu = { rute: string; label: string; Ikon: LucideIcon }
 
 export const MENU: ReadonlyArray<ItemMenu> = [
@@ -9,9 +9,9 @@ export const MENU: ReadonlyArray<ItemMenu> = [
   { rute: '/laporan', label: 'Laporan', Ikon: FileText },
   { rute: '/riwayat', label: 'Riwayat', Ikon: History },
   { rute: '/anggota', label: 'Anggota', Ikon: Users },
+  { rute: '/jenis', label: 'Jenis Uang', Ikon: Tags },
   { rute: '/pengaturan', label: 'Pengaturan', Ikon: Settings },
 ]
 
-/** Di bilah bawah (< 768px) hanya lima item pertama; Pengaturan pindah ke ikon di header. */
+/** Di bilah bawah (< 768px) hanya lima item pertama; Jenis Uang dan Pengaturan lewat ikon di header. */
 export const MENU_BILAH_BAWAH = MENU.slice(0, 5)
-export const ITEM_PENGATURAN = MENU[5]

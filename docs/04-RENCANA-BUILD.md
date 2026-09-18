@@ -431,6 +431,21 @@ geser samping.
 Jebakan E1 (tanggal sebagai UTC) tidak berlaku: semua tanggal `TEXT 'YYYY-MM-DD'`. E2 (soft
 delete melewati FK) sudah ditangani sejak Fase 8: pemakaian diperiksa eksplisit.
 
+## Sisipan — Iuran Duka, menu Jenis Uang, daftar anggota besar, peta anggota (18 September 2026)
+
+- Jenis bawaan `PM12` Iuran Duka (seed idempoten menambahkannya ke pemasangan lama saat
+  start; 22 jenis).
+- Menu **Jenis Uang** (`/jenis`) terpisah dari Pengaturan; Pengaturan menyisakan tautan.
+- Keterangan catatan terisi otomatis dari jenis dan boleh diubah (`FormCatatan`).
+- Daftar anggota: 25 per halaman, pencarian & penyaring di server (`daftarAnggota(filter,
+  halaman)`, `ringkasanAnggota()`), tabel di layar lebar, kartu di layar sempit.
+- `/peta`: halaman penuh, `semuaTitikAnggota()`, klaster marker, pencarian menyaring marker.
+- Uji dengan 300 anggota acak di sekitar Medan (Electron 22 / Node 16): 13 halaman,
+  cari "Sari Nas" → 1 hasil lewat URL tanpa kehilangan fokus, penyaring Meninggal, peta
+  16 klaster + 8 marker tunggal untuk 301 titik, cari "Budi" menyaring 13 marker dan
+  popup terbuka saat hasil diklik, keterangan otomatis mengikuti jenis tapi tidak menimpa
+  yang diketik sendiri, 360px tanpa geser samping (baris halaman dibuat membungkus).
+
 ## Fase 9 — Electron
 
 Ikuti `docs/03` seluruhnya, dan `docs/05` untuk Windows 7.

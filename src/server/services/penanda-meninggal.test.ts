@@ -31,10 +31,10 @@ function dbUji() {
   return { db, kode, budi, ani, lain, cahyo, catat, statusBudi, statusAni }
 }
 
-test('seed: 21 jenis, PK01 satu-satunya penanda, periode PM01/PM03/PM10/PM11/PK01 benar, nominal kosong', () => {
+test('seed: 22 jenis, PK01 satu-satunya penanda, periode PM01/PM03/PM10/PM11/PK01 benar, nominal kosong', () => {
   const { db, kode } = dbUji()
   const semua = db.select().from(schema.jenis).all()
-  assert.equal(semua.length, 21)
+  assert.equal(semua.length, 22)
   assert.deepEqual(semua.filter((j) => j.menandaiMeninggal).map((j) => j.kode), ['PK01'])
   assert.equal(kode('PM01').periode, 'bulanan')
   assert.equal(kode('PM03').periode, 'sekali')

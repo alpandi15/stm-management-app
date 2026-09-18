@@ -44,7 +44,8 @@ alasannya di `docs/05`.
 - Zod + React Hook Form
 - `cmdk` + `react-day-picker` untuk pilihan-bisa-cari dan kalender (klien saja); tidak ada
   `<select>`/`<input type="date">` mentah di aplikasi
-- `leaflet` untuk pin peta alamat anggota (klien saja, dimuat dinamis tanpa SSR)
+- `leaflet` + `leaflet.markercluster` untuk pin alamat dan peta seluruh anggota (klien saja,
+  dimuat dinamis tanpa SSR)
 - **`jose` 4.x** untuk sesi, `bcryptjs` untuk PIN
 - **Electron 22.3.27** + electron-builder (target `nsis` dan `portable`, arch `ia32` + `x64`)
 - Node **20** di mesin pengembangan (`nvm use`); runtime pengguna adalah Node 16.17 di Electron

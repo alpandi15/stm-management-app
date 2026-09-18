@@ -1,12 +1,46 @@
 import 'server-only'
-import { and, asc, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, count, eq, isNotNull, isNull, like, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/server/db'
 import { anggota, anggotaKeluarga, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
 
 export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null }
 
-/** Daftar anggota (aktif dulu, lalu nama) dengan total uang masuk yang pernah tercatat atas namanya. */
-export function daftarAnggota(): BarisAnggota[] {
+import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
+
+export type FilterAnggota = { cari?: string; saring?: SaringAnggota }
+
+function kondisiAnggota(f: FilterAnggota): SQL | undefined {
+  const cari = f.cari?.trim()
+  const pola = cari ? `%${cari}%` : null
+  return and(
+    pola ? or(like(anggota.nama, pola), like(anggota.nomor, pola), like(anggota.alamat, pola), like(anggota.noHp, pola)) : undefined,
+    f.saring === 'aktif' ? eq(anggota.aktif, true) : undefined,
+    f.saring === 'nonaktif' ? eq(anggota.aktif, false) : undefined,
+    f.saring === 'meninggal' ? eq(anggota.status, 'meninggal') : undefined,
+  )
+}
+
+/** Jumlah anggota per keadaan — untuk tombol penyaring. */
+export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: number; meninggal: number } {
+  const r = db
+    .select({
+      semua: count(),
+      aktif: sql<number>`sum(case when ${anggota.aktif} = 1 then 1 else 0 end)`,
+      nonaktif: sql<number>`sum(case when ${anggota.aktif} = 0 then 1 else 0 end)`,
+      meninggal: sql<number>`sum(case when ${anggota.status} = 'meninggal' then 1 else 0 end)`,
+    })
+    .from(anggota)
+    .get()
+  return { semua: r?.semua ?? 0, aktif: Number(r?.aktif ?? 0), nonaktif: Number(r?.nonaktif ?? 0), meninggal: Number(r?.meninggal ?? 0) }
+}
+
+/**
+ * Daftar anggota berhalaman (25 per halaman) dengan pencarian di server — siap untuk ribuan
+ * anggota. Urutan: aktif dulu, lalu nama. Total iuran = Σ uang masuk atas namanya.
+ */
+export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: BarisAnggota[]; total: number } {
+  const where = kondisiAnggota(f)
+  const total = db.select({ n: count() }).from(anggota).where(where).get()?.n ?? 0
   const jumlahKeluarga = new Map(
     db
       .select({ anggotaId: anggotaKeluarga.anggotaId, n: sql<number>`count(*)` })
@@ -17,7 +51,7 @@ export function daftarAnggota(): BarisAnggota[] {
       .map((r) => [r.anggotaId, Number(r.n)]),
   )
   const namaSemua = new Map(db.select({ id: anggota.id, nama: anggota.nama }).from(anggota).all().map((a) => [a.id, a.nama]))
-  return db
+  const baris = db
     .select({
       id: anggota.id,
       nomor: anggota.nomor,
@@ -38,8 +72,11 @@ export function daftarAnggota(): BarisAnggota[] {
     })
     .from(anggota)
     .leftJoin(transaksi, and(eq(transaksi.anggotaId, anggota.id), isNull(transaksi.dihapusPada)))
+    .where(where)
     .groupBy(anggota.id)
     .orderBy(sql`${anggota.aktif} desc`, asc(anggota.nama))
+    .limit(PER_HALAMAN_ANGGOTA)
+    .offset((halaman - 1) * PER_HALAMAN_ANGGOTA)
     .all()
     .map((b) => ({
       ...b,
@@ -48,6 +85,20 @@ export function daftarAnggota(): BarisAnggota[] {
       jumlahKeluarga: jumlahKeluarga.get(b.id) ?? 0,
       namaAsal: b.anggotaAsalId ? (namaSemua.get(b.anggotaAsalId) ?? null) : null,
     }))
+  return { baris, total }
+}
+
+export type TitikAnggota = { id: number; nomor: string | null; nama: string; alamat: string | null; noHp: string | null; lat: number; lng: number; aktif: boolean; status: 'aktif' | 'meninggal' }
+
+/** Semua anggota yang punya titik peta — untuk halaman peta (ribuan titik masih ringan). */
+export function semuaTitikAnggota(): TitikAnggota[] {
+  return db
+    .select({ id: anggota.id, nomor: anggota.nomor, nama: anggota.nama, alamat: anggota.alamat, noHp: anggota.noHp, lat: anggota.lat, lng: anggota.lng, aktif: anggota.aktif, status: anggota.status })
+    .from(anggota)
+    .where(and(isNotNull(anggota.lat), isNotNull(anggota.lng)))
+    .orderBy(asc(anggota.nama))
+    .all()
+    .map((a) => ({ ...a, lat: a.lat as number, lng: a.lng as number }))
 }
 
 export function ambilAnggota(id: number): Anggota | null {

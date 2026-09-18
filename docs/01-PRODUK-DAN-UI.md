@@ -160,7 +160,8 @@ menu bawah (bottom bar) di bawah 768px. Di menu bawah hanya lima item pertama ya
 dengan label 13px pada lebar 360px; **Pengaturan pindah ke ikon roda gigi di header**
 (di sebelah tombol Kunci) pada lebar itu.
 
-Isi menu — enam item, tidak lebih:
+Isi menu — tujuh item (Jenis Uang dipisah dari Pengaturan atas permintaan pemilik,
+18 September 2026):
 
 | Ikon | Label | Rute |
 | --- | --- | --- |
@@ -169,7 +170,12 @@ Isi menu — enam item, tidak lebih:
 | `FileText` | Laporan | `/laporan` |
 | `History` | Riwayat | `/riwayat` |
 | `Users` | Anggota | `/anggota` |
+| `Tags` | Jenis Uang | `/jenis` |
 | `Settings` | Pengaturan | `/pengaturan` |
+
+Di bilah bawah tetap lima item pertama; Jenis Uang dan Pengaturan lewat ikon di header.
+Halaman **Peta Anggota** (`/peta`) berdiri sendiri tanpa sidebar — dibuka dari tombol di
+halaman Anggota, kembali lewat tombol di kepala peta.
 
 Header atas berisi nama STM di kiri dan tombol **Kunci** (kembali ke layar PIN) di kanan.
 Tidak ada avatar, tidak ada notifikasi, tidak ada pencarian global.
@@ -257,7 +263,8 @@ Satu kolom, urutan tetap:
    Terpilih otomatis bila datang dari tombol Beranda.
 2. **Tanggal** — default hari ini, dengan tiga pintasan `Hari Ini · Kemarin · Pilih Tanggal`.
 3. **Untuk apa uangnya?** — daftar pilihan menyesuaikan jenis.
-4. **Keterangan** — placeholder *"Contoh: Iuran wajib Januari 2026"*.
+4. **Keterangan** — terisi otomatis dengan nama jenis yang dipilih dan boleh diubah;
+   bila sudah diketik sendiri, ganti jenis tidak menimpanya.
 5. **Dari / Untuk siapa** — boleh pilih anggota terdaftar atau ketik nama bebas. Opsional.
 6. **Jumlah Uang** — prefix `Rp`, pemisah ribuan otomatis saat mengetik,
    `inputMode="numeric"`. Terbilang muncul di bawahnya.
@@ -306,8 +313,15 @@ sebenarnya, ditutup badge **Cocok** atau **Tidak Cocok**.
 
 ### 5.8 Anggota — `/anggota`
 
-Daftar kartu sederhana: nama, nomor HP, total iuran yang pernah dibayar.
-Tambah/ubah lewat panel geser dari kanan, bukan halaman terpisah.
+Dirancang untuk ribuan anggota: tabel padat di layar lebar (nomor, nama + HP, alamat,
+keadaan, total iuran, keluarga, menu ⋮) dan kartu di layar sempit, **25 per halaman**,
+pencarian langsung ke query di server (ditunda 300 ms, ditulis ke URL), tombol Tampilkan
+Semua / Aktif / Nonaktif / Meninggal dengan jumlahnya. Tambah/ubah lewat panel geser dari
+kanan: nomor anggota (disarankan `A-0001`), nama, HP, alamat + pin peta, status hidup /
+meninggal. Tombol **Peta Anggota** membuka `/peta`: seluruh titik dengan klaster
+(`leaflet.markercluster`), warna per keadaan, kotak cari yang menyaring marker dan
+menerbangkan peta ke hasil yang diklik, popup berisi nomor/nama/alamat/HP dan tautan
+Keluarga.
 
 ### 5.9 Pengaturan — `/pengaturan`
 

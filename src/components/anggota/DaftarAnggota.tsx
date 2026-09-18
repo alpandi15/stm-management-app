@@ -1,11 +1,13 @@
 'use client'
 import * as React from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { ExternalLink, Pencil, Phone, Plus, Search, Trash2, UserRoundCheck, UserRoundX, Users } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRoundCheck, UserRoundX, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifAnggota, hapusAnggota, tambahAnggota, ubahAnggota } from '@/server/actions/anggota'
 import type { BarisAnggota } from '@/server/queries/anggota'
+import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggal, hariIni } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
@@ -22,16 +24,54 @@ import { cn } from '@/lib/utils'
 
 type Form = { nomor: string; nama: string; noHp: string; alamat: string; lat: number | null; lng: number | null; status: 'aktif' | 'meninggal'; tanggalMeninggal: string }
 
-export function DaftarAnggota({ baris, saranNomor }: { baris: BarisAnggota[]; saranNomor: string }) {
+export function DaftarAnggota({
+  baris,
+  total,
+  halaman,
+  cari,
+  saring,
+  ringkasan,
+  saranNomor,
+}: {
+  baris: BarisAnggota[]
+  total: number
+  halaman: number
+  cari: string
+  saring: SaringAnggota
+  ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number }
+  saranNomor: string
+}) {
   const router = useRouter()
-  const [cari, setCari] = React.useState('')
+  const pathname = usePathname()
+  const params = useSearchParams()
+  const [teksCari, setTeksCari] = React.useState(cari)
+  const [sedangCari, mulaiCari] = React.useTransition()
+
+  // Pencarian langsung ke query: ketikan ditunda 300 ms lalu ditulis ke URL → halaman dirender ulang di server
+  const ubahUrl = React.useCallback(
+    (perubahan: Record<string, string | undefined>) => {
+      const p = new URLSearchParams(params.toString())
+      for (const [k, v] of Object.entries(perubahan)) {
+        if (v) p.set(k, v)
+        else p.delete(k)
+      }
+      mulaiCari(() => router.replace(`${pathname}?${p.toString()}`, { scroll: false }))
+    },
+    [params, pathname, router],
+  )
+  React.useEffect(() => {
+    if (teksCari.trim() === cari) return
+    const t = setTimeout(() => ubahUrl({ cari: teksCari.trim() || undefined, hal: undefined }), 300)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teksCari])
+
+  const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN_ANGGOTA))
   const [panel, setPanel] = React.useState<{ mode: 'tambah' } | { mode: 'ubah'; id: number } | null>(null)
   const [form, setForm] = React.useState<Form>({ nomor: '', nama: '', noHp: '', alamat: '', lat: null, lng: null, status: 'aktif', tanggalMeninggal: '' })
   const [galat, setGalat] = React.useState<{ pesan: string; field?: string } | null>(null)
   const [hapus, setHapus] = React.useState<BarisAnggota | null>(null)
   const [sedangKirim, mulai] = React.useTransition()
-
-  const tampil = baris.filter((a) => !cari.trim() || `${a.nama} ${a.nomor ?? ''}`.toLowerCase().includes(cari.trim().toLowerCase()))
 
   function bukaTambah() {
     setForm({ nomor: saranNomor, nama: '', noHp: '', alamat: '', lat: null, lng: null, status: 'aktif', tanggalMeninggal: '' })
@@ -98,20 +138,108 @@ export function DaftarAnggota({ baris, saranNomor }: { baris: BarisAnggota[]; sa
 
   const galatField = (k: string) => (galat?.field === k ? <PesanGalat>{galat.pesan}</PesanGalat> : null)
 
+  const Badge = ({ a }: { a: BarisAnggota }) => (
+    <span className="flex flex-wrap gap-1">
+      {!a.aktif && <span className="rounded-badge bg-border px-2.5 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>}
+      {a.status === 'meninggal' && <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>}
+      {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-2.5 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
+      {a.aktif && a.status === 'aktif' && !a.anggotaAsalId && <span className="rounded-badge bg-masuk-soft px-2.5 py-0.5 text-ket font-semibold text-masuk">Aktif</span>}
+    </span>
+  )
+
+  const MenuAksi = ({ a }: { a: BarisAnggota }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="flex size-sentuh items-center justify-center rounded-input text-muted hover:bg-bg hover:text-text" aria-label={`Menu ${a.nama}`}>
+          <MoreVertical className="size-6" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => bukaUbah(a)}>
+          <Pencil /> Ubah
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={`/anggota/${a.id}/keluarga`}>
+            <Users /> Keluarga ({a.jumlahKeluarga})
+          </Link>
+        </DropdownMenuItem>
+        {a.lat != null && a.lng != null && (
+          <DropdownMenuItem asChild>
+            <a href={`https://www.openstreetmap.org/?mlat=${a.lat}&mlon=${a.lng}#map=17/${a.lat}/${a.lng}`} target="_blank" rel="noreferrer">
+              <ExternalLink /> Buka di peta
+            </a>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onSelect={() => aturAktif(a)}>
+          {a.aktif ? <UserRoundX /> : <UserRoundCheck />} {a.aktif ? 'Nonaktifkan' : 'Aktifkan'}
+        </DropdownMenuItem>
+        {a.jumlahCatatan === 0 && (
+          <DropdownMenuItem bahaya onSelect={() => setHapus(a)}>
+            <Trash2 /> Hapus
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
+  const tautanHalaman = (h: number) => {
+    const p = new URLSearchParams(params.toString())
+    p.set('hal', String(h))
+    return `${pathname}?${p.toString()}`
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
-          <Input aria-label="Cari anggota" placeholder="Cari nama atau nomor anggota…" className="pl-12" value={cari} onChange={(e) => setCari(e.target.value)} />
+      <div className="flex flex-col gap-3 rounded-kartu border border-border bg-surface p-4 shadow-kartu">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
+            <Input aria-label="Cari anggota" placeholder="Cari nama, nomor, alamat, atau HP…" className="pl-12" value={teksCari} onChange={(e) => setTeksCari(e.target.value)} autoComplete="off" />
+            {sedangCari && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-ket text-muted">mencari…</span>}
+          </div>
+          <Button asChild variant="sekunder">
+            <Link href="/peta">
+              <MapIcon /> Peta Anggota
+            </Link>
+          </Button>
+          <Button onClick={bukaTambah}>
+            <Plus /> Tambah Anggota
+          </Button>
         </div>
-        <Button onClick={bukaTambah}>
-          <Plus /> Tambah Anggota
-        </Button>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tampilkan">
+          {(
+            [
+              ['semua', `Semua (${ringkasan.semua})`],
+              ['aktif', `Aktif (${ringkasan.aktif})`],
+              ['nonaktif', `Nonaktif (${ringkasan.nonaktif})`],
+              ['meninggal', `Meninggal (${ringkasan.meninggal})`],
+            ] as const
+          ).map(([nilai, label]) => (
+            <button
+              key={nilai}
+              type="button"
+              role="radio"
+              aria-checked={saring === nilai}
+              onClick={() => ubahUrl({ saring: nilai === 'semua' ? undefined : nilai, hal: undefined })}
+              className={cn(
+                'min-h-sentuh rounded-badge border-2 px-4 text-isi font-semibold transition-colors duration-150',
+                saring === nilai ? 'border-primary bg-primary-soft text-primary' : 'border-border bg-surface text-text hover:bg-bg',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {tampil.length === 0 ? (
-        baris.length === 0 ? (
+      <p className="text-isi text-muted">
+        {total === 0 ? 'Tidak ada anggota' : `${total} anggota`}
+        {cari && <> yang cocok dengan “<span className="font-semibold text-text">{cari}</span>”</>}
+        {total > PER_HALAMAN_ANGGOTA && ` · halaman ${halaman} dari ${totalHalaman}`}
+      </p>
+
+      {baris.length === 0 ? (
+        ringkasan.semua === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <KeadaanKosong judul="Belum ada anggota" kalimat="Daftar anggota memudahkan mencatat iuran dan santunan. Anda juga bisa mengetik nama bebas saat mencatat." />
             <Button ukuran="aksi" onClick={bukaTambah}>
@@ -119,68 +247,101 @@ export function DaftarAnggota({ baris, saranNomor }: { baris: BarisAnggota[]; sa
             </Button>
           </div>
         ) : (
-          <p className="text-isi text-muted">Tidak ada anggota yang cocok dengan “{cari}”.</p>
+          <KeadaanKosong judul="Tidak ada yang cocok" kalimat="Coba kata lain, atau ubah pilihan Tampilkan di atas." />
         )
       ) : (
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {tampil.map((a) => (
-            <li key={a.id} className={cn('flex flex-col gap-2 rounded-kartu border border-border bg-surface p-4 shadow-kartu', !a.aktif && 'opacity-70')}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+        <>
+          {/* Tabel di layar lebar */}
+          <div className="hidden overflow-hidden rounded-kartu border border-border bg-surface shadow-kartu md:block">
+            <table className="w-full text-isi">
+              <thead className="bg-bg text-left text-ket font-semibold uppercase tracking-wide text-muted">
+                <tr>
+                  <th className="px-4 py-3">Nomor</th>
+                  <th className="px-4 py-3">Nama</th>
+                  <th className="px-4 py-3">Alamat</th>
+                  <th className="px-4 py-3">Keadaan</th>
+                  <th className="px-4 py-3 text-right">Total iuran</th>
+                  <th className="px-4 py-3 text-right">Keluarga</th>
+                  <th className="px-2 py-3"><span className="sr-only">Aksi</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {baris.map((a) => (
+                  <tr key={a.id} className={cn('hover:bg-bg', !a.aktif && 'opacity-70')}>
+                    <td className="angka whitespace-nowrap px-4 py-3 text-muted">{a.nomor ?? '–'}</td>
+                    <td className="px-4 py-3">
+                      <button type="button" className="text-left font-semibold hover:text-primary" onClick={() => bukaUbah(a)}>
+                        {a.nama}
+                      </button>
+                      {a.noHp && (
+                        <p className="angka flex items-center gap-1 text-ket text-muted">
+                          <Phone className="size-3.5" /> {a.noHp}
+                        </p>
+                      )}
+                      {a.namaAsal && <p className="text-ket text-muted">Pecah dari {a.namaAsal}</p>}
+                    </td>
+                    <td className="max-w-xs px-4 py-3 text-muted">
+                      <span className="line-clamp-2">{a.alamat ?? '–'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge a={a} />
+                      {a.status === 'meninggal' && a.tanggalMeninggal && <p className="mt-1 text-ket text-muted">{formatTanggal(a.tanggalMeninggal)}</p>}
+                    </td>
+                    <td className="angka whitespace-nowrap px-4 py-3 text-right font-semibold text-masuk">
+                      {formatRupiah(a.totalIuran)}
+                      <p className="text-ket font-normal text-muted">{a.jumlahCatatan} catatan</p>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button asChild variant="halus">
+                        <Link href={`/anggota/${a.id}/keluarga`}>
+                          <Users /> {a.jumlahKeluarga}
+                        </Link>
+                      </Button>
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      <MenuAksi a={a} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Kartu di layar sempit */}
+          <ul className="flex flex-col gap-3 md:hidden">
+            {baris.map((a) => (
+              <li key={a.id} className={cn('flex items-start gap-3 rounded-kartu border border-border bg-surface p-4 shadow-kartu', !a.aktif && 'opacity-70')}>
+                <div className="min-w-0 flex-1">
                   {a.nomor && <p className="angka text-ket font-semibold text-muted">{a.nomor}</p>}
                   <p className="truncate text-judul-kartu font-semibold">{a.nama}</p>
-                  {a.noHp && (
-                    <p className="angka flex items-center gap-1.5 text-isi text-muted">
-                      <Phone className="size-4" /> {a.noHp}
-                    </p>
-                  )}
                   {a.alamat && <p className="line-clamp-2 text-ket text-muted">{a.alamat}</p>}
-                  {a.namaAsal && <p className="text-ket text-muted">Pecah dari keluarga {a.namaAsal}{a.tanggalBergabung && `, bergabung ${formatTanggal(a.tanggalBergabung)}`}</p>}
+                  <p className="mt-1 text-isi">
+                    <span className="angka font-bold text-masuk">{formatRupiah(a.totalIuran)}</span>
+                    <span className="text-ket text-muted"> · keluarga {a.jumlahKeluarga}</span>
+                  </p>
+                  <div className="mt-1">
+                    <Badge a={a} />
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  {!a.aktif && <span className="rounded-badge bg-border px-3 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>}
-                  {a.status === 'meninggal' && <span className="rounded-badge bg-keluar-soft px-3 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>}
-                  {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-3 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
-                </div>
-              </div>
-              {a.status === 'meninggal' && a.tanggalMeninggal && (
-                <p className="text-ket text-muted">
-                  Meninggal {formatTanggal(a.tanggalMeninggal)}
-                  {a.ditandaiOlehTransaksiId && ' · dari catatan santunan'}
-                </p>
-              )}
-              <p className="text-isi">
-                Total iuran: <span className="angka font-bold text-masuk">{formatRupiah(a.totalIuran)}</span>
-                <span className="text-ket text-muted"> · {a.jumlahCatatan} catatan</span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild variant="sekunder">
-                  <Link href={`/anggota/${a.id}/keluarga`}>
-                    <Users /> Keluarga ({a.jumlahKeluarga})
-                  </Link>
-                </Button>
-                <Button variant="sekunder" onClick={() => bukaUbah(a)}>
-                  <Pencil /> Ubah
-                </Button>
-                {a.lat != null && a.lng != null && (
-                  <Button asChild variant="halus">
-                    <a href={`https://www.openstreetmap.org/?mlat=${a.lat}&mlon=${a.lng}#map=17/${a.lat}/${a.lng}`} target="_blank" rel="noreferrer">
-                      <ExternalLink /> Peta
-                    </a>
-                  </Button>
-                )}
-                <Button variant="halus" onClick={() => aturAktif(a)} disabled={sedangKirim}>
-                  {a.aktif ? <UserRoundX /> : <UserRoundCheck />} {a.aktif ? 'Nonaktifkan' : 'Aktifkan'}
-                </Button>
-                {a.jumlahCatatan === 0 && (
-                  <Button variant="halus" className="text-keluar" onClick={() => setHapus(a)}>
-                    <Trash2 /> Hapus
-                  </Button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                <MenuAksi a={a} />
+              </li>
+            ))}
+          </ul>
+
+          {totalHalaman > 1 && (
+            <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Halaman">
+              <Button asChild variant="sekunder" className={cn(halaman <= 1 && 'pointer-events-none opacity-50')}>
+                <Link href={tautanHalaman(halaman - 1)} scroll={false}>Sebelumnya</Link>
+              </Button>
+              <span className="order-first w-full text-center text-isi text-muted sm:order-none sm:w-auto">
+                Halaman {halaman} dari {totalHalaman}
+              </span>
+              <Button asChild variant="sekunder" className={cn(halaman >= totalHalaman && 'pointer-events-none opacity-50')}>
+                <Link href={tautanHalaman(halaman + 1)} scroll={false}>Berikutnya</Link>
+              </Button>
+            </nav>
+          )}
+        </>
       )}
 
       <Sheet open={panel !== null} onOpenChange={(o) => !o && setPanel(null)}>

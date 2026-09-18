@@ -92,7 +92,7 @@ export function FormCatatan({
       metode: awal?.metode ?? 'tunai',
     },
   })
-  const { register, control, handleSubmit, watch, setValue, setError, formState } = form
+  const { register, control, handleSubmit, watch, setValue, getValues, setError, formState } = form
   const arah = watch('arah')
   const jenisId = watch('jenisId')
   const pihak = watch('pihak')
@@ -114,8 +114,14 @@ export function FormCatatan({
     const j = daftarJenis.find((x) => x.id === jenisId)
     if (j?.nominalBawaan != null) setValue('jumlah', j.nominalBawaan, { shouldValidate: true })
     else if (j) setValue('jumlah', undefined as unknown as number)
+    // Keterangan bawaan = nama jenis; hanya diganti bila masih kosong atau masih berupa nama jenis lama
+    if (j) {
+      const sekarang = getValues('keterangan').trim()
+      const namaJenisLama = daftarJenis.map((x) => x.nama)
+      if (!sekarang || namaJenisLama.includes(sekarang)) setValue('keterangan', j.nama, { shouldValidate: !!sekarang })
+    }
     setAnggotaKeluargaId(null) // tanggungan milik jenis/anggota lama tidak boleh terbawa (Spec 2 §A5)
-  }, [jenisId, daftarJenis, setValue])
+  }, [jenisId, daftarJenis, setValue, getValues])
   const anggotaSebelumnya = React.useRef<number | undefined>(anggotaTerpilih?.id)
   React.useEffect(() => {
     if (anggotaSebelumnya.current === anggotaTerpilih?.id) return

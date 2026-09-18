@@ -15,7 +15,7 @@
 | Sesi | `jose` **4.x** (JWT di cookie httpOnly) | Murni JavaScript, tanpa modul native. 4.x karena 5.x butuh Node 18 |
 | Hash PIN | `bcryptjs` | Murni JavaScript — penting, lihat catatan di bawah |
 | Tanggal | `date-fns` + `date-fns/locale/id` | |
-| Peta alamat | `leaflet` + ubin OpenStreetMap | Pin alamat anggota (permintaan pengguna). Satu-satunya fitur yang butuh internet; tanpa koneksi pin/koordinat tetap bekerja |
+| Peta alamat | `leaflet` + `leaflet.markercluster` + ubin OpenStreetMap | Pin alamat anggota (permintaan pengguna). Satu-satunya fitur yang butuh internet; tanpa koneksi pin/koordinat tetap bekerja |
 | Pilihan & kalender | `cmdk` + `react-day-picker` | Komponen Combobox dan Calendar shadcn/ui: semua pilihan bisa dicari (pengganti `<select>`), pemilih tanggal berbahasa Indonesia dengan dropdown bulan/tahun. Keduanya hanya berjalan di klien |
 | Desktop | Electron **22.3.27** + electron-builder | Lihat `docs/03` dan `docs/05` — versi terakhir untuk Windows 7 |
 | Uji | `node --test` + `tsx` | Bawaan Node; `tsx` hanya untuk menjalankan `.ts` tanpa langkah kompilasi |
@@ -288,7 +288,7 @@ Uang masuk — `PM01` Iuran Wajib Anggota (bulanan), `PM02` Iuran Sukarela, `PM0
 Pangkal Anggota Baru (sekali), `PM04` Sumbangan / Donasi, `PM05` Denda Anggota, `PM06`
 Hasil Usaha & Kegiatan, `PM07` Pengembalian Pinjaman, `PM08` Jasa / Bunga Bank, `PM09`
 Penerimaan Lain-lain, `PM10` Iuran Tahunan (tahunan), `PM11` Uang Pangkal Anggota Pecah dari
-Orang Tua (sekali). Total **21** jenis. `PK01` berperiode sekali dan satu-satunya yang
+Orang Tua (sekali), `PM12` Iuran Duka. Total **22** jenis. `PK01` berperiode sekali dan satu-satunya yang
 `menandaiMeninggal`. Seed tidak pernah menulis nominal — itu milik pengurus.
 
 Uang keluar — `PK01` Santunan Duka / Kemalangan, `PK02` Bantuan Sakit / Rawat Inap,
