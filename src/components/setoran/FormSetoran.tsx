@@ -47,6 +47,7 @@ export function FormSetoran({
   const [metode, setMetode] = React.useState<'tunai' | 'transfer'>('tunai')
   const [keterangan, setKeterangan] = React.useState('')
   const [ketOtomatis, setKetOtomatis] = React.useState(true)
+  const [almarhumDipilih, setAlmarhumDipilih] = React.useState<string | null>(null)
   const [bukti, setBukti] = React.useState<File | null | undefined>(undefined)
   const [cari, setCari] = React.useState('')
   const [dipilih, setDipilih] = React.useState<Map<number, BarisState>>(new Map())
@@ -66,6 +67,7 @@ export function FormSetoran({
     if (!jenis) return
     if (ketOtomatis) setKeterangan(jenis.nama)
     setPeriode(null)
+    setAlmarhumDipilih(null)
     setDipilih(new Map())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jenisId])
@@ -188,15 +190,20 @@ export function FormSetoran({
             <Label htmlFor="almarhum">Untuk almarhum <span className="font-normal text-muted">(boleh dikosongkan)</span></Label>
             <PilihanCari<string>
               id="almarhum"
-              nilai={null}
+              nilai={almarhumDipilih}
               onUbah={(v) => {
+                setAlmarhumDipilih(v)
                 if (v) {
                   setKeterangan(`Iuran duka alm. ${v}`)
                   setKetOtomatis(false)
+                } else {
+                  setKeterangan(jenis?.nama ?? '')
+                  setKetOtomatis(true)
                 }
               }}
               pilihan={almarhum.map((a) => ({ nilai: a.nama, label: a.label }))}
-              placeholder="Pilih untuk mengisi keterangan…"
+              labelKosong="Tidak dikaitkan (tulis di keterangan)"
+              placeholder="Pilih almarhum untuk mengisi keterangan…"
               placeholderCari="Ketik nama almarhum…"
             />
             <p className="text-ket text-muted">Setoran gabungan beberapa almarhum: tulis saja di keterangan, mis. “Iuran duka alm. Ani & alm. Sumi”.</p>
