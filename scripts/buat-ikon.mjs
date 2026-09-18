@@ -43,4 +43,10 @@ for (const tujuan of ['src/app/favicon.ico', 'build/icon.ico']) {
   fs.writeFileSync(tujuan, ico)
   console.log(`${tujuan}: ${(ico.length / 1024).toFixed(0)} KB, ${png.length} ukuran`)
 }
+// icon.png untuk tab browser: Next menambahkan hash isi ke URL-nya sehingga tidak
+// tertahan cache seperti favicon.ico. apple-icon.png untuk layar utama iOS.
+const png256 = png.find((p) => p.u === 256).data
+fs.writeFileSync('src/app/icon.png', png256)
+fs.writeFileSync('src/app/apple-icon.png', png256)
+console.log('src/app/icon.png & apple-icon.png: 256px')
 fs.rmSync(tmp, { recursive: true, force: true })

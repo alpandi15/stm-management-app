@@ -57,7 +57,8 @@ supaya klik ulang tidak membatalkan pilihan).
 
 **Logo dan ikon.** Sumber `src/assets/logo-app.png`; `public/logo-app.png` (512px)
 dipakai `components/kerangka/Logo.tsx` di layar kunci, pengaturan awal, sidebar, dan
-header layar sempit. `scripts/buat-ikon.mjs` membuat `src/app/favicon.ico` dan
+header layar sempit. `scripts/buat-ikon.mjs` membuat `src/app/favicon.ico`, `src/app/icon.png` +
+`apple-icon.png` (URL-nya diberi hash oleh Next sehingga tidak tertahan cache browser), dan
 `build/icon.ico` (7 ukuran, entri PNG) dari sumber itu — jalankan ulang bila logo berubah.
 
 **shadcn/ui tanpa CLI.** CLI shadcn v4 memasang paket runtime (`shadcn`, `cn`,
