@@ -142,3 +142,14 @@ export function totalSemua(): { masuk: number; keluar: number } {
   return { masuk: Number(r?.masuk ?? 0), keluar: Number(r?.keluar ?? 0) }
 }
 
+
+/** Seluruh catatan dalam rentang, urut naik (tanggal, id) — untuk Buku Kas dengan saldo berjalan. */
+export function semuaCatatanDalamRentang(rentang: Rentang): BarisCatatan[] {
+  return db
+    .select(kolomBaris)
+    .from(transaksi)
+    .innerJoin(jenis, eq(jenis.id, transaksi.jenisId))
+    .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir)))
+    .orderBy(asc(transaksi.tanggal), asc(transaksi.id))
+    .all()
+}

@@ -8,6 +8,7 @@ import { KartuAngka } from '@/components/laporan/KartuAngka'
 import { RincianJenis } from '@/components/laporan/RincianJenis'
 import { PanelRentang } from '@/components/laporan/PanelRentang'
 import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
+import { MenuCetak } from '@/components/laporan/MenuCetak'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
 
   return (
     <div className="flex flex-col gap-5">
-      <JudulHalaman>Laporan</JudulHalaman>
+      <JudulHalaman aksi={<MenuCetak />}>Laporan</JudulHalaman>
 
       <PanelRentang
         periode={periode}

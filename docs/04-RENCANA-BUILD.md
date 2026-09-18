@@ -15,7 +15,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 4 | Catatan kas — inti aplikasi — **selesai** |
 | 5 | Riwayat & log — **selesai** |
 | 6 | Laporan — **selesai** |
-| 7 | Cetak |
+| 7 | Cetak — **selesai** |
 | 8 | Anggota, jenis, pengaturan, cadangan |
 | 9 | Electron & pembuatan `.exe` |
 | 10 | Pengujian, penyisiran UI, panduan pengguna |
@@ -313,6 +313,22 @@ berulang di setiap halaman dan tidak ada baris yang terpotong di tengah.
 **Bukti selesai:** ketiga dokumen tercetak rapi lewat pratinjau cetak browser di kertas A4,
 dan angkanya sama dengan tampilan layar untuk rentang yang sama. Nama bendahara kosong
 menghasilkan garis tanda tangan kosong, bukan tulisan "null".
+
+**Hasil (18 September 2026):** 300 baris uji disisipkan (total 308 dalam rentang 1 Agu –
+18 Sep 2026); ketiga dokumen dirender di Electron 22 dan diekspor `printToPDF` A4:
+`ringkas` 2 halaman (Sisa Kas Akhir Rp 36.983.000 dan 308 catatan = layar Laporan),
+`buku-kas` lanskap 18 halaman dengan judul kolom berulang dan baris utuh (diperiksa
+visual halaman 2), `pemeriksaan` 2 halaman dengan 15 perubahan dalam rentang. Tidak ada
+"null"/"undefined" di dokumen mana pun; nama ketua kosong → garis kosong. Berita Acara
+menunjukkan TIDAK COCOK — benar, karena 300 baris uji masuk tanpa log (database uji
+dikembalikan sesudahnya). Tombol Cetak di Laporan membuka pilihan tiga dokumen dengan
+rentang/penyaring yang sedang tampil.
+
+Keputusan: Buku Kas mengabaikan penyaring jenis/cara bayar (saldo berjalan hanya bermakna
+untuk seluruh catatan). Nomor halaman: Chromium tidak mendukung `@page` margin box, jadi
+nomor halaman datang dari header/footer bawaan dialog cetak (opsi *Headers and footers*)
+dan, di Electron, dari `footerTemplate` pada `printToPDF` (Fase 9). `?cetak=0` mematikan
+pemanggilan `window.print()` otomatis (dipakai pengujian).
 
 ---
 

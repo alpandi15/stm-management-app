@@ -531,7 +531,14 @@ Ketentuan:
 
 - Kop berisi nama STM, alamat, judul dokumen, dan kalimat rentang tanggal.
 - `thead { display: table-header-group }` supaya judul kolom berulang tiap halaman.
-- Nomor halaman di kanan bawah.
+- Nomor halaman di kanan bawah. Chromium tidak mendukung `@page { @bottom-right }`, jadi
+  nomor halaman berasal dari header/footer bawaan dialog cetak (aktif secara bawaan) dan,
+  untuk *Simpan sebagai PDF* di Electron, dari `footerTemplate` `printToPDF` dengan
+  `<span class="pageNumber">`.
+- Buku Kas mengabaikan penyaring jenis/cara bayar: saldo berjalan hanya bermakna untuk
+  seluruh catatan. Laporan ringkas dan pemeriksaan mengikuti penyaring seperti di layar.
+- Parameter URL sama dengan halaman Laporan (`periode`, `acuan`, `awal`, `akhir`, `jenis`,
+  `metode`); `cetak=0` mematikan `window.print()` otomatis.
 - Blok tanda tangan memakai nama bendahara dan ketua dari Pengaturan; bila kosong, cetak
   garis kosong — jangan pernah mencetak "null" atau "undefined".
 - Sediakan juga tombol **Simpan sebagai PDF** yang memanggil `webContents.printToPDF`

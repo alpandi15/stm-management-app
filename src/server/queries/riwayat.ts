@@ -1,5 +1,6 @@
 import 'server-only'
-import { and, asc, count, desc, inArray, isNotNull } from 'drizzle-orm'
+import { and, asc, count, desc, gte, inArray, isNotNull, lte } from 'drizzle-orm'
+import { dariISO, type Rentang } from '@/lib/tanggal'
 import { db } from '@/server/db'
 import { jenis, log, transaksi, type AksiLog, type Transaksi } from '@/server/db/schema'
 import { formatRupiah } from '@/lib/rupiah'
@@ -122,4 +123,33 @@ export function semuaLogUrut(): Array<{ aksi: AksiLog; lama: Transaksi | null; b
     .orderBy(asc(log.dibuatPada), asc(log.id))
     .all()
     .map((b) => ({ aksi: b.aksi, lama: bacaJson(b.dataLama), baru: bacaJson(b.dataBaru) }))
+}
+
+/** Entri log yang waktunya jatuh dalam rentang tanggal (waktu lokal) — untuk Berita Acara Pemeriksaan. */
+export function perubahanDalamRentang(rentang: Rentang): EntriRiwayat[] {
+  const mulai = dariISO(rentang.awal).getTime()
+  const akhir = dariISO(rentang.akhir).getTime() + 24 * 60 * 60 * 1000 - 1
+  const namaJenis = new Map(db.select({ id: jenis.id, nama: jenis.nama }).from(jenis).all().map((j) => [j.id, j.nama]))
+  return db
+    .select()
+    .from(log)
+    .where(and(gte(log.dibuatPada, mulai), lte(log.dibuatPada, akhir)))
+    .orderBy(asc(log.dibuatPada), asc(log.id))
+    .all()
+    .map((b) => {
+      const lama = bacaJson(b.dataLama)
+      const baru = bacaJson(b.dataBaru)
+      const acuan = baru ?? lama
+      return {
+        id: b.id,
+        waktu: b.dibuatPada,
+        aksi: b.aksi,
+        transaksiId: b.transaksiId,
+        noBukti: b.noBukti ?? '',
+        ringkasan: ringkasanBaris(acuan, namaJenis),
+        arah: acuan?.arah ?? null,
+        perubahan: b.aksi === 'ubah' && lama && baru ? hitungPerubahan(lama, baru, namaJenis) : [],
+        bisaDikembalikan: false,
+      }
+    })
 }
