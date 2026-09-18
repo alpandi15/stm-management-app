@@ -112,3 +112,29 @@ export function kalimatRentang(r: Rentang): string {
   if (r.awal === r.akhir) return formatTanggal(r.awal)
   return `${formatTanggal(r.awal)} sampai ${formatTanggal(r.akhir)}`
 }
+
+/** Pilihan cepat di baris penyaring Catatan Kas (docs/01 §5.4). */
+export const PILIHAN_RENTANG = ['bulan-ini', 'bulan-lalu', 'tahun-ini', 'pilih'] as const
+export type PilihanRentang = (typeof PILIHAN_RENTANG)[number]
+
+export function apakahPilihanRentang(s: string): s is PilihanRentang {
+  return (PILIHAN_RENTANG as readonly string[]).includes(s)
+}
+
+/** Menerjemahkan pilihan cepat (+ tanggal bebas) menjadi rentang; tanggal terbalik dibetulkan. */
+export function tentukanRentang(pilihan: PilihanRentang, awal: string, akhir: string): Rentang {
+  switch (pilihan) {
+    case 'bulan-lalu':
+      return rentangBulanLalu()
+    case 'tahun-ini':
+      return rentangTahunIni()
+    case 'pilih': {
+      const bulan = rentangBulanIni()
+      const a = apakahISO(awal) ? awal : bulan.awal
+      const b = apakahISO(akhir) ? akhir : bulan.akhir
+      return a <= b ? { awal: a, akhir: b } : { awal: b, akhir: a }
+    }
+    default:
+      return rentangBulanIni()
+  }
+}

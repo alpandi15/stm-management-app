@@ -13,7 +13,7 @@ dipakai **satu orang** — bendahara — di satu komputer. Bukan aplikasi web mu
 **Aplikasi harus bisa dijalankan di Windows 7 SP1, 32-bit maupun 64-bit.** Syarat ini
 mengunci beberapa versi dependensi (lihat `docs/05`). Jangan menaikkan versi yang dikunci.
 
-Status repo: Fase 0–3 selesai (fondasi, pengaturan awal, login PIN, kerangka aplikasi). Lihat `docs/04`
+Status repo: Fase 0–4 selesai (fondasi, pengaturan awal, login PIN, kerangka, catatan kas). Lihat `docs/04`
 untuk fase berikutnya.
 
 ## Dokumen (baca berurutan)
@@ -100,7 +100,10 @@ Semuanya akan memakan waktu Anda kalau diabaikan. Rinciannya di `docs/03` dan `d
 7. **`cn()` memakai tailwind-merge yang didaftari token kustom** (`src/lib/utils.ts`).
    Token ukuran/radius/jarak baru di `globals.css` harus ditambahkan ke daftar itu, kalau
    tidak kelas warna (`text-primary-fg`) bisa dibuang diam-diam.
-8. **Next 14, bukan 15/16.** Nama konfigurasinya berbeda: `next.config.mjs` (bukan `.ts`),
+8. **Jangan mengekspor konstanta/fungsi biasa dari berkas `'use client'`** lalu memakainya
+   di Server Component — Next mengubahnya jadi referensi klien dan gagal saat render.
+   Taruh di `src/lib/`.
+9. **Next 14, bukan 15/16.** Nama konfigurasinya berbeda: `next.config.mjs` (bukan `.ts`),
    `experimental.serverComponentsExternalPackages` (bukan `serverExternalPackages`),
    `middleware.ts` selalu edge runtime (tidak bisa membuka SQLite), `useFormState`
    (bukan `useActionState`), `params` dan `cookies()` sinkron.

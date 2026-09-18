@@ -30,6 +30,25 @@ for (const nama of KELAS_STREAM) {
   if (typeof globalThis[nama] === 'undefined' && web[nama]) globalThis[nama] = web[nama]
 }
 
+// Blob ada di modul buffer sejak Node 15.7, jadi global baru di Node 18. File baru ada di
+// Node 19.2 — dibuat minimal di atas Blob (cukup untuk FormData Server Action Next).
+if (typeof globalThis.Blob === 'undefined') {
+  globalThis.Blob = require('buffer').Blob
+}
+if (typeof globalThis.File === 'undefined') {
+  const B = globalThis.Blob
+  globalThis.File = class File extends B {
+    constructor(bagian, nama, opsi) {
+      super(bagian, opsi)
+      this.name = String(nama)
+      this.lastModified = opsi && opsi.lastModified !== undefined ? opsi.lastModified : Date.now()
+    }
+    get [Symbol.toStringTag]() {
+      return 'File'
+    }
+  }
+}
+
 if (typeof globalThis.crypto === 'undefined') {
   globalThis.crypto = require('crypto').webcrypto
 }

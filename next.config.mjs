@@ -14,6 +14,8 @@ const nextConfig = {
   // (baru jadi `serverExternalPackages` di Next 15).
   experimental: {
     serverComponentsExternalPackages: ['better-sqlite3'],
+    // Foto bukti dikirim lewat Server Action (maks 5 MB, docs/02 §5.1); bawaan Next 1 MB
+    serverActions: { bodySizeLimit: '6mb' },
   },
   // Pengoptimal gambar butuh `sharp` (modul native lagi); tidak diperlukan di aplikasi ini.
   images: { unoptimized: true },

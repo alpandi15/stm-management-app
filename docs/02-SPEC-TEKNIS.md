@@ -89,6 +89,9 @@ src/
       transaksi.ts  laporan.ts  riwayat.ts  beranda.ts
     services/
       nomor-bukti.ts  laporan.ts  log.ts  penguncian.ts  cadangan.ts
+      transaksi.ts                     # service penyimpanan: buat/ubah/hapus/kembalikan + log
+      bukti.ts                         # simpan/hapus berkas foto, validasi nama berkas
+    galat.ts                           # GalatPengguna: pesan untuk pengguna dari service
   lib/
     rupiah.ts                        # format + terbilang
     tanggal.ts                       # rentang periode, format Indonesia
@@ -405,6 +408,13 @@ const urut = terakhir?.n ? Number(terakhir.n.slice(-4)) + 1 : 1
 Nomor yang sudah dipakai lalu dihapus tidak boleh dipakai ulang, karena nomornya sudah
 terlanjur tertulis di kuitansi fisik yang dipegang warga.
 
+Dalam implementasi, `max()` diambil sebagai **angka** (`max(cast(substr(no_bukti, 9) as
+integer))`), bukan `max()` teks seperti cuplikan di atas: setelah `0009999`, `"10000"` lebih
+kecil dari `"9999"` secara teks dan nomornya akan kembar. Ada tes untuk kasus ini.
+
+Konsekuensi nomor yang sudah terbit: **arah catatan tidak bisa diubah** di mode ubah
+(KM tidak bisa jadi KK). Pesannya menyarankan hapus lalu buat baru.
+
 better-sqlite3 bersifat sinkron dan aplikasi ini satu pengguna, jadi membungkus proses
 baca-lalu-tulis dengan `sqlite.transaction(...)` sudah cukup untuk menjamin tidak ada
 nomor kembar.
@@ -570,8 +580,9 @@ tidak membengkak dan cadangan tetap ringan.
 
 - `strict: true` di TypeScript. Tidak ada `any` tanpa komentar alasan.
 - Kode server tidak memakai API yang baru ada di Node 18+ kecuali sudah ada di
-  `electron/polyfill-node16.js` (`docs/05` §4). Contoh yang **tidak boleh**: `File`/`Blob`
-  global (pakai `Buffer`), `fs.promises.cp`, `Array.prototype.toSorted`, `Object.groupBy`.
+  `electron/polyfill-node16.js` (`docs/05` §4). Contoh yang **tidak boleh**: `instanceof File`
+  (pakai pemeriksaan bentuk: ada `arrayBuffer` dan `type`), `fs.promises.cp`,
+  `Array.prototype.toSorted`, `Object.groupBy`.
   Contoh yang aman: `fetch` (lewat flag), `crypto.randomUUID()`, `AbortController`,
   `stream/web`, `fs.promises`, `structuredClone` (polyfill).
 - Semua Server Action diawali pemeriksaan sesi. Buat pembungkus

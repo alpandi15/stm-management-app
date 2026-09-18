@@ -59,8 +59,9 @@ Next 14 mengasumsikan beberapa Web API sudah global. Di Node 16 kelas-kelasnya a
 tetapi belum dipasang sebagai global. Dua hal menutup celah itu:
 
 1. **`electron/polyfill-node16.js`** — memasang `ReadableStream` & kawan-kawan dari
-   `stream/web`, `crypto.webcrypto`, `structuredClone`, `DOMException`,
-   `AbortSignal.timeout`, `Array.prototype.findLast`, `Object.hasOwn`.
+   `stream/web`, `Blob` (dari `buffer`) dan `File` minimal, `crypto.webcrypto`,
+   `structuredClone`, `DOMException`, `AbortSignal.timeout`, `Array.prototype.findLast`,
+   `Object.hasOwn`. `Blob`/`File` dibutuhkan saat Server Action menerima berkas (foto bukti).
 2. **Flag `--experimental-fetch`** — memasang `fetch`, `Request`, `Response`, `Headers`,
    `FormData` bawaan Node 16.15+. Tanpa ini `NextRequest extends Request` gagal saat modul dimuat.
 

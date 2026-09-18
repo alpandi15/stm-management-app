@@ -12,7 +12,7 @@ membangun UI lewat jendela Electron hanya memperlambat tanpa manfaat.
 | 1 | Fondasi: dependensi, database, sistem desain — **selesai** |
 | 2 | Pengaturan awal & login PIN — **selesai** |
 | 3 | Kerangka aplikasi (sidebar, header, tema) — **selesai** |
-| 4 | Catatan kas — inti aplikasi |
+| 4 | Catatan kas — inti aplikasi — **selesai** |
 | 5 | Riwayat & log |
 | 6 | Laporan |
 | 7 | Cetak |
@@ -197,6 +197,29 @@ Ketentuan sesuai `docs/02` §5 dan `docs/01` §5.4–5.5. Yang mudah terlewat:
 **Bukti selesai:** catat lima transaksi lewat UI (campuran masuk dan keluar, satu dengan
 foto), ubah salah satu, hapus satu, dan pastikan nomor bukti berurutan serta tidak ada
 yang terpakai ulang setelah penghapusan.
+
+**Hasil (18 September 2026):** skrip Electron 22 (Chromium 108 ↔ server Node 16) mengisi
+form sungguhan: 5 catatan → `KM-0001, KK-0001 (foto, transfer), KM-0002, KK-0002, KM-0003`;
+catatan ke-5 (tanggal+jenis+jumlah sama dengan #1) memunculkan dialog *"Catatan serupa
+sudah ada"* dan tersimpan setelah *Tetap Simpan*; terbilang tampil saat mengetik; ubah
+KM-0002 (jenis nonaktif di mode ubah); hapus KK-0002 lewat dialog yang menyebutkan isinya;
+catatan keluar berikutnya mendapat **KK-0003** (KK-0002 tidak dipakai ulang); foto bukti
+terkompresi di klien (2400×1800 PNG → 1600×1200 JPG 18 KB) dan terbuka lewat
+`/api/bukti/`; penyaring Uang Keluar dan ringkasan SQL benar; validasi form kosong
+memberi 4 kalimat; 360px tanpa geser samping. Log: 5 buat, 1 ubah, 1 hapus, 1 buat.
+`npm test` 21 lulus (ditambah `nomor-bukti.test.ts` dengan SQLite in-memory: urut per
+arah/tahun, nomor terhapus tidak dipakai ulang, lanjut benar setelah 9999).
+
+Temuan: (1) Node 16 tidak punya `Blob`/`File` global — ditambahkan ke polyfill
+(`docs/05` §4); (2) `max()` teks salah setelah nomor 9999 → urutan diambil sebagai angka
+lewat `cast(substr(...))`; (3) konstanta yang diekspor dari berkas `'use client'` tidak
+bisa dipakai Server Component — pilihan rentang pindah ke `lib/tanggal.ts`; (4) ubah arah
+(masuk ↔ keluar) ditolak di mode ubah karena nomor bukti sudah terbit — hapus lalu buat
+baru (`services/transaksi.ts`). Berkas tambahan: `server/galat.ts` (GalatPengguna),
+`services/{transaksi,bukti,laporan}.ts` (laporan baru `hitungSisaKas`),
+`components/ui/{dialog,dropdown-menu,select,pilihan-ganda}.tsx`,
+`components/keuangan/{InputBukti,DaftarCatatan,BannerKasMinus}.tsx`, `(app)/not-found.tsx`.
+Daftar memakai halaman 50 catatan; ringkasan tetap dari seluruh hasil penyaringan.
 
 ---
 
