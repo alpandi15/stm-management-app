@@ -1,6 +1,5 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { bukaKunci, pulihkanPin } from '@/server/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,6 @@ import { KodePemulihan } from '@/components/auth/KodePemulihan'
 
 /** Lupa PIN (docs/02 §4.5): kode pemulihan → PIN baru (dua kali) → kode baru sekali. */
 export function FormLupaPin({ namaStm, onBatal }: { namaStm: string; onBatal: () => void }) {
-  const router = useRouter()
   const [kode, setKode] = useState('')
   const [tahap, setTahap] = useState<'kode' | 'pin'>('kode')
   const [pinPertama, setPinPertama] = useState<string | null>(null)
@@ -69,8 +67,7 @@ export function FormLupaPin({ namaStm, onBatal }: { namaStm: string; onBatal: ()
         setGalat(hasil.pesan)
         return
       }
-      router.replace('/beranda')
-      router.refresh()
+      window.location.assign('/beranda')
     })
   }
 

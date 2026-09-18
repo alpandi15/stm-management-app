@@ -1,6 +1,5 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { selesaikanSetup } from '@/server/actions/setup'
 import { bukaKunci } from '@/server/actions/auth'
@@ -16,7 +15,6 @@ import { cn } from '@/lib/utils'
 type Langkah = 1 | 2 | 3
 
 export function WizardSetup() {
-  const router = useRouter()
   const [langkah, setLangkah] = useState<Langkah>(1)
   const [namaStm, setNamaStm] = useState('')
   const [namaBendahara, setNamaBendahara] = useState('')
@@ -78,8 +76,7 @@ export function WizardSetup() {
         setGalat(hasil.pesan)
         return
       }
-      router.replace('/beranda')
-      router.refresh()
+      window.location.assign('/beranda')
     })
   }
 

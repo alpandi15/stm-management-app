@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { KotakPin } from './KotakPin'
 import { PapanAngka } from './PapanAngka'
 import { PesanGalat } from '@/components/ui/pesan-galat'
@@ -42,18 +42,23 @@ export function InputPin({
   const tambah = useCallback(
     (d: string) => {
       if (nonaktif) return
-      setPin((p) => {
-        if (p.length >= 6) return p
-        const baru = p + d
-        if (baru.length === 6) {
-          // Serahkan ke pemanggil setelah render selesai
-          setTimeout(() => onSelesai(baru), 0)
-        }
-        return baru
-      })
+      setPin((p) => (p.length >= 6 ? p : p + d))
     },
-    [nonaktif, onSelesai],
+    [nonaktif],
   )
+
+  // Digit keenam terisi → serahkan ke pemanggil. Dilakukan di effect, bukan di dalam
+  // updater setState: di mode pengembangan React memanggil updater dua kali (Strict Mode),
+  // dan onSelesai akan terpanggil ganda.
+  const sudahDikirim = useRef<string | null>(null)
+  useEffect(() => {
+    if (pin.length !== 6 || sudahDikirim.current === pin) return
+    sudahDikirim.current = pin
+    onSelesai(pin)
+  }, [pin, onSelesai])
+  useEffect(() => {
+    if (pin.length === 0) sudahDikirim.current = null
+  }, [pin])
 
   const hapus = useCallback(() => setPin((p) => p.slice(0, -1)), [])
 

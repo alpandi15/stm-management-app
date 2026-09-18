@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { bukaKunci } from '@/server/actions/auth'
 import { Button } from '@/components/ui/button'
 import { InputPin } from '@/components/auth/InputPin'
@@ -8,11 +7,11 @@ import { FormLupaPin } from './FormLupaPin'
 import { Logo } from '@/components/kerangka/Logo'
 
 export function LayarKunci({ namaStm, namaBendahara }: { namaStm: string; namaBendahara: string }) {
-  const router = useRouter()
   const [galat, setGalat] = useState<string | null>(null)
   const [reset, setReset] = useState(0)
   const [sisaDetik, setSisaDetik] = useState(0)
   const [lupa, setLupa] = useState(false)
+  const [membuka, setMembuka] = useState(false)
   const [sedangKirim, mulaiKirim] = useTransition()
 
   // Hitung mundur saat terkunci sementara (jeda disimpan di server; ini hanya tampilan)
@@ -30,8 +29,10 @@ export function LayarKunci({ namaStm, namaBendahara }: { namaStm: string; namaBe
     mulaiKirim(async () => {
       const hasil = await bukaKunci(pin)
       if (hasil.ok) {
-        router.replace('/beranda')
-        router.refresh()
+        // Navigasi penuh, bukan router.replace(): dokumen baru dijamin membaca cookie sesi
+        // yang baru, dan tidak ada refresh yang bisa membatalkan navigasi.
+        setMembuka(true)
+        window.location.assign('/beranda')
         return
       }
       setGalat(hasil.pesan)
@@ -60,8 +61,8 @@ export function LayarKunci({ namaStm, namaBendahara }: { namaStm: string; namaBe
           <FormLupaPin namaStm={namaStm} onBatal={() => setLupa(false)} />
         ) : (
           <>
-            <p className="mb-6 text-center text-isi text-muted">Masukkan PIN untuk membuka aplikasi</p>
-            <InputPin label="PIN" onSelesai={kirim} galat={pesan} kunciReset={reset} nonaktif={sedangKirim || terkunci} />
+            <p className="mb-6 text-center text-isi text-muted">{membuka ? 'Membuka aplikasi…' : sedangKirim ? 'Memeriksa PIN…' : 'Masukkan PIN untuk membuka aplikasi'}</p>
+            <InputPin label="PIN" onSelesai={kirim} galat={pesan} kunciReset={reset} nonaktif={sedangKirim || terkunci || membuka} />
             <div className="mt-8 text-center">
               <Button variant="tautan" onClick={() => setLupa(true)}>
                 Lupa PIN?

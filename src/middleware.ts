@@ -4,7 +4,9 @@ import { NAMA_COOKIE, atributCookie, bacaToken, buatToken } from '@/server/auth/
 // Middleware di Next 14 berjalan di edge runtime: tidak bisa membuka SQLite atau membaca
 // berkas. Tugasnya satu: memperpanjang cookie sesi yang sah pada setiap navigasi, supaya
 // kunci otomatis terjadi karena tidak ada aktivitas, bukan karena batas waktu mutlak
-// (docs/02 §4.4). Cookie yang tidak sah dibersihkan.
+// (docs/02 §4.4). Cookie yang tidak sah DIBIARKAN — keputusan ada di server (wajibSesi).
+// Menghapusnya di sini berbahaya: bila kunci yang dilihat middleware sempat berbeda dari
+// kunci server, setiap PIN benar akan terpental balik ke layar kunci.
 //
 // Middleware sengaja TIDAK mengalihkan ke layar kunci. NextURL milik Next mengganti
 // "127.0.0.1" menjadi "localhost" pada setiap pengalihan, dan di Electron (yang memuat
@@ -29,11 +31,8 @@ export async function middleware(req: NextRequest) {
   if (!token) return NextResponse.next()
 
   const sesi = await bacaToken(secret, token)
+  if (!sesi) return NextResponse.next()
   const res = NextResponse.next()
-  if (!sesi) {
-    res.cookies.set(NAMA_COOKIE, '', { ...atributCookie(0), maxAge: 0 })
-    return res
-  }
   res.cookies.set(NAMA_COOKIE, await buatToken(secret, sesi.m), atributCookie(sesi.m))
   return res
 }
