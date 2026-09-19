@@ -188,8 +188,14 @@ export const pecahKeluarga = aksiTerlindungi(async (id: number) => {
   return berhasil(baru)
 })
 
+/** Nonaktif mencatat tanggalnya: batas kewajiban iuran duka (lib/duka.ts). Aktif lagi mengosongkannya. */
 export const aturAktifAnggota = aksiTerlindungi(async (id: number, aktif: boolean) => {
-  const baris = db.update(schema.anggota).set({ aktif }).where(eq(schema.anggota.id, id)).returning().get()
+  const baris = db
+    .update(schema.anggota)
+    .set({ aktif, tanggalNonaktif: aktif ? null : hariIni() })
+    .where(eq(schema.anggota.id, id))
+    .returning()
+    .get()
   if (!baris) return gagal('Anggota tidak ditemukan.')
   revalidatePath('/anggota')
   return berhasil(baris)

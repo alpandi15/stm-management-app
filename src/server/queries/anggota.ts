@@ -1,19 +1,26 @@
 import 'server-only'
-import { and, asc, count, eq, isNotNull, isNull, like, or, sql, type SQL } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, isNotNull, isNull, like, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/server/db'
 import { anggota, anggotaKeluarga, jenis, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
 import { dariCatatan, type BarisCatatan } from './transaksi'
+import { tunggakanSemuaAnggota } from './duka'
+import type { TunggakanDuka } from '@/lib/duka'
 
-export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null }
+export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null; tunggakanDuka: TunggakanDuka | null }
 
 import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
 
 export type FilterAnggota = { cari?: string; saring?: SaringAnggota }
 
+function idNunggakDuka(): number[] {
+  return [...tunggakanSemuaAnggota().entries()].filter(([, t]) => t.jumlahNunggak > 0).map(([id]) => id)
+}
+
 function kondisiAnggota(f: FilterAnggota): SQL | undefined {
   const cari = f.cari?.trim()
   const pola = cari ? `%${cari}%` : null
   return and(
+    f.saring === 'nunggak-duka' ? (() => { const ids = idNunggakDuka(); return ids.length ? inArray(anggota.id, ids) : sql`0` })() : undefined,
     pola ? or(like(anggota.nama, pola), like(anggota.nomor, pola), like(anggota.alamat, pola), like(anggota.noHp, pola)) : undefined,
     f.saring === 'aktif' ? eq(anggota.aktif, true) : undefined,
     f.saring === 'nonaktif' ? eq(anggota.aktif, false) : undefined,
@@ -23,7 +30,7 @@ function kondisiAnggota(f: FilterAnggota): SQL | undefined {
 }
 
 /** Jumlah anggota per keadaan — untuk tombol penyaring. */
-export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number } {
+export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number; nunggakDuka: number } {
   const r = db
     .select({
       semua: count(),
@@ -34,7 +41,7 @@ export function ringkasanAnggota(): { semua: number; aktif: number; nonaktif: nu
     })
     .from(anggota)
     .get()
-  return { semua: r?.semua ?? 0, aktif: Number(r?.aktif ?? 0), nonaktif: Number(r?.nonaktif ?? 0), meninggal: Number(r?.meninggal ?? 0), pengutip: Number(r?.pengutip ?? 0) }
+  return { semua: r?.semua ?? 0, aktif: Number(r?.aktif ?? 0), nonaktif: Number(r?.nonaktif ?? 0), meninggal: Number(r?.meninggal ?? 0), pengutip: Number(r?.pengutip ?? 0), nunggakDuka: idNunggakDuka().length }
 }
 
 /**
@@ -54,6 +61,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       .map((r) => [r.anggotaId, Number(r.n)]),
   )
   const namaSemua = new Map(db.select({ id: anggota.id, nama: anggota.nama }).from(anggota).all().map((a) => [a.id, a.nama]))
+  const tunggakan = tunggakanSemuaAnggota()
   const baris = db
     .select({
       id: anggota.id,
@@ -71,6 +79,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       ditandaiOlehTransaksiId: anggota.ditandaiOlehTransaksiId,
       anggotaAsalId: anggota.anggotaAsalId,
       tanggalBergabung: anggota.tanggalBergabung,
+      tanggalNonaktif: anggota.tanggalNonaktif,
       dibuatPada: anggota.dibuatPada,
       totalIuran: sql<number>`coalesce(sum(case when ${transaksi.arah} = 'masuk' then ${transaksi.jumlah} else 0 end), 0)`,
       jumlahCatatan: sql<number>`count(${transaksi.id})`,
@@ -89,6 +98,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       jumlahCatatan: Number(b.jumlahCatatan),
       jumlahKeluarga: jumlahKeluarga.get(b.id) ?? 0,
       namaAsal: b.anggotaAsalId ? (namaSemua.get(b.anggotaAsalId) ?? null) : null,
+      tunggakanDuka: tunggakan.get(b.id) ?? null,
     }))
   return { baris, total }
 }

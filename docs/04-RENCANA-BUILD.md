@@ -516,6 +516,19 @@ saat navigasi diperlambat 1,5 s dan hilang saat tiba (juga tidak tertinggal pada
 instan), tautan detail `google.com/maps?q=3.5916998,98.7858193`, daftar tanggungan 4 orang +
 1 pecah tanpa geser samping di 360px.
 
+**Buku Duka + form ramah lansia** (19 September 2026): `docs/02` §5.1e dan `docs/01` §4.
+Migrasi `0008_buku_duka.sql` (`kejadian_duka`, `pembayaran_duka`, `anggota.tanggal_nonaktif`).
+`lib/duka.ts` + 6 tes aturan wajib (bergabung belakangan, almarhum sendiri, meninggal
+sebelumnya, nonaktif dengan/tanpa tanggal, tunggakan mengikuti tarif tiap kejadian).
+Uji Electron 22/Node 16 (`uji-duka.js`): menu 8 item; kejadian 1 "Bpk. Karim" 10 Jun 2024
+Rp 5.000 lewat kalender inline di panel; kejadian 2 dipilih dari data (Nenek Sumi → nama,
+"Orang Tua dari Budi Santoso", tanggal terisi) tarif bawaan 5.000 diubah 7.000; kejadian 1
+wajib 4 (Budi, Dewi, Fitri nonaktif sejak 2025-02, Gani meninggal 2024-12) dan 2 tidak wajib
+(Eko bergabung 2025-07, Cahyo 2026-09); centang Dewi → DB + kepala 1/4; tandai semua → 4;
+hapus centang Budi → 3; detail Budi "Menunggak 2 kejadian Rp 12.000" (5.000 + 7.000); saring
+nunggak-duka: Budi 2, Dewi 1, Eko 1; cetak tunggakan kejadian 2: 3 baris. Form catat:
+kalender inline, tanpa Hari Ini/Kemarin, footer `sticky`, tepi input 2px `#8a93a6`.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

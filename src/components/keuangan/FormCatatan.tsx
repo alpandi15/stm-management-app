@@ -12,7 +12,7 @@ import type { Jenis, Transaksi } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
 import { skemaJumlah, skemaTanggal } from '@/lib/validasi'
 import { formatRupiah } from '@/lib/rupiah'
-import { hariIni, kemarin } from '@/lib/tanggal'
+import { hariIni } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,7 +38,6 @@ const skemaForm = z.object({
 })
 type NilaiForm = z.infer<typeof skemaForm>
 
-type ModeTanggal = 'hari-ini' | 'kemarin' | 'pilih'
 
 /** Label opsi jenis (Spec 2 §B6): nama · Rp X / bulan */
 export function labelJenis(j: Pick<Jenis, 'nama' | 'nominalBawaan' | 'periode'>): string {
@@ -78,9 +77,6 @@ export function FormCatatan({
   const [galatUmum, setGalatUmum] = React.useState<string | null>(null)
 
   const tanggalAwal = awal?.tanggal ?? hariIni()
-  const [modeTanggal, setModeTanggal] = React.useState<ModeTanggal>(
-    tanggalAwal === hariIni() ? 'hari-ini' : tanggalAwal === kemarin() ? 'kemarin' : 'pilih',
-  )
 
   const jenisAwalDariKode = kodeJenisAwal ? daftarJenis.find((j) => j.kode === kodeJenisAwal && j.aktif) : undefined
   const anggotaAwal = anggotaIdAwal ? daftarAnggota.find((a) => a.id === anggotaIdAwal) : undefined
@@ -163,11 +159,6 @@ export function FormCatatan({
       : { nama: anggotaTerpilih!.nama, status: anggotaTerpilih!.status }
     : undefined
 
-  function pilihModeTanggal(m: ModeTanggal) {
-    setModeTanggal(m)
-    if (m === 'hari-ini') setValue('tanggal', hariIni(), { shouldValidate: true })
-    if (m === 'kemarin') setValue('tanggal', kemarin(), { shouldValidate: true })
-  }
 
   async function kirim(nilai: NilaiForm, abaikanDuplikat = false) {
     setSedangKirim(true)
@@ -240,26 +231,14 @@ export function FormCatatan({
         <PesanGalat>{g.arah?.message}</PesanGalat>
       </div>
 
-      {/* 2. Tanggal */}
+      {/* 2. Tanggal — kalender langsung terlihat, sudah menunjuk hari ini; tanpa popover */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="tanggal">Tanggal</Label>
-        <PilihanGanda<ModeTanggal>
-          label="Tanggal"
-          nilai={modeTanggal}
-          onPilih={pilihModeTanggal}
-          pilihan={[
-            { nilai: 'hari-ini', label: 'Hari Ini' },
-            { nilai: 'kemarin', label: 'Kemarin' },
-            { nilai: 'pilih', label: 'Pilih Tanggal' },
-          ]}
+        <Controller
+          control={control}
+          name="tanggal"
+          render={({ field }) => <PilihTanggal inline id="tanggal" nilai={field.value} onUbah={field.onChange} maks={hariIni()} galat={!!g.tanggal} />}
         />
-        {modeTanggal === 'pilih' && (
-          <Controller
-            control={control}
-            name="tanggal"
-            render={({ field }) => <PilihTanggal id="tanggal" nilai={field.value} onUbah={field.onChange} maks={hariIni()} galat={!!g.tanggal} />}
-          />
-        )}
         <PesanGalat>{g.tanggal?.message}</PesanGalat>
       </div>
 
@@ -438,13 +417,13 @@ export function FormCatatan({
 
       <PesanGalat>{galatUmum}</PesanGalat>
 
-      {/* 9. Simpan / Batal */}
-      <div className="flex flex-col gap-3 pt-2">
-        <Button type="submit" ukuran="aksi" className="w-full" disabled={sedangKirim}>
-          {sedangKirim ? 'Menyimpan…' : 'Simpan'}
-        </Button>
-        <Button type="button" variant="halus" ukuran="aksi" className="w-full" onClick={() => router.back()} disabled={sedangKirim}>
+      {/* 9. Simpan / Batal — lengket di bawah supaya selalu terlihat saat form panjang */}
+      <div className="sticky bottom-20 z-10 -mx-4 -mb-4 flex gap-3 border-t-2 border-border bg-surface px-4 py-3 md:bottom-0 sm:-mx-6 sm:-mb-6 sm:px-6">
+        <Button type="button" variant="sekunder" ukuran="aksi" className="flex-1" onClick={() => router.back()} disabled={sedangKirim}>
           Batal
+        </Button>
+        <Button type="submit" ukuran="aksi" className="flex-[2]" disabled={sedangKirim}>
+          {sedangKirim ? 'Menyimpan…' : 'Simpan'}
         </Button>
       </div>
 

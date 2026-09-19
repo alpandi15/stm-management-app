@@ -85,14 +85,14 @@ export function PilihanCari<T extends string | number>({
           aria-invalid={galat || undefined}
           disabled={nonaktif}
           className={cn(
-            'flex min-h-sentuh w-full items-center justify-between gap-2 rounded-input border border-border bg-surface px-4 text-left text-form text-text transition-colors duration-150',
+            'flex min-h-sentuh w-full items-center justify-between gap-2 rounded-input border-2 border-border-kuat bg-input px-4 text-left text-form text-text transition-colors duration-150',
             'focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             'aria-[invalid=true]:border-keluar disabled:opacity-50',
             className,
           )}
         >
           <span className={cn('truncate', !teksTerpilih && 'text-muted')}>{teksTerpilih ?? placeholder}</span>
-          <ChevronsUpDown className="size-5 shrink-0 text-muted" />
+          <ChevronsUpDown className="size-5 shrink-0 text-primary" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-64 p-0" onOpenAutoFocus={(e) => e.preventDefault()}>

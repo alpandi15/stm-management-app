@@ -57,6 +57,13 @@
       "when": 1789744405102,
       "tag": "0007_jenis_kelamin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1789797275876,
+      "tag": "0008_buku_duka",
+      "breakpoints": true
     }
   ]
 }

@@ -89,10 +89,53 @@ export const anggota = sqliteTable(
     ditandaiOlehTransaksiId: integer('ditandai_oleh_transaksi_id'), // tanpa FK (Spec 2 §A3)
     anggotaAsalId: integer('anggota_asal_id').references((): AnySQLiteColumn => anggota.id, { onDelete: 'set null' }), // pecah dari keluarga siapa
     tanggalBergabung: text('tanggal_bergabung'), // YYYY-MM-DD
+    tanggalNonaktif: text('tanggal_nonaktif'), // YYYY-MM-DD, diisi saat dinonaktifkan; batas kewajiban iuran duka
     dibuatPada: integer('dibuat_pada').notNull(),
   },
   (t) => [uniqueIndex('idx_anggota_nomor').on(t.nomor), index('idx_anggota_penanda').on(t.ditandaiOlehTransaksiId)],
 )
+
+/**
+ * Buku Duka (docs/02 §5.1e): satu baris per orang yang meninggal. Tarif dikunci per kejadian
+ * (kejadian lama tetap 5.000 walau tarif kini 7.000). Terpisah dari catatan kas.
+ */
+export const kejadianDuka = sqliteTable(
+  'kejadian_duka',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    nomor: integer('nomor').notNull(), // urutan kejadian 1, 2, 3, …
+    namaAlmarhum: text('nama_almarhum').notNull(),
+    hubungan: text('hubungan'), // mis. "Anggota", "Istri dari Budi Santoso" — teks bebas
+    anggotaId: integer('anggota_id').references(() => anggota.id, { onDelete: 'set null' }), // almarhum = anggota ini, atau kepala keluarganya
+    anggotaKeluargaId: integer('anggota_keluarga_id').references(() => anggotaKeluarga.id, { onDelete: 'set null' }),
+    tanggalMeninggal: text('tanggal_meninggal').notNull(), // YYYY-MM-DD
+    tarif: integer('tarif').notNull(), // rupiah penuh per anggota
+    keterangan: text('keterangan'),
+    dibuatPada: integer('dibuat_pada').notNull(),
+    diubahPada: integer('diubah_pada').notNull(),
+  },
+  (t) => [index('idx_duka_tanggal').on(t.tanggalMeninggal)],
+)
+
+/** Centang "sudah bayar" seorang anggota untuk satu kejadian. Tidak ada nominal: tarifnya di kejadian. */
+export const pembayaranDuka = sqliteTable(
+  'pembayaran_duka',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    kejadianId: integer('kejadian_id')
+      .notNull()
+      .references(() => kejadianDuka.id, { onDelete: 'cascade' }),
+    anggotaId: integer('anggota_id')
+      .notNull()
+      .references(() => anggota.id, { onDelete: 'cascade' }),
+    tanggalBayar: text('tanggal_bayar').notNull(), // YYYY-MM-DD
+    catatan: text('catatan'),
+    dibuatPada: integer('dibuat_pada').notNull(),
+  },
+  (t) => [uniqueIndex('idx_bayar_duka_unik').on(t.kejadianId, t.anggotaId), index('idx_bayar_duka_anggota').on(t.anggotaId)],
+)
+export type KejadianDuka = typeof kejadianDuka.$inferSelect
+export type PembayaranDuka = typeof pembayaranDuka.$inferSelect
 
 /** Tanggungan anggota (Spec 2 §A1). Soft delete: `pindahKeAnggotaId` terisi bila sudah jadi anggota sendiri. */
 export const anggotaKeluarga = sqliteTable(

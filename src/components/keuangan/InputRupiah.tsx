@@ -54,7 +54,7 @@ export function InputRupiah({
           readOnly={hanyaBaca}
           aria-invalid={galat || undefined}
           className={cn(
-            'angka flex min-h-aksi w-full rounded-input border border-border bg-surface pl-14 pr-4 text-judul font-bold text-text placeholder:text-muted',
+            'angka flex min-h-aksi w-full rounded-input border-2 border-border-kuat bg-input pl-14 pr-4 text-judul font-bold text-text placeholder:text-muted',
             'focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary aria-[invalid=true]:border-keluar',
             hanyaBaca && 'bg-bg text-muted',
           )}

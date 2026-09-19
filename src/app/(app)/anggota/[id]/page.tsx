@@ -12,6 +12,8 @@ import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
 import { MatriksPeriode } from '@/components/anggota/MatriksPeriode'
 import { DaftarTanggungan } from '@/components/anggota/DaftarTanggungan'
+import { RingkasanDuka } from '@/components/anggota/RingkasanDuka'
+import { ringkasanDukaAnggota } from '@/server/queries/duka'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -129,6 +131,11 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
           <DaftarTanggungan anggotaId={a.id} aktif={keluarga.aktif} pecah={keluarga.pecah} />
         </div>
       </section>
+
+      {(() => {
+        const duka = ringkasanDukaAnggota(a.id)
+        return duka ? <RingkasanDuka ringkasan={duka} /> : null
+      })()}
 
       <section className="flex flex-col gap-3" aria-label="Pembayaran per periode">
         <h2 className="text-judul-kartu font-semibold">Pembayaran per Periode</h2>

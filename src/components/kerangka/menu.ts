@@ -1,6 +1,6 @@
-import { FileText, History, House, NotebookPen, Settings, Tags, Users, type LucideIcon } from 'lucide-react'
+import { FileText, HeartHandshake, History, House, NotebookPen, Settings, Tags, Users, type LucideIcon } from 'lucide-react'
 
-/** Tujuh item menu (docs/01 §4; Jenis Uang dipisah dari Pengaturan atas permintaan pemilik). */
+/** Delapan item menu (docs/01 §4; Jenis Uang dan Buku Duka ditambah atas permintaan pemilik). */
 export type ItemMenu = { rute: string; label: string; Ikon: LucideIcon }
 
 export const MENU: ReadonlyArray<ItemMenu> = [
@@ -9,6 +9,7 @@ export const MENU: ReadonlyArray<ItemMenu> = [
   { rute: '/laporan', label: 'Laporan', Ikon: FileText },
   { rute: '/riwayat', label: 'Riwayat', Ikon: History },
   { rute: '/anggota', label: 'Anggota', Ikon: Users },
+  { rute: '/duka', label: 'Buku Duka', Ikon: HeartHandshake },
   { rute: '/jenis', label: 'Jenis Uang', Ikon: Tags },
   { rute: '/pengaturan', label: 'Pengaturan', Ikon: Settings },
 ]

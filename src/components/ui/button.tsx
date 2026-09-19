@@ -10,7 +10,7 @@ const variasiTombol = cva(
     variants: {
       variant: {
         utama: 'bg-primary text-primary-fg hover:bg-primary-hover',
-        sekunder: 'border border-border bg-surface text-text hover:bg-bg',
+        sekunder: 'border-2 border-border-kuat bg-input text-text hover:bg-bg',
         halus: 'text-text hover:bg-bg',
         masuk: 'bg-masuk text-arah-fg hover:opacity-90',
         keluar: 'bg-keluar text-arah-fg hover:opacity-90',

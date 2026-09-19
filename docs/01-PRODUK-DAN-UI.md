@@ -155,9 +155,19 @@ tidak ada parallax, tidak ada skeleton yang berkedip lama. Hormati
 
 ## 4. Kerangka aplikasi
 
+**Form untuk pengguna lanjut usia** (permintaan pemilik, 19 September 2026): kolom isian
+bertepi 2px warna `border-kuat` di atas latar `input` putih supaya jelas mana yang bisa
+diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di form catat
+**tidak** memakai Hari Ini/Kemarin maupun popover: kalender tampil langsung di dalam form,
+sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
+**lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
+
 **Tirai muat.** Saat pindah halaman, seluruh layar ditutup tirai tembus pandang berisi ikon
 berputar dan "Memuat…" (muncul setelah 100 ms agar halaman instan tidak berkedip). Komputer
 tua bisa butuh 1–2 detik per halaman; tanpa tirai pengguna mengira kliknya tidak masuk.
+
+**Menu** (delapan): Beranda, Catatan Kas, Laporan, Riwayat, Anggota, **Buku Duka**, Jenis Uang,
+Pengaturan. Bilah bawah tetap lima item pertama.
 
 **Sidebar kiri tetap** selebar 240px di laptop dan desktop (≥ 1024px), menciut jadi ikon saja
 di tablet 768–1023px (melebar sementara di atas isi halaman saat kursor berada di atasnya, agar

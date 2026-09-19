@@ -32,7 +32,7 @@ export function PilihanGanda<T extends string>({
               : 'border-keluar bg-keluar text-arah-fg'
             : aktif
               ? 'border-primary bg-primary-soft text-primary'
-              : 'border-border bg-surface text-text hover:bg-bg'
+              : 'border-border-kuat bg-input text-text hover:bg-bg'
         return (
           <button
             key={v}

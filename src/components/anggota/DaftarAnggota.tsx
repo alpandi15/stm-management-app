@@ -57,7 +57,7 @@ export function DaftarAnggota({
   halaman: number
   cari: string
   saring: SaringAnggota
-  ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number }
+  ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number; nunggakDuka: number }
   saranNomor: string
 }) {
   const router = useRouter()
@@ -182,6 +182,11 @@ export function DaftarAnggota({
       {a.status === 'meninggal' && <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>}
       {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-2.5 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
       {a.pengutip && <span className="rounded-badge bg-warning-soft px-2.5 py-0.5 text-ket font-semibold text-warning">Pengutip</span>}
+      {a.tunggakanDuka && a.tunggakanDuka.jumlahNunggak > 0 && (
+        <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar" title={`Belum bayar iuran duka ${a.tunggakanDuka.jumlahNunggak} kejadian · ${formatRupiah(a.tunggakanDuka.totalNunggak)}`}>
+          Nunggak duka {a.tunggakanDuka.jumlahNunggak}
+        </span>
+      )}
       {a.aktif && a.status === 'aktif' && !a.anggotaAsalId && <span className="rounded-badge bg-masuk-soft px-2.5 py-0.5 text-ket font-semibold text-masuk">Aktif</span>}
     </span>
   )
@@ -258,6 +263,7 @@ export function DaftarAnggota({
               ['nonaktif', `Nonaktif (${ringkasan.nonaktif})`],
               ['meninggal', `Meninggal (${ringkasan.meninggal})`],
               ['pengutip', `Tim pengutip (${ringkasan.pengutip})`],
+              ['nunggak-duka', `Nunggak duka (${ringkasan.nunggakDuka})`],
             ] as const
           ).map(([nilai, label]) => (
             <button

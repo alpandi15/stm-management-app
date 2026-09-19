@@ -1,7 +1,7 @@
 // Skema Zod bersama: dipakai di form (kenyamanan) dan di Server Action (yang menentukan).
 // Pesan galat berupa kalimat dengan jalan keluar (docs/01 P7), bukan "Required".
 import { z } from 'zod'
-import { apakahISO } from './tanggal'
+import { apakahISO, hariIni } from './tanggal'
 
 export const ARAH = ['masuk', 'keluar'] as const
 export const METODE = ['tunai', 'transfer'] as const
@@ -147,6 +147,24 @@ export const skemaJenis = z
   })
   .refine((v) => !v.nominalDikunci || v.nominalBawaan != null, { message: 'Nominal belum diisi, jadi belum ada yang bisa dikunci.', path: ['nominalDikunci'] })
 export type InputJenis = z.infer<typeof skemaJenis>
+
+/** Kejadian duka (docs/02 §5.1e). */
+export const skemaKejadian = z
+  .object({
+    namaAlmarhum: z.string({ error: 'Nama almarhum belum diisi.' }).trim().min(2, 'Nama almarhum belum diisi.').max(120, 'Nama terlalu panjang. Maksimal 120 huruf.'),
+    hubungan: z.string().trim().max(120, 'Keterangan hubungan terlalu panjang.').nullable().optional(),
+    anggotaId: z.number().int().positive().nullable().optional(),
+    anggotaKeluargaId: z.number().int().positive().nullable().optional(),
+    tanggalMeninggal: skemaTanggal,
+    tarif: z
+      .number({ error: 'Tarif iuran belum diisi.' })
+      .int('Tarif harus bilangan bulat, tanpa koma.')
+      .min(1, 'Tarif iuran harus lebih dari nol.')
+      .max(JUMLAH_MAKS, 'Tarif terlalu besar. Periksa kembali angkanya.'),
+    keterangan: z.string().trim().max(255, 'Keterangan terlalu panjang. Maksimal 255 huruf.').nullable().optional(),
+  })
+  .refine((v) => v.tanggalMeninggal <= hariIni(), { message: 'Tanggal meninggal tidak boleh melewati hari ini.', path: ['tanggalMeninggal'] })
+export type InputKejadian = z.input<typeof skemaKejadian>
 
 /** Ukuran maksimum foto bukti: 5 MB (docs/02 §5.1). */
 export const BUKTI_MAKS_BYTE = 5 * 1024 * 1024

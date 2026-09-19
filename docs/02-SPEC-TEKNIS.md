@@ -483,6 +483,31 @@ Encrypt), sehingga ubin gagal dan peta kosong. Ubin di luar jangkauan (`z` > 19,
 Tautan "Buka di Google Maps" di detail/daftar anggota membuka `google.com/maps?q=lat,lng`
 di browser sistem.
 
+### 5.1e Buku Duka (iuran kemalangan per kejadian)
+
+Kebutuhan pemilik: iuran duka ditagih **per orang yang meninggal**, tarifnya **dikunci pada
+saat kejadian** (5 kejadian pertama Rp 5.000, berikutnya Rp 7.000, bisa berubah lagi), dan
+yang penting adalah daftar siapa sudah/belum bayar — bukan pencatatan uangnya per orang.
+Karena itu Buku Duka **terpisah dari catatan kas** (uangnya tetap dicatat sebagai catatan
+biasa/setoran kolektif).
+
+- `kejadian_duka`: nomor urut, nama almarhum (teks bebas, boleh ditautkan ke anggota /
+  tanggungan berstatus meninggal), hubungan (teks), tanggal meninggal, **tarif** (INTEGER
+  rupiah per anggota, bawaan = tarif kejadian terakhir), keterangan.
+- `pembayaran_duka`: centang (kejadian, anggota) unik + tanggal bayar. Tidak ada nominal.
+- `anggota.tanggal_nonaktif` diisi saat dinonaktifkan (dikosongkan saat diaktifkan lagi).
+- **Siapa yang wajib** — satu-satunya aturan ada di `lib/duka.ts` (`wajibBayarDuka`), dipakai
+  server dan klien, tidak ditiru di SQL: bergabung setelah kejadian → tidak; almarhum sendiri
+  (kejadian atas namanya, bukan keluarganya) → tidak; meninggal sebelum kejadian → tidak;
+  nonaktif → wajib hanya kejadian sebelum/pada tanggal nonaktif (nonaktif tanpa tanggal =
+  data lama → tidak wajib). Tunggakan = Σ tarif kejadian wajib yang belum dicentang.
+- Halaman `/duka` (daftar kejadian + bilah kemajuan), `/duka/[id]` (kepala + daftar centang:
+  klik nama = simpan langsung, penyaring belum/sudah/semua, "tandai semua yang tampil",
+  "tandai semua wajib" untuk mengisi kejadian lama lalu menghapus centang yang menunggak),
+  `/cetak/duka/[id]` (daftar tunggakan dengan kolom paraf). Detail anggota: kartu "Iuran Duka"
+  (wajib/bayar/nunggak + status per kejadian). Daftar anggota: badge "Nunggak duka N" dan
+  penyaring `nunggak-duka`.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat

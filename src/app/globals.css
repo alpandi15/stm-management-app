@@ -19,6 +19,8 @@
   --color-bg: #f7f8fa;
   --color-surface: #ffffff;
   --color-border: #e6e8ec;
+  --color-border-kuat: #8a93a6; /* tepi kolom isian: harus jelas terlihat oleh pengguna lanjut usia */
+  --color-input: #ffffff; /* latar kolom isian, dibedakan dari latar form (bg) */
   --color-text: #111827;
   --color-muted: #6b7280;
   --color-primary: #1d4ed8;
@@ -88,6 +90,8 @@
     --color-bg: #0f1115;
     --color-surface: #171a21;
     --color-border: #262a33;
+    --color-border-kuat: #5b6478;
+    --color-input: #0b0d12;
     --color-text: #f3f4f6;
     --color-muted: #9ba3af;
     --color-primary: #3b82f6;
