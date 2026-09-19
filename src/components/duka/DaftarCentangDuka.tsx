@@ -39,7 +39,7 @@ export function DaftarCentangDuka({ kejadianId, tarif, anggota }: { kejadianId: 
     if (saring === 'belum' && bayar.has(a.id)) return false
     if (saring === 'sudah' && !bayar.has(a.id)) return false
     if (!q) return true
-    return a.nama.toLowerCase().includes(q) || (a.nomor ?? '').toLowerCase().includes(q) || (a.alamat ?? '').toLowerCase().includes(q)
+    return a.nama.toLowerCase().includes(q) || (a.nomor ?? '').toLowerCase().includes(q) || (a.alamat ?? '').toLowerCase().includes(q) || (a.namaRt ?? '').toLowerCase().includes(q)
   })
 
   async function toggle(a: BarisAnggotaKejadian) {
@@ -107,7 +107,7 @@ export function DaftarCentangDuka({ kejadianId, tarif, anggota }: { kejadianId: 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
-          <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari nama, nomor, atau alamat…" className="pl-12 pr-11" aria-label="Cari anggota" />
+          <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari nama, nomor, RT, atau alamat…" className="pl-12 pr-11" aria-label="Cari anggota" />
           {cari && (
             <button type="button" onClick={() => setCari('')} aria-label="Hapus pencarian" className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-input text-muted hover:bg-bg hover:text-text">
               <X className="size-5" />
@@ -178,7 +178,7 @@ export function DaftarCentangDuka({ kejadianId, tarif, anggota }: { kejadianId: 
                     {a.nomor && <span className="angka ml-2 text-ket font-normal text-muted">{a.nomor}</span>}
                   </span>
                   <span className="block truncate text-ket text-muted">
-                    {sudah ? `Sudah bayar${tanggal ? ` · ${formatTanggal(tanggal)}` : ''}` : a.alamat || 'Belum bayar'}
+                    {sudah ? `Sudah bayar${tanggal ? ` · ${formatTanggal(tanggal)}` : ''}` : [a.namaRt, a.alamat].filter(Boolean).join(' · ') || 'Belum bayar'}
                   </span>
                 </span>
                 <span className={cn('angka shrink-0 rounded-badge px-3 py-1 text-ket font-semibold', sudah ? 'bg-masuk-soft text-masuk' : 'bg-keluar-soft text-keluar')}>

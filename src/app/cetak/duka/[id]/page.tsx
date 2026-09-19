@@ -46,20 +46,22 @@ export default async function HalamanCetakDuka({ params, searchParams }: { param
               <th style={{ width: '5%' }}>No</th>
               <th style={{ width: '12%' }}>No. Anggota</th>
               <th>Nama</th>
-              <th style={{ width: '30%' }}>Alamat</th>
+              <th style={{ width: '9%' }}>RT</th>
+              <th style={{ width: '24%' }}>Alamat</th>
               <th className="angka" style={{ width: '13%' }}>Iuran</th>
               <th style={{ width: '14%' }}>Paraf / Tgl bayar</th>
             </tr>
           </thead>
           <tbody>
             {belum.length === 0 && (
-              <tr><td colSpan={6} className="tengah">Semua anggota yang wajib sudah membayar.</td></tr>
+              <tr><td colSpan={7} className="tengah">Semua anggota yang wajib sudah membayar.</td></tr>
             )}
             {belum.map((a, i) => (
               <tr key={a.id}>
                 <td className="tengah">{i + 1}</td>
                 <td className="rapat">{a.nomor ?? '–'}</td>
                 <td>{a.nama}</td>
+                <td>{a.namaRt ?? ''}</td>
                 <td>{a.alamat ?? ''}</td>
                 <td className="angka">{formatRupiah(k.tarif)}</td>
                 <td></td>

@@ -483,6 +483,14 @@ Encrypt), sehingga ubin gagal dan peta kosong. Ubin di luar jangkauan (`z` > 19,
 Tautan "Buka di Google Maps" di detail/daftar anggota membuka `google.com/maps?q=lat,lng`
 di browser sistem.
 
+### 5.1d2 Data RT
+
+Tabel `rt` (nama unik, keterangan, urutan tampil; migrasi 0011) dan `anggota.rt_id` (set null
+bila RT dihapus). CRUD di `/anggota/rt` (`queries/rt.ts`, `actions/rt.ts`): nama kembar ditolak,
+RT yang masih dipakai anggota tidak bisa dihapus. RT dipilih di form anggota, tampil sebagai
+badge di kolom alamat dan detail, jadi penyaring `?rt=<id>` / `?rt=tanpa` di daftar anggota,
+serta ikut di daftar centang dan cetak tunggakan Buku Duka (untuk pengutip per RT).
+
 ### 5.1e Buku Duka (iuran kemalangan per kejadian)
 
 Kebutuhan pemilik: iuran duka ditagih **per orang yang meninggal**, tarifnya **dikunci pada

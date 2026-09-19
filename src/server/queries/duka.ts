@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { anggota, anggotaKeluarga, kejadianDuka, pembayaranDuka, tunggakanDukaLama, type KejadianDuka, type TunggakanDukaLama } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, kejadianDuka, pembayaranDuka, rt, tunggakanDukaLama, type KejadianDuka, type TunggakanDukaLama } from '@/server/db/schema'
 import { hitungTunggakan, wajibBayarDuka, type AnggotaUntukDuka, type KejadianUntukDuka, type TunggakanDuka } from '@/lib/duka'
 
 const kolomAnggotaDuka = {
@@ -76,6 +76,7 @@ export type BarisAnggotaKejadian = {
   nomor: string | null
   nama: string
   alamat: string | null
+  namaRt: string | null
   aktif: boolean
   status: 'aktif' | 'meninggal'
   wajib: boolean
@@ -96,8 +97,9 @@ export function daftarAnggotaKejadian(kejadianId: number): BarisAnggotaKejadian[
       .map((p) => [p.anggotaId, p.tanggalBayar]),
   )
   return db
-    .select({ ...kolomAnggotaDuka, nomor: anggota.nomor, nama: anggota.nama, alamat: anggota.alamat })
+    .select({ ...kolomAnggotaDuka, nomor: anggota.nomor, nama: anggota.nama, alamat: anggota.alamat, namaRt: rt.nama })
     .from(anggota)
+    .leftJoin(rt, eq(rt.id, anggota.rtId))
     .orderBy(asc(anggota.nama))
     .all()
     .map((a) => ({
@@ -105,6 +107,7 @@ export function daftarAnggotaKejadian(kejadianId: number): BarisAnggotaKejadian[
       nomor: a.nomor,
       nama: a.nama,
       alamat: a.alamat,
+      namaRt: a.namaRt,
       aktif: a.aktif,
       status: a.status,
       wajib: wajibBayarDuka(a, k),

@@ -1,16 +1,16 @@
 import 'server-only'
 import { and, asc, count, eq, inArray, isNotNull, isNull, like, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { anggota, anggotaKeluarga, jenis, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, jenis, rt, transaksi, type Anggota, type AnggotaKeluarga } from '@/server/db/schema'
 import { dariCatatan, type BarisCatatan } from './transaksi'
 import { tunggakanSemuaAnggota } from './duka'
 import type { TunggakanDuka } from '@/lib/duka'
 
-export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null; tunggakanDuka: TunggakanDuka | null }
+export type BarisAnggota = Anggota & { totalIuran: number; jumlahCatatan: number; jumlahKeluarga: number; namaAsal: string | null; tunggakanDuka: TunggakanDuka | null; namaRt: string | null }
 
 import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
 
-export type FilterAnggota = { cari?: string; saring?: SaringAnggota }
+export type FilterAnggota = { cari?: string; saring?: SaringAnggota; rtId?: number | 'tanpa' }
 
 function idNunggakDuka(): number[] {
   return [...tunggakanSemuaAnggota().entries()].filter(([, t]) => t.jumlahNunggak > 0).map(([id]) => id)
@@ -26,6 +26,7 @@ function kondisiAnggota(f: FilterAnggota): SQL | undefined {
     f.saring === 'nonaktif' ? eq(anggota.aktif, false) : undefined,
     f.saring === 'meninggal' ? eq(anggota.status, 'meninggal') : undefined,
     f.saring === 'pengutip' ? eq(anggota.pengutip, true) : undefined,
+    f.rtId === 'tanpa' ? isNull(anggota.rtId) : f.rtId ? eq(anggota.rtId, f.rtId) : undefined,
   )
 }
 
@@ -70,6 +71,8 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
       jenisKelamin: anggota.jenisKelamin,
       noHp: anggota.noHp,
       alamat: anggota.alamat,
+      rtId: anggota.rtId,
+      namaRt: rt.nama,
       lat: anggota.lat,
       lng: anggota.lng,
       aktif: anggota.aktif,
@@ -86,6 +89,7 @@ export function daftarAnggota(f: FilterAnggota = {}, halaman = 1): { baris: Bari
     })
     .from(anggota)
     .leftJoin(transaksi, and(eq(transaksi.anggotaId, anggota.id), isNull(transaksi.dihapusPada)))
+    .leftJoin(rt, eq(rt.id, anggota.rtId))
     .where(where)
     .groupBy(anggota.id)
     .orderBy(sql`${anggota.aktif} desc`, asc(anggota.nama))

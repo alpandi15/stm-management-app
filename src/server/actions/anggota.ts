@@ -32,6 +32,7 @@ function rapikanAnggota(d: InputAnggota) {
     jenisKelamin: d.jenisKelamin ?? null,
     noHp: d.noHp?.trim() || null,
     alamat: d.alamat?.trim() || null,
+    rtId: d.rtId ?? null,
     lat: d.lat ?? null,
     lng: d.lng ?? null,
     pengutip: !!d.pengutip,
@@ -39,6 +40,10 @@ function rapikanAnggota(d: InputAnggota) {
     tanggalMeninggal: status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
     tanggalBergabung: d.tanggalBergabung || null,
   }
+}
+
+function rtAda(rtId: number | null): boolean {
+  return !rtId || !!db.select({ id: schema.rt.id }).from(schema.rt).where(eq(schema.rt.id, rtId)).get()
 }
 
 function nomorKembar(nomor: string | null, kecualiId?: number): boolean {
@@ -62,6 +67,7 @@ export const tambahAnggota = aksiTerlindungi(async (input: InputAnggotaBaru) => 
   }
   const data = rapikanAnggota(hasil.data)
   if (nomorKembar(data.nomor)) return gagal(`Nomor anggota ${data.nomor} sudah dipakai anggota lain.`, 'nomor')
+  if (!rtAda(data.rtId)) return gagal('RT yang dipilih tidak dikenali. Pilih ulang dari daftar.', 'rtId')
   const keluarga: DataKeluarga[] = []
   for (const [i, k] of (hasil.data.keluarga ?? []).entries()) {
     const v = validasiKeluarga(k)
@@ -91,6 +97,7 @@ export const ubahAnggota = aksiTerlindungi(async (id: number, input: InputAnggot
   const lama = ambilAnggota(id)
   if (!lama) return gagal('Anggota tidak ditemukan.')
   if (nomorKembar(v.data!.nomor, id)) return gagal(`Nomor anggota ${v.data!.nomor} sudah dipakai anggota lain.`, 'nomor')
+  if (!rtAda(v.data!.rtId)) return gagal('RT yang dipilih tidak dikenali. Pilih ulang dari daftar.', 'rtId')
   const statusBerubah = lama.status !== v.data!.status || lama.tanggalMeninggal !== v.data!.tanggalMeninggal
   const baris = db
     .update(schema.anggota)

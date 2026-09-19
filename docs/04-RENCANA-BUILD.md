@@ -549,6 +549,11 @@ N duka · Rp X" merah). Uji Electron 22: Dian Permata + 2 baris (6 × 5.000, 10 
 badge "Nunggak 18 duka Rp 112.000"; baris jumlah 0 ditolak dan anggota tidak tersimpan; Hasan
 Baru bergabung 2026-09-01 → kolom duka "–"; 360px tanpa geser samping.
 
+**Data RT** (19 September 2026): `docs/02` §5.1d2. Uji Electron 22 (`uji-rt.js`): tambah RT 01–03
+(saran nama otomatis), nama kembar ditolak, ubah nama, pilih RT di form Ubah Anggota → badge
+"RT 01" di tabel dan detail, penyaring `?rt=1` (1 baris) dan `?rt=tanpa` (7), hapus RT terpakai
+nonaktif, hapus RT kosong berhasil.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

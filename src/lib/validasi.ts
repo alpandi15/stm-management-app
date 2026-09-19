@@ -87,6 +87,7 @@ const objekAnggota = z
     jenisKelamin: skemaJenisKelamin,
     noHp: z.string().trim().max(30, 'Nomor HP terlalu panjang.').nullable().optional(),
     alamat: z.string().trim().max(255, 'Alamat terlalu panjang.').nullable().optional(),
+    rtId: z.number({ error: 'RT yang dipilih tidak dikenali. Pilih ulang dari daftar.' }).int().positive().nullable().optional(),
     lat: z.number().min(-90).max(90).nullable().optional(),
     lng: z.number().min(-180).max(180).nullable().optional(),
     pengutip: z.boolean().optional(),
@@ -160,6 +161,14 @@ export const skemaJenis = z
   })
   .refine((v) => !v.nominalDikunci || v.nominalBawaan != null, { message: 'Nominal belum diisi, jadi belum ada yang bisa dikunci.', path: ['nominalDikunci'] })
 export type InputJenis = z.infer<typeof skemaJenis>
+
+/** RT (rukun tetangga) — data induk anggota. */
+export const skemaRt = z.object({
+  nama: z.string({ error: 'Nama RT belum diisi.' }).trim().min(1, 'Nama RT belum diisi.').max(60, 'Nama RT terlalu panjang. Maksimal 60 huruf.'),
+  keterangan: z.string().trim().max(255, 'Keterangan terlalu panjang. Maksimal 255 huruf.').nullable().optional(),
+  urutan: z.number({ error: 'Urutan harus angka.' }).int('Urutan harus angka bulat.').min(0).max(9999).nullable().optional(),
+})
+export type InputRt = z.input<typeof skemaRt>
 
 /** Kejadian duka (docs/02 §5.1e). */
 export const skemaKejadian = z

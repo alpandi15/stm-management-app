@@ -14,6 +14,7 @@ import { MatriksPeriode } from '@/components/anggota/MatriksPeriode'
 import { DaftarTanggungan } from '@/components/anggota/DaftarTanggungan'
 import { RingkasanDuka } from '@/components/anggota/RingkasanDuka'
 import { ringkasanDukaAnggota, tarifTunggakanLamaTerpakai } from '@/server/queries/duka'
+import { ambilRt } from '@/server/queries/rt'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -29,6 +30,7 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
   const totalHalaman = Math.max(1, Math.ceil(riwayat.total / PER_HALAMAN_RIWAYAT_ANGGOTA))
   const keluarga = daftarKeluarga(a.id)
   const asal = a.anggotaAsalId ? ambilAnggota(a.anggotaAsalId) : null
+  const namaRt = a.rtId ? (ambilRt(a.rtId)?.nama ?? null) : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,7 +82,8 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
           )}
           <dt className="text-muted">Alamat</dt>
           <dd>
-            {a.alamat ?? '–'}
+            {namaRt && <span className="mr-2 rounded-badge bg-bg px-2 py-0.5 text-ket font-semibold">{namaRt}</span>}
+            {a.alamat ?? (namaRt ? '' : '–')}
             {a.lat != null && a.lng != null && (
               <a href={`https://www.google.com/maps?q=${a.lat},${a.lng}`} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary hover:underline">
                 <ExternalLink className="size-4" /> Buka di Google Maps

@@ -70,6 +70,16 @@ export const jenis = sqliteTable('jenis', {
   periode: text('periode', { enum: PERIODE_JENIS }).notNull().default('bebas'),
 })
 
+/** RT (rukun tetangga) tempat anggota tinggal — data induk sederhana, dikelola di /anggota/rt. */
+export const rt = sqliteTable('rt', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  nama: text('nama').notNull().unique(), // mis. "RT 01", "RT 05 / RW 02"
+  keterangan: text('keterangan'), // mis. nama ketua RT, wilayah
+  urutan: integer('urutan').notNull().default(0), // urutan tampil (0 = mengikuti nama)
+  dibuatPada: integer('dibuat_pada').notNull(),
+})
+export type Rt = typeof rt.$inferSelect
+
 export const anggota = sqliteTable(
   'anggota',
   {
@@ -79,6 +89,7 @@ export const anggota = sqliteTable(
     jenisKelamin: text('jenis_kelamin', { enum: JENIS_KELAMIN }), // boleh kosong
     noHp: text('no_hp'),
     alamat: text('alamat'),
+    rtId: integer('rt_id').references(() => rt.id, { onDelete: 'set null' }),
     lat: real('lat'), // titik peta alamat (bukan uang — REAL boleh)
     lng: real('lng'),
     aktif: integer('aktif', { mode: 'boolean' }).notNull().default(true),
@@ -92,7 +103,7 @@ export const anggota = sqliteTable(
     tanggalNonaktif: text('tanggal_nonaktif'), // YYYY-MM-DD, diisi saat dinonaktifkan; batas kewajiban iuran duka
     dibuatPada: integer('dibuat_pada').notNull(),
   },
-  (t) => [uniqueIndex('idx_anggota_nomor').on(t.nomor), index('idx_anggota_penanda').on(t.ditandaiOlehTransaksiId)],
+  (t) => [uniqueIndex('idx_anggota_nomor').on(t.nomor), index('idx_anggota_penanda').on(t.ditandaiOlehTransaksiId), index('idx_anggota_rt').on(t.rtId)],
 )
 
 /**

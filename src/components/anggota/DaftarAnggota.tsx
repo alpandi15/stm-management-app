@@ -2,10 +2,11 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { CircleCheck, ExternalLink, HeartHandshake, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users, X } from 'lucide-react'
+import { CircleCheck, ExternalLink, HeartHandshake, Home, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifAnggota, hapusAnggota, tambahAnggota, ubahAnggota } from '@/server/actions/anggota'
 import type { BarisAnggota } from '@/server/queries/anggota'
+import type { Rt } from '@/server/db/schema'
 import { PER_HALAMAN_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
 import { HUBUNGAN, jenisKelaminDariHubungan, type JenisKelamin } from '@/lib/validasi'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -33,6 +34,7 @@ type Form = {
   jenisKelamin: JenisKelamin | null
   noHp: string
   alamat: string
+  rtId: number | null
   lat: number | null
   lng: number | null
   pengutip: boolean
@@ -43,7 +45,7 @@ type Form = {
   keluarga: BarisKeluargaForm[]
   tunggakanLama: BarisTunggakanForm[]
 }
-const formKosong: Form = { nomor: '', nama: '', jenisKelamin: null, noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '', tanggalBergabung: '', keluarga: [], tunggakanLama: [] }
+const formKosong: Form = { nomor: '', nama: '', jenisKelamin: null, noHp: '', alamat: '', rtId: null, lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '', tanggalBergabung: '', keluarga: [], tunggakanLama: [] }
 let kunciKeluarga = 0
 
 export function DaftarAnggota({
@@ -55,6 +57,8 @@ export function DaftarAnggota({
   ringkasan,
   saranNomor,
   tarifSaran,
+  daftarRt,
+  rtId,
 }: {
   baris: BarisAnggota[]
   total: number
@@ -65,6 +69,9 @@ export function DaftarAnggota({
   saranNomor: string
   /** Tarif tunggakan duka lama yang pernah dipakai — bawaan baris di form tambah */
   tarifSaran: number[]
+  daftarRt: Rt[]
+  /** Penyaring RT aktif dari URL: id RT, 'tanpa', atau kosong */
+  rtId?: number | 'tanpa'
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -104,7 +111,7 @@ export function DaftarAnggota({
     setPanel({ mode: 'tambah' })
   }
   function bukaUbah(a: BarisAnggota) {
-    setForm({ ...formKosong, nomor: a.nomor ?? '', nama: a.nama, jenisKelamin: a.jenisKelamin, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '', tanggalBergabung: a.tanggalBergabung ?? '' })
+    setForm({ ...formKosong, nomor: a.nomor ?? '', nama: a.nama, jenisKelamin: a.jenisKelamin, noHp: a.noHp ?? '', alamat: a.alamat ?? '', rtId: a.rtId, lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '', tanggalBergabung: a.tanggalBergabung ?? '' })
     setGalat(null)
     setPanel({ mode: 'ubah', id: a.id })
   }
@@ -119,6 +126,7 @@ export function DaftarAnggota({
         jenisKelamin: form.jenisKelamin,
         noHp: form.noHp || null,
         alamat: form.alamat || null,
+        rtId: form.rtId,
         lat: form.lat,
         lng: form.lng,
         pengutip: form.pengutip,
@@ -284,10 +292,30 @@ export function DaftarAnggota({
               <MapIcon /> Peta Anggota
             </Link>
           </Button>
+          <Button asChild variant="sekunder">
+            <Link href="/anggota/rt">
+              <Home /> Data RT
+            </Link>
+          </Button>
           <Button onClick={bukaTambah}>
             <Plus /> Tambah Anggota
           </Button>
         </div>
+        {daftarRt.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-label font-semibold text-muted">RT:</span>
+            <div className="w-full sm:w-72">
+              <PilihanCari<string>
+                id="saring-rt"
+                nilai={rtId === 'tanpa' ? 'tanpa' : rtId ? String(rtId) : null}
+                onUbah={(v) => ubahUrl({ rt: v ?? undefined, hal: undefined })}
+                pilihan={[{ nilai: 'tanpa', label: 'Belum punya RT' }, ...daftarRt.map((r) => ({ nilai: String(r.id), label: r.nama, keterangan: r.keterangan ?? undefined }))]}
+                placeholder="Semua RT"
+                labelKosong="Semua RT"
+              />
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tampilkan">
           {(
             [
@@ -366,7 +394,8 @@ export function DaftarAnggota({
                       {a.namaAsal && <p className="text-ket text-muted">Pecah dari {a.namaAsal}</p>}
                     </td>
                     <td className="max-w-xs px-4 py-3 text-muted">
-                      <span className="line-clamp-2">{a.alamat ?? '–'}</span>
+                      {a.namaRt && <span className="mb-0.5 inline-block rounded-badge bg-bg px-2 py-0.5 text-ket font-semibold text-text">{a.namaRt}</span>}
+                      <span className="line-clamp-2">{a.alamat ?? (a.namaRt ? '' : '–')}</span>
                     </td>
                     <td className="px-4 py-3">
                       <Badge a={a} />
@@ -404,7 +433,12 @@ export function DaftarAnggota({
                   <Link href={`/anggota/${a.id}`} className="block truncate text-judul-kartu font-semibold hover:text-primary">
                     {a.nama}
                   </Link>
-                  {a.alamat && <p className="line-clamp-2 text-ket text-muted">{a.alamat}</p>}
+                  {(a.alamat || a.namaRt) && (
+                    <p className="line-clamp-2 text-ket text-muted">
+                      {a.namaRt && <span className="mr-1 font-semibold text-text">{a.namaRt}</span>}
+                      {a.alamat}
+                    </p>
+                  )}
                   <p className="mt-1 text-isi">
                     <span className="angka font-bold text-masuk">{formatRupiah(a.totalIuran)}</span>
                     <span className="text-ket text-muted"> · keluarga {a.jumlahKeluarga}</span>
@@ -458,6 +492,30 @@ export function DaftarAnggota({
             <div className="flex flex-col gap-2">
               <Label htmlFor="alamat-anggota">Alamat <span className="font-normal text-muted">(boleh kosong)</span></Label>
               <Input id="alamat-anggota" value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} maxLength={255} placeholder="Contoh: Jl. Melati No. 12, Blok C" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="rt-anggota">
+                RT <span className="font-normal text-muted">(boleh kosong)</span>
+              </Label>
+              <PilihanCari<number>
+                id="rt-anggota"
+                nilai={form.rtId}
+                onUbah={(v) => setForm({ ...form, rtId: v })}
+                pilihan={daftarRt.map((r) => ({ nilai: r.id, label: r.nama, keterangan: r.keterangan ?? undefined }))}
+                placeholder={daftarRt.length ? 'Pilih RT…' : 'Belum ada RT — buat di Data RT'}
+                labelKosong="Tanpa RT"
+                galat={galat?.field === 'rtId'}
+              />
+              {galatField('rtId')}
+              <p className="text-ket text-muted">
+                Daftar RT diatur di{' '}
+                <Link href="/anggota/rt" className="font-semibold text-primary underline-offset-4 hover:underline">
+                  Data RT
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
               <p className="text-ket text-muted">Titik di peta (boleh kosong) — klik peta atau seret pin. Peta butuh internet.</p>
               {panel && <PetaPinDinamis lat={form.lat} lng={form.lng} onUbah={(t) => setForm((f) => ({ ...f, lat: t?.lat ?? null, lng: t?.lng ?? null }))} />}
             </div>
