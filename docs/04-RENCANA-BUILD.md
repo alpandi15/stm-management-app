@@ -501,11 +501,20 @@ peta OSM kosong di paket `.exe` pada Windows 7. Penyebab yang paling masuk akal:
 sertifikat Windows 7 tanpa akar Let's Encrypt (Chromium 108 memakai toko Windows). Solusi:
 ubin lewat `/api/ubin/{z}/{x}/{y}` dengan cache di folder data (`docs/02` §5.1d) — sekaligus
 peta tetap tampil offline untuk area yang pernah dibuka. Tautan peta di detail & daftar
-anggota → Google Maps. Bilah muat 3px di tepi atas saat tautan internal diklik
-(`kerangka/BilahMuat.tsx`) + `(app)/loading.tsx` (spinner "Memuat…") untuk komputer lambat.
+anggota → Google Maps. **Tirai muat satu layar** (`kerangka/TiraiMuat.tsx`, atas permintaan
+pemilik): `PemantauNavigasi` menyalakannya saat tautan internal diklik dan mematikannya saat
+pathname berubah; `(app)/loading.tsx` menampilkan tirai yang sama sampai isi halaman tiba.
+Temuan: pathname berubah saat batas loading tampil (rute sudah di-prefetch), bukan saat isi
+tiba — jadi `setAktif(true)` tidak boleh ditunda, kalau tidak tirai tertinggal; kedip halaman
+instan dicegah animasi muncul tertunda 100 ms. **Daftar tanggungan** di detail anggota jadi
+kartu sendiri (`anggota/DaftarTanggungan.tsx`): avatar inisial, hubungan, jenis kelamin,
+umur (`umurTahun`), status meninggal + tanggal, keterangan, dan chip "sudah jadi anggota
+sendiri" bertaut ke anggotanya.
 Uji Electron 22/Node 16: proxy 200 `image/png` 1.610 B, cache tertulis, ambil kedua 1 ms,
-ubin tak valid 400, halaman peta memuat 24 ubin dari `/api/ubin/15/…`, bilah muat aktif saat
-klik Laporan dan padam saat tiba, tautan detail `google.com/maps?q=3.5916998,98.7858193`.
+ubin tak valid 400, halaman peta memuat 24 ubin dari `/api/ubin/15/…`, tirai tampil satu layar
+saat navigasi diperlambat 1,5 s dan hilang saat tiba (juga tidak tertinggal pada navigasi
+instan), tautan detail `google.com/maps?q=3.5916998,98.7858193`, daftar tanggungan 4 orang +
+1 pecah tanpa geser samping di 360px.
 
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat

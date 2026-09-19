@@ -162,3 +162,13 @@ export function periodeUntuk(periodeJenis: 'bebas' | 'sekali' | 'bulanan' | 'tah
   if (periodeJenis === 'tahunan') return eksplisit && /^\d{4}$/.test(eksplisit) ? eksplisit : tanggal.slice(0, 4)
   return null
 }
+
+/** Umur dalam tahun penuh pada hari ini (null bila tanggal kosong/salah). */
+export function umurTahun(tanggalLahir: string | null | undefined, acuan: TanggalISO = hariIni()): number | null {
+  if (!tanggalLahir || !apakahISO(tanggalLahir)) return null
+  const l = dariISO(tanggalLahir)
+  const a = dariISO(acuan)
+  let umur = a.getFullYear() - l.getFullYear()
+  if (a.getMonth() < l.getMonth() || (a.getMonth() === l.getMonth() && a.getDate() < l.getDate())) umur -= 1
+  return umur < 0 ? null : umur
+}

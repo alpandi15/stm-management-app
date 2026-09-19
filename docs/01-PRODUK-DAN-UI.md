@@ -155,6 +155,10 @@ tidak ada parallax, tidak ada skeleton yang berkedip lama. Hormati
 
 ## 4. Kerangka aplikasi
 
+**Tirai muat.** Saat pindah halaman, seluruh layar ditutup tirai tembus pandang berisi ikon
+berputar dan "Memuat…" (muncul setelah 100 ms agar halaman instan tidak berkedip). Komputer
+tua bisa butuh 1–2 detik per halaman; tanpa tirai pengguna mengira kliknya tidak masuk.
+
 **Sidebar kiri tetap** selebar 240px di laptop dan desktop (≥ 1024px), menciut jadi ikon saja
 di tablet 768–1023px (melebar sementara di atas isi halaman saat kursor berada di atasnya, agar
 nama menu terbaca), dan menjadi menu bawah (bottom bar) di bawah 768px. Di menu bawah hanya lima item pertama yang muat

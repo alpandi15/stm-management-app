@@ -41,6 +41,7 @@
   --color-masuk-soft: #ecfdf5;
   --color-keluar-soft: #fef2f2;
   --color-warning-soft: #fffbeb;
+  --color-tirai: rgb(247 248 250 / 0.8); /* tirai muat di atas isi (TiraiMuat) */
   --color-primary-soft: #f3f8ff;
 
   --font-sans: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
@@ -104,6 +105,7 @@
     --color-masuk-soft: #052e22;
     --color-keluar-soft: #3b0d0d;
     --color-warning-soft: #3b2506;
+    --color-tirai: rgb(15 17 21 / 0.8);
     --color-primary-soft: #0b1734;
     color-scheme: dark;
   }
@@ -145,15 +147,13 @@
   background-image: linear-gradient(135deg, var(--color-keluar), var(--color-keluar-tua));
 }
 
-/* Bilah muat di tepi atas saat pindah halaman (components/kerangka/BilahMuat.tsx) */
-@keyframes bilah-muat {
-  0% { transform: scaleX(0); }
-  60% { transform: scaleX(0.7); }
-  100% { transform: scaleX(0.92); }
+/* Tirai muat (kerangka/TiraiMuat.tsx): tak terlihat 100 ms pertama supaya halaman instan tidak berkedip */
+@keyframes tirai-muncul {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-@utility animasi-bilah-muat {
-  transform-origin: left;
-  animation: bilah-muat 6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+@utility animasi-tirai {
+  animation: tirai-muncul 150ms ease-out 100ms both;
 }
 
 @utility angka {

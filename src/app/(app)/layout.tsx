@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/kerangka/Sidebar'
 import { BilahBawah } from '@/components/kerangka/BilahBawah'
 import { Header } from '@/components/kerangka/Header'
 import { Toaster } from '@/components/kerangka/Toaster'
-import { BilahMuat } from '@/components/kerangka/BilahMuat'
+import { PemantauNavigasi } from '@/components/kerangka/PemantauNavigasi'
 import { cadanganOtomatisSaatBuka } from '@/server/services/cadangan'
 
 export const dynamic = 'force-dynamic'
@@ -31,7 +31,7 @@ export default async function LayoutAplikasi({ children }: { children: React.Rea
       <BilahBawah />
       <Toaster />
       <React.Suspense fallback={null}>
-        <BilahMuat />
+        <PemantauNavigasi />
       </React.Suspense>
     </div>
   )

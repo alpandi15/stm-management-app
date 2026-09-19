@@ -1,14 +1,18 @@
 'use client'
 import * as React from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { TiraiMuat } from './TiraiMuat'
 
 /**
- * Bilah tipis di tepi atas yang berjalan saat pindah halaman (docs/01 §4). App Router tidak
- * punya peristiwa "mulai navigasi", jadi bilah dinyalakan saat tautan internal diklik dan
- * dimatikan begitu pathname/query berubah. Komputer tua Windows 7 bisa butuh 1–2 detik per
- * halaman; tanpa ini pengguna mengira kliknya tidak masuk.
+ * Tirai muat satu layar dari klik tautan sampai router mulai merender halaman tujuan.
+ * App Router tidak punya peristiwa "mulai navigasi", jadi tirai dinyalakan saat tautan
+ * internal diklik dan dimatikan begitu pathname/query berubah — itu terjadi saat batas
+ * loading.tsx tampil (bukan saat isi tiba), dan (app)/loading.tsx meneruskan tirai yang sama
+ * sampai isinya datang. Jangan menunda setAktif(true): pathname bisa berubah lebih cepat
+ * dari penundaan itu (rute sudah di-prefetch) dan tirai tidak pernah padam. Kedip untuk
+ * halaman instan dicegah lewat animasi muncul yang ditunda 100 ms (utilitas animasi-tirai).
  */
-export function BilahMuat() {
+export function PemantauNavigasi() {
   const pathname = usePathname()
   const cari = useSearchParams()
   const [aktif, setAktif] = React.useState(false)
@@ -31,16 +35,12 @@ export function BilahMuat() {
     return () => document.removeEventListener('click', klik, true)
   }, [])
 
-  // Pengaman: bila navigasi dibatalkan (mis. tautan ke halaman yang sama dengan hash), padamkan sendiri
+  // Pengaman: bila navigasi tidak pernah selesai (mis. dibatalkan), padamkan sendiri
   React.useEffect(() => {
     if (!aktif) return
     const t = setTimeout(() => setAktif(false), 15000)
     return () => clearTimeout(t)
   }, [aktif])
 
-  return (
-    <div aria-hidden className={`pointer-events-none fixed inset-x-0 top-0 z-50 h-[3px] transition-opacity duration-200 ${aktif ? 'opacity-100' : 'opacity-0'}`}>
-      <div className={`h-full bg-primary ${aktif ? 'animasi-bilah-muat' : ''}`} />
-    </div>
-  )
+  return aktif ? <TiraiMuat sumber="navigasi" /> : null
 }

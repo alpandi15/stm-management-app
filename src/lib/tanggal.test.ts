@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { apakahISO, formatTanggal, kalimatRentang, rentangPeriode } from './tanggal'
+import { apakahISO, formatTanggal, kalimatRentang, rentangPeriode, umurTahun } from './tanggal'
 
 test('rentang harian sama dengan acuan', () => {
   assert.deepEqual(rentangPeriode('harian', '2026-01-20'), { awal: '2026-01-20', akhir: '2026-01-20' })
@@ -47,4 +47,12 @@ test('periode: tambah bulan melintasi tahun, periodeUntuk memakai nilai eksplisi
   assert.equal(periodeUntuk('sekali', '2026-09-18', '2026-10'), null)
   assert.equal(formatPeriode('2026-10'), 'Oktober 2026')
   assert.equal(formatPeriode('2026'), '2026')
+})
+
+test('umurTahun menghitung tahun penuh, belum ulang tahun dikurangi satu', () => {
+  assert.equal(umurTahun('1984-05-20', '2026-09-19'), 42)
+  assert.equal(umurTahun('1984-12-25', '2026-09-19'), 41)
+  assert.equal(umurTahun('2026-09-19', '2026-09-19'), 0)
+  assert.equal(umurTahun(null), null)
+  assert.equal(umurTahun('bukan-tanggal'), null)
 })

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
 import { MatriksPeriode } from '@/components/anggota/MatriksPeriode'
+import { DaftarTanggungan } from '@/components/anggota/DaftarTanggungan'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -93,8 +94,6 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
               </dd>
             </>
           )}
-          <dt className="text-muted">Tanggungan</dt>
-          <dd>{keluarga.aktif.length === 0 ? '–' : keluarga.aktif.map((k) => `${k.nama} (${k.hubungan}${k.status === 'meninggal' ? ', meninggal' : ''})`).join(', ')}</dd>
         </dl>
         <div className="mt-4 grid grid-cols-1 gap-3 border-t border-border pt-4 sm:grid-cols-3">
           <div>
@@ -109,6 +108,25 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
             <p className="text-ket text-muted">Jumlah catatan</p>
             <p className="angka text-judul-kartu font-bold">{riwayat.total}</p>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-kartu border border-border bg-surface p-6 shadow-kartu" aria-label="Keluarga dan tanggungan">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-judul-kartu font-semibold">Keluarga / Tanggungan</h2>
+            <p className="mt-1 text-ket text-muted">
+              {keluarga.aktif.length === 0 ? 'Dipakai saat mencatat santunan duka.' : `${keluarga.aktif.length} orang ditanggung${keluarga.aktif.some((k) => k.status === 'meninggal') ? ` · ${keluarga.aktif.filter((k) => k.status === 'meninggal').length} sudah meninggal` : ''}`}
+            </p>
+          </div>
+          <Button asChild variant="sekunder">
+            <Link href={`/anggota/${a.id}/keluarga`}>
+              <Users /> Kelola Keluarga
+            </Link>
+          </Button>
+        </div>
+        <div className="mt-4">
+          <DaftarTanggungan anggotaId={a.id} aktif={keluarga.aktif} pecah={keluarga.pecah} />
         </div>
       </section>
 
