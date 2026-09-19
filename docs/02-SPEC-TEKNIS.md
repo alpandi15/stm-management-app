@@ -496,6 +496,12 @@ biasa/setoran kolektif).
   rupiah per anggota, bawaan = tarif kejadian terakhir), keterangan.
 - `pembayaran_duka`: centang (kejadian, anggota) unik + tanggal bayar. Tidak ada nominal.
 - `anggota.tanggal_nonaktif` diisi saat dinonaktifkan (dikosongkan saat diaktifkan lagi).
+- **Tunggakan lama** (`anggota.duka_lama_jumlah`, `duka_lama_rupiah`, `duka_lama_keterangan`,
+  migrasi 0009): iuran duka yang belum dibayar dari masa sebelum Buku Duka dipakai — pengurus
+  umumnya tidak tahu lagi siapa almarhumnya, hanya "si A masih kurang 3 kejadian". Cukup dua
+  angka + catatan, diisi/diturunkan di detail anggota (`aturTunggakanLama`), dan digabung ke
+  `jumlahNunggak`/`totalNunggak` (badge, penyaring, ringkasan). Buku Duka dipakai untuk
+  kejadian mulai sekarang.
 - **Siapa yang wajib** — satu-satunya aturan ada di `lib/duka.ts` (`wajibBayarDuka`), dipakai
   server dan klien, tidak ditiru di SQL: bergabung setelah kejadian → tidak; almarhum sendiri
   (kejadian atas namanya, bukan keluarganya) → tidak; meninggal sebelum kejadian → tidak;
@@ -505,7 +511,8 @@ biasa/setoran kolektif).
   klik nama = simpan langsung, penyaring belum/sudah/semua, "tandai semua yang tampil",
   "tandai semua wajib" untuk mengisi kejadian lama lalu menghapus centang yang menunggak),
   `/cetak/duka/[id]` (daftar tunggakan dengan kolom paraf). Detail anggota: kartu "Iuran Duka"
-  (wajib/bayar/nunggak + status per kejadian). Daftar anggota: badge "Nunggak duka N" dan
+  (wajib/bayar/nunggak + status per kejadian) yang **bisa dicentang langsung** per kejadian
+  (`aturPembayaranDuka`), "tandai semua" (`tandaiSemuaDukaAnggota`), dan blok tunggakan lama. Daftar anggota: badge "Nunggak duka N" dan
   penyaring `nunggak-duka`.
 
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)

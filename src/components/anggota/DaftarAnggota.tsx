@@ -183,7 +183,7 @@ export function DaftarAnggota({
       {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-2.5 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
       {a.pengutip && <span className="rounded-badge bg-warning-soft px-2.5 py-0.5 text-ket font-semibold text-warning">Pengutip</span>}
       {a.tunggakanDuka && a.tunggakanDuka.jumlahNunggak > 0 && (
-        <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar" title={`Belum bayar iuran duka ${a.tunggakanDuka.jumlahNunggak} kejadian · ${formatRupiah(a.tunggakanDuka.totalNunggak)}`}>
+        <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar" title={`Belum bayar iuran duka ${a.tunggakanDuka.jumlahNunggak} kejadian · ${formatRupiah(a.tunggakanDuka.totalNunggak)}${a.tunggakanDuka.lamaJumlah ? ` (termasuk ${a.tunggakanDuka.lamaJumlah} tunggakan lama)` : ''}`}>
           Nunggak duka {a.tunggakanDuka.jumlahNunggak}
         </span>
       )}

@@ -90,6 +90,11 @@ export const anggota = sqliteTable(
     anggotaAsalId: integer('anggota_asal_id').references((): AnySQLiteColumn => anggota.id, { onDelete: 'set null' }), // pecah dari keluarga siapa
     tanggalBergabung: text('tanggal_bergabung'), // YYYY-MM-DD
     tanggalNonaktif: text('tanggal_nonaktif'), // YYYY-MM-DD, diisi saat dinonaktifkan; batas kewajiban iuran duka
+    // Tunggakan iuran duka dari masa sebelum Buku Duka dipakai (almarhumnya tidak tercatat):
+    // cukup berapa kejadian dan total rupiahnya, diturunkan saat dibayar (docs/02 §5.1e)
+    dukaLamaJumlah: integer('duka_lama_jumlah').notNull().default(0),
+    dukaLamaRupiah: integer('duka_lama_rupiah').notNull().default(0),
+    dukaLamaKeterangan: text('duka_lama_keterangan'),
     dibuatPada: integer('dibuat_pada').notNull(),
   },
   (t) => [uniqueIndex('idx_anggota_nomor').on(t.nomor), index('idx_anggota_penanda').on(t.ditandaiOlehTransaksiId)],

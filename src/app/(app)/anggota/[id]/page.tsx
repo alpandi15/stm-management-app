@@ -134,7 +134,7 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
 
       {(() => {
         const duka = ringkasanDukaAnggota(a.id)
-        return duka ? <RingkasanDuka ringkasan={duka} /> : null
+        return duka ? <RingkasanDuka anggotaId={a.id} ringkasan={duka} /> : null
       })()}
 
       <section className="flex flex-col gap-3" aria-label="Pembayaran per periode">

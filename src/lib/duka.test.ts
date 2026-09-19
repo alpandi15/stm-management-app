@@ -36,5 +36,12 @@ test('nonaktif: wajib sampai tanggal nonaktif; tanpa tanggal tidak wajib', () =>
 test('tunggakan mengikuti tarif tiap kejadian, bukan tarif terbaru', () => {
   const daftar = [k(1, '2024-01-01', 5000), k(2, '2024-06-01', 5000), k(3, '2025-01-01', 7000), k(4, '2025-05-01', 7000)]
   const t = hitungTunggakan(dasar, daftar, new Set([1, 3]))
-  assert.deepEqual(t, { jumlahWajib: 4, jumlahBayar: 2, jumlahNunggak: 2, totalNunggak: 12000 })
+  assert.deepEqual(t, { jumlahWajib: 4, jumlahBayar: 2, jumlahNunggakKejadian: 2, totalNunggakKejadian: 12000, lamaJumlah: 0, lamaRupiah: 0, jumlahNunggak: 2, totalNunggak: 12000 })
+})
+
+test('tunggakan lama (almarhum tidak tercatat) ikut digabung ke total', () => {
+  const t = hitungTunggakan({ ...dasar, dukaLamaJumlah: 3, dukaLamaRupiah: 15000 }, [k(1, '2026-01-01', 7000)], new Set())
+  assert.equal(t.jumlahNunggak, 4)
+  assert.equal(t.totalNunggak, 22000)
+  assert.equal(t.jumlahNunggakKejadian, 1)
 })

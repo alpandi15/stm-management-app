@@ -8,6 +8,9 @@ export type AnggotaUntukDuka = {
   tanggalMeninggal: string | null
   tanggalBergabung: string | null
   tanggalNonaktif: string | null
+  /** Tunggakan lama (sebelum Buku Duka dipakai): berapa kejadian dan total rupiah */
+  dukaLamaJumlah?: number
+  dukaLamaRupiah?: number
 }
 
 export type KejadianUntukDuka = {
@@ -37,18 +40,42 @@ export function wajibBayarDuka(a: AnggotaUntukDuka, k: KejadianUntukDuka): boole
   return true
 }
 
-export type TunggakanDuka = { jumlahWajib: number; jumlahBayar: number; jumlahNunggak: number; totalNunggak: number }
+export type TunggakanDuka = {
+  jumlahWajib: number
+  jumlahBayar: number
+  /** Kejadian di Buku Duka yang belum dicentang */
+  jumlahNunggakKejadian: number
+  totalNunggakKejadian: number
+  /** Tunggakan lama yang almarhumnya tidak tercatat */
+  lamaJumlah: number
+  lamaRupiah: number
+  /** Gabungan kejadian + lama — dipakai badge, penyaring, dan ringkasan */
+  jumlahNunggak: number
+  totalNunggak: number
+}
 
-/** Ringkasan tunggakan seorang anggota atas daftar kejadian, diberi himpunan id kejadian yang sudah dibayar. */
+/** Ringkasan tunggakan seorang anggota atas daftar kejadian (+ tunggakan lama), diberi himpunan id kejadian yang sudah dibayar. */
 export function hitungTunggakan(a: AnggotaUntukDuka, kejadian: KejadianUntukDuka[], sudahBayar: Set<number>): TunggakanDuka {
   let jumlahWajib = 0
   let jumlahBayar = 0
-  let totalNunggak = 0
+  let totalNunggakKejadian = 0
   for (const k of kejadian) {
     if (!wajibBayarDuka(a, k)) continue
     jumlahWajib += 1
     if (sudahBayar.has(k.id)) jumlahBayar += 1
-    else totalNunggak += k.tarif
+    else totalNunggakKejadian += k.tarif
   }
-  return { jumlahWajib, jumlahBayar, jumlahNunggak: jumlahWajib - jumlahBayar, totalNunggak }
+  const lamaJumlah = a.dukaLamaJumlah ?? 0
+  const lamaRupiah = a.dukaLamaRupiah ?? 0
+  const jumlahNunggakKejadian = jumlahWajib - jumlahBayar
+  return {
+    jumlahWajib,
+    jumlahBayar,
+    jumlahNunggakKejadian,
+    totalNunggakKejadian,
+    lamaJumlah,
+    lamaRupiah,
+    jumlahNunggak: jumlahNunggakKejadian + lamaJumlah,
+    totalNunggak: totalNunggakKejadian + lamaRupiah,
+  }
 }

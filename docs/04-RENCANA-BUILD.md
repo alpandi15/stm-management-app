@@ -529,6 +529,12 @@ hapus centang Budi → 3; detail Budi "Menunggak 2 kejadian Rp 12.000" (5.000 + 
 nunggak-duka: Budi 2, Dewi 1, Eko 1; cetak tunggakan kejadian 2: 3 baris. Form catat:
 kalender inline, tanpa Hari Ini/Kemarin, footer `sticky`, tepi input 2px `#8a93a6`.
 
+**Tunggakan lama & centang di detail anggota** (19 September 2026): `docs/02` §5.1e. Uji
+Electron 22 (`uji-duka2.js`): centang Karim langsung di detail → DB + ringkasan "Menunggak 1 ·
+Rp 7.000"; isi tunggakan lama 3 kejadian Rp 15.000 → "Menunggak 4 kejadian Rp 22.000", badge
+daftar "Nunggak duka 4"; validasi jumlah kosong; "Sudah dibayar semua" → 0; centang Sumi →
+"Lunas semua Rp 0".
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

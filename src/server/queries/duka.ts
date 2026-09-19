@@ -11,6 +11,8 @@ const kolomAnggotaDuka = {
   tanggalMeninggal: anggota.tanggalMeninggal,
   tanggalBergabung: anggota.tanggalBergabung,
   tanggalNonaktif: anggota.tanggalNonaktif,
+  dukaLamaJumlah: anggota.dukaLamaJumlah,
+  dukaLamaRupiah: anggota.dukaLamaRupiah,
 }
 
 function semuaAnggotaDuka(): AnggotaUntukDuka[] {
@@ -98,12 +100,13 @@ export function daftarAnggotaKejadian(kejadianId: number): BarisAnggotaKejadian[
 }
 
 export type RingkasanDukaAnggota = TunggakanDuka & {
+  lamaKeterangan: string | null
   daftar: Array<KejadianDuka & { sudahBayar: boolean; tanggalBayar: string | null }>
 }
 
 /** Untuk detail anggota: kejadian yang menjadi kewajibannya beserta status bayar. */
 export function ringkasanDukaAnggota(anggotaId: number): RingkasanDukaAnggota | null {
-  const a = db.select(kolomAnggotaDuka).from(anggota).where(eq(anggota.id, anggotaId)).get()
+  const a = db.select({ ...kolomAnggotaDuka, dukaLamaKeterangan: anggota.dukaLamaKeterangan }).from(anggota).where(eq(anggota.id, anggotaId)).get()
   if (!a) return null
   const kejadian = db.select().from(kejadianDuka).orderBy(desc(kejadianDuka.tanggalMeninggal), desc(kejadianDuka.nomor)).all()
   const bayar = new Map(
@@ -117,6 +120,7 @@ export function ringkasanDukaAnggota(anggotaId: number): RingkasanDukaAnggota | 
   const wajib = kejadian.filter((k) => wajibBayarDuka(a, k))
   return {
     ...hitungTunggakan(a, kejadian, new Set(bayar.keys())),
+    lamaKeterangan: a.dukaLamaKeterangan,
     daftar: wajib.map((k) => ({ ...k, sudahBayar: bayar.has(k.id), tanggalBayar: bayar.get(k.id) ?? null })),
   }
 }
