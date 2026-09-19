@@ -11,11 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
-import { InputRupiah } from '@/components/keuangan/InputRupiah'
-
-type BarisForm = { kunci: number; jumlah: string; tarif: number | null; keterangan: string }
-let kunciBaris = 0
-const barisBaru = (tarif: number | null = null): BarisForm => ({ kunci: ++kunciBaris, jumlah: '', tarif, keterangan: '' })
+import { FieldTunggakanLama, barisTunggakanBaru as barisBaru, type BarisTunggakanForm as BarisForm } from './FieldTunggakanLama'
 
 /**
  * Tunggakan iuran duka dari masa sebelum Buku Duka dipakai — almarhumnya tidak tercatat lagi,
@@ -45,7 +41,7 @@ export function TunggakanLama({ anggotaId, baris, tarifSaran }: { anggotaId: num
   }
   function bukaUbah(b: TunggakanDukaLama) {
     setGalat(null)
-    setFormUbah({ kunci: ++kunciBaris, jumlah: String(b.jumlah), tarif: b.tarif, keterangan: b.keterangan ?? '' })
+    setFormUbah({ ...barisBaru(b.tarif), jumlah: String(b.jumlah), keterangan: b.keterangan ?? '' })
     setUbah(b)
   }
   function bukaBayar(b: TunggakanDukaLama) {
@@ -124,30 +120,6 @@ export function TunggakanLama({ anggotaId, baris, tarifSaran }: { anggotaId: num
 
   const galatField = (k: string) => (galat?.field === k ? <PesanGalat>{galat.pesan}</PesanGalat> : null)
 
-  // Fungsi penolong render (bukan komponen): komponen yang didefinisikan di dalam render kehilangan fokus tiap ketikan
-  function fieldBaris(b: BarisForm, onUbah: (u: Partial<BarisForm>) => void, awalan: string) {
-    return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1.4fr]">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${awalan}-jumlah-${b.kunci}`}>Berapa kejadian</Label>
-          <Input id={`${awalan}-jumlah-${b.kunci}`} inputMode="numeric" className="angka" value={b.jumlah} onChange={(e) => onUbah({ jumlah: e.target.value.replace(/\D/g, '') })} aria-invalid={galat?.field === `jumlah-${b.kunci}` || galat?.field === 'jumlah'} placeholder="6" />
-          {galatField(`jumlah-${b.kunci}`)}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${awalan}-tarif-${b.kunci}`}>Iuran per kejadian</Label>
-          <InputRupiah id={`${awalan}-tarif-${b.kunci}`} nilai={b.tarif} onUbah={(n) => onUbah({ tarif: n })} galat={galat?.field === `tarif-${b.kunci}` || galat?.field === 'tarif'} />
-          {galatField(`tarif-${b.kunci}`)}
-        </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor={`${awalan}-ket-${b.kunci}`}>
-            Keterangan <span className="font-normal text-muted">(boleh kosong)</span>
-          </Label>
-          <Input id={`${awalan}-ket-${b.kunci}`} value={b.keterangan} onChange={(e) => onUbah({ keterangan: e.target.value })} maxLength={255} placeholder="Contoh: Januari–Mei 2026, pengurus lama" />
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="rounded-input border-2 border-dashed border-border-kuat px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -206,7 +178,7 @@ export function TunggakanLama({ anggotaId, baris, tarifSaran }: { anggotaId: num
                     </Button>
                   )}
                 </div>
-                {fieldBaris(b, (u) => setFormTambah((f) => f.map((x) => (x.kunci === b.kunci ? { ...x, ...u } : x))), 'tambah')}
+                <FieldTunggakanLama b={b} awalan="tambah" galat={galat} onUbah={(u) => setFormTambah((f) => f.map((x) => (x.kunci === b.kunci ? { ...x, ...u } : x)))} />
               </div>
             ))}
             <Button type="button" variant="halus" className="w-fit" onClick={() => setFormTambah([...formTambah, barisBaru()])}>
@@ -228,7 +200,7 @@ export function TunggakanLama({ anggotaId, baris, tarifSaran }: { anggotaId: num
       <Dialog open={ubah !== null} onOpenChange={(o) => !o && setUbah(null)}>
         <DialogContent judul="Ubah baris tunggakan">
           <form onSubmit={simpanUbah} className="flex flex-col gap-4" noValidate>
-            {fieldBaris(formUbah, (u) => setFormUbah((f) => ({ ...f, ...u })), 'ubah')}
+            <FieldTunggakanLama b={formUbah} awalan="ubah" galat={galat} onUbah={(u) => setFormUbah((f) => ({ ...f, ...u }))} />
             {galat && !/^(jumlah|tarif)/.test(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
             {galat && (galat.field === 'jumlah' || galat.field === 'tarif') && <PesanGalat>{galat.pesan}</PesanGalat>}
             <div className="flex flex-col gap-2 sm:flex-row-reverse">

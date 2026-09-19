@@ -539,6 +539,16 @@ dan "10 × Rp 7.000 = Rp 70.000", ringkasan Menunggak 18 · Rp 112.000; bayar 4 
 Lunas Semua → baris hilang; bayar 11 dari 10 ditolak; badge daftar "Nunggak duka 12 (termasuk
 10 tunggakan lama)".
 
+**Tambah anggota + tunggakan, badge daftar** (19 September 2026): form Tambah Anggota memuat
+bagian *Tunggakan iuran duka lama* (baris jumlah × tarif, tarif yang pernah dipakai jadi
+bawaan; `skemaAnggotaBaru.tunggakanLama`, disimpan satu transaksi) dan kolom *Tanggal
+bergabung* (kosong = anggota lama; terisi = tidak ditagih kejadian sebelumnya). Daftar anggota:
+kolom Keadaan hanya satu badge utama (Aktif/Nonaktif/Meninggal) + tag bergaris (Pengutip,
+Pecah KK); iuran duka pindah ke kolom sendiri "Iuran duka" (✓ Duka lunas hijau, atau "Nunggak
+N duka · Rp X" merah). Uji Electron 22: Dian Permata + 2 baris (6 × 5.000, 10 × 7.000) tersimpan,
+badge "Nunggak 18 duka Rp 112.000"; baris jumlah 0 ditolak dan anggota tidak tersimpan; Hasan
+Baru bergabung 2026-09-01 → kolom duka "–"; 360px tanpa geser samping.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

@@ -92,6 +92,8 @@ const objekAnggota = z
     pengutip: z.boolean().optional(),
     status: z.enum(STATUS_HIDUP, { error: 'Pilih dulu orang ini masih hidup atau sudah meninggal.' }).optional(),
     tanggalMeninggal: skemaTanggalOpsional,
+    /** Kosong = anggota lama (wajib semua kejadian duka); terisi = tidak ditagih kejadian sebelum tanggal ini */
+    tanggalBergabung: skemaTanggalOpsional,
   })
 const aturanAnggota = { message: 'Isi tanggal meninggalnya.', path: ['tanggalMeninggal'] }
 export const skemaAnggota = objekAnggota.refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, aturanAnggota)
@@ -123,9 +125,20 @@ export const skemaKeluarga = z
   .refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, { message: 'Isi tanggal meninggalnya.', path: ['tanggalMeninggal'] })
 export type InputKeluarga = z.input<typeof skemaKeluarga>
 
-/** Anggota baru boleh langsung membawa daftar keluarganya (tanggungan) dalam satu simpan. */
+/** Satu baris tunggakan duka lama (docs/02 §5.1e): berapa kejadian × iuran per kejadian. */
+export const skemaTunggakanLama = z.object({
+  jumlah: z.number({ error: 'Berapa kejadian harus diisi angka.' }).int('Berapa kejadian harus angka bulat.').min(1, 'Berapa kejadian minimal 1.').max(1000, 'Berapa kejadian terlalu banyak. Maksimal 1000.'),
+  tarif: z.number({ error: 'Iuran per kejadian belum diisi.' }).int('Iuran per kejadian harus bilangan bulat.').min(1, 'Iuran per kejadian harus lebih dari nol.').max(JUMLAH_MAKS, 'Iuran per kejadian terlalu besar.'),
+  keterangan: z.string().trim().max(255, 'Keterangan terlalu panjang. Maksimal 255 huruf.').nullable().optional(),
+})
+export type InputTunggakanLama = z.input<typeof skemaTunggakanLama>
+
+/** Anggota baru boleh langsung membawa daftar keluarganya (tanggungan) dan tunggakan duka lamanya dalam satu simpan. */
 export const skemaAnggotaBaru = objekAnggota
-  .extend({ keluarga: z.array(skemaKeluarga).max(50, 'Terlalu banyak anggota keluarga sekaligus. Maksimal 50.').optional() })
+  .extend({
+    keluarga: z.array(skemaKeluarga).max(50, 'Terlalu banyak anggota keluarga sekaligus. Maksimal 50.').optional(),
+    tunggakanLama: z.array(skemaTunggakanLama).max(20, 'Terlalu banyak baris tunggakan. Maksimal 20.').optional(),
+  })
   .refine((v) => v.status !== 'meninggal' || !!v.tanggalMeninggal, aturanAnggota)
 export type InputAnggotaBaru = z.input<typeof skemaAnggotaBaru>
 

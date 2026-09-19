@@ -2,7 +2,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ExternalLink, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users, X } from 'lucide-react'
+import { CircleCheck, ExternalLink, HeartHandshake, Map as MapIcon, MoreVertical, Pencil, Phone, Plus, Search, Trash2, UserRound, UserRoundCheck, UserRoundX, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifAnggota, hapusAnggota, tambahAnggota, ubahAnggota } from '@/server/actions/anggota'
 import type { BarisAnggota } from '@/server/queries/anggota'
@@ -23,6 +23,7 @@ import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { PilihanCari } from '@/components/ui/pilihan-cari'
 import { PetaPinDinamis } from './PetaPinDinamis'
 import { PilihJenisKelamin } from './PilihJenisKelamin'
+import { FieldTunggakanLama, barisTunggakanBaru, type BarisTunggakanForm } from './FieldTunggakanLama'
 import { cn } from '@/lib/utils'
 
 type BarisKeluargaForm = { kunci: number; nama: string; hubungan: (typeof HUBUNGAN)[number] | null; jenisKelamin: JenisKelamin | null }
@@ -37,10 +38,12 @@ type Form = {
   pengutip: boolean
   status: 'aktif' | 'meninggal'
   tanggalMeninggal: string
-  /** Hanya dipakai saat tambah — keluarga ikut tersimpan bersama anggota baru */
+  tanggalBergabung: string
+  /** Hanya dipakai saat tambah — keluarga dan tunggakan duka lama ikut tersimpan bersama anggota baru */
   keluarga: BarisKeluargaForm[]
+  tunggakanLama: BarisTunggakanForm[]
 }
-const formKosong: Form = { nomor: '', nama: '', jenisKelamin: null, noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '', keluarga: [] }
+const formKosong: Form = { nomor: '', nama: '', jenisKelamin: null, noHp: '', alamat: '', lat: null, lng: null, pengutip: false, status: 'aktif', tanggalMeninggal: '', tanggalBergabung: '', keluarga: [], tunggakanLama: [] }
 let kunciKeluarga = 0
 
 export function DaftarAnggota({
@@ -51,6 +54,7 @@ export function DaftarAnggota({
   saring,
   ringkasan,
   saranNomor,
+  tarifSaran,
 }: {
   baris: BarisAnggota[]
   total: number
@@ -59,6 +63,8 @@ export function DaftarAnggota({
   saring: SaringAnggota
   ringkasan: { semua: number; aktif: number; nonaktif: number; meninggal: number; pengutip: number; nunggakDuka: number }
   saranNomor: string
+  /** Tarif tunggakan duka lama yang pernah dipakai — bawaan baris di form tambah */
+  tarifSaran: number[]
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -98,7 +104,7 @@ export function DaftarAnggota({
     setPanel({ mode: 'tambah' })
   }
   function bukaUbah(a: BarisAnggota) {
-    setForm({ ...formKosong, nomor: a.nomor ?? '', nama: a.nama, jenisKelamin: a.jenisKelamin, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '' })
+    setForm({ ...formKosong, nomor: a.nomor ?? '', nama: a.nama, jenisKelamin: a.jenisKelamin, noHp: a.noHp ?? '', alamat: a.alamat ?? '', lat: a.lat, lng: a.lng, pengutip: a.pengutip, status: a.status, tanggalMeninggal: a.tanggalMeninggal ?? '', tanggalBergabung: a.tanggalBergabung ?? '' })
     setGalat(null)
     setPanel({ mode: 'ubah', id: a.id })
   }
@@ -118,19 +124,25 @@ export function DaftarAnggota({
         pengutip: form.pengutip,
         status: form.status,
         tanggalMeninggal: form.status === 'meninggal' ? form.tanggalMeninggal || null : null,
+        tanggalBergabung: form.tanggalBergabung || null,
       }
       const keluarga = form.keluarga.map((k) => ({
         nama: k.nama,
         hubungan: k.hubungan as (typeof HUBUNGAN)[number],
         jenisKelamin: jenisKelaminDariHubungan(k.hubungan) ?? k.jenisKelamin,
       }))
-      const hasil = panel.mode === 'tambah' ? await tambahAnggota({ ...input, keluarga }) : await ubahAnggota(panel.id, input)
+      const tunggakanLama = form.tunggakanLama
+        .filter((t) => t.jumlah || t.tarif || t.keterangan)
+        .map((t) => ({ jumlah: Number(t.jumlah || 0), tarif: t.tarif ?? 0, keterangan: t.keterangan || null }))
+      const hasil = panel.mode === 'tambah' ? await tambahAnggota({ ...input, keluarga, tunggakanLama }) : await ubahAnggota(panel.id, input)
       if (!hasil.ok) {
         setGalat({ pesan: hasil.pesan, field: hasil.field })
         return
       }
       toast.success(
-        panel.mode === 'tambah' ? `${hasil.data.nama} ditambahkan${keluarga.length ? ` bersama ${keluarga.length} anggota keluarga` : ''}.` : 'Perubahan tersimpan.',
+        panel.mode === 'tambah'
+          ? `${hasil.data.nama} ditambahkan${keluarga.length ? ` bersama ${keluarga.length} anggota keluarga` : ''}${tunggakanLama.length ? ` dan ${tunggakanLama.length} baris tunggakan duka lama` : ''}.`
+          : 'Perubahan tersimpan.',
       )
       setPanel(null)
       router.refresh()
@@ -176,20 +188,41 @@ export function DaftarAnggota({
 
   const galatField = (k: string) => (galat?.field === k ? <PesanGalat>{galat.pesan}</PesanGalat> : null)
 
+  /** Keadaan: satu badge utama (Aktif / Nonaktif / Meninggal) + tag kecil bergaris (Pengutip, Pecah KK). */
   const Badge = ({ a }: { a: BarisAnggota }) => (
-    <span className="flex flex-wrap gap-1">
-      {!a.aktif && <span className="rounded-badge bg-border px-2.5 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>}
-      {a.status === 'meninggal' && <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>}
-      {a.anggotaAsalId && <span className="rounded-badge bg-primary-soft px-2.5 py-0.5 text-ket font-semibold text-primary">Pecah KK</span>}
-      {a.pengutip && <span className="rounded-badge bg-warning-soft px-2.5 py-0.5 text-ket font-semibold text-warning">Pengutip</span>}
-      {a.tunggakanDuka && a.tunggakanDuka.jumlahNunggak > 0 && (
-        <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar" title={`Belum bayar iuran duka ${a.tunggakanDuka.jumlahNunggak} kejadian · ${formatRupiah(a.tunggakanDuka.totalNunggak)}${a.tunggakanDuka.lamaJumlah ? ` (termasuk ${a.tunggakanDuka.lamaJumlah} tunggakan lama)` : ''}`}>
-          Nunggak duka {a.tunggakanDuka.jumlahNunggak}
-        </span>
+    <span className="flex flex-wrap items-center gap-1.5">
+      {a.status === 'meninggal' ? (
+        <span className="rounded-badge bg-keluar-soft px-2.5 py-0.5 text-ket font-semibold text-keluar">Meninggal</span>
+      ) : a.aktif ? (
+        <span className="rounded-badge bg-masuk-soft px-2.5 py-0.5 text-ket font-semibold text-masuk">Aktif</span>
+      ) : (
+        <span className="rounded-badge bg-border px-2.5 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>
       )}
-      {a.aktif && a.status === 'aktif' && !a.anggotaAsalId && <span className="rounded-badge bg-masuk-soft px-2.5 py-0.5 text-ket font-semibold text-masuk">Aktif</span>}
+      {a.pengutip && <span className="rounded-badge border border-warning px-2 py-0.5 text-ket font-medium text-warning">Pengutip</span>}
+      {a.anggotaAsalId && <span className="rounded-badge border border-primary px-2 py-0.5 text-ket font-medium text-primary">Pecah KK</span>}
     </span>
   )
+
+  /** Iuran duka: lunas (hijau) atau nunggak N kejadian · Rp X (merah) — kolom sendiri, bukan tercampur dengan badge keadaan. */
+  const StatusDuka = ({ a, ringkas }: { a: BarisAnggota; ringkas?: boolean }) => {
+    const t = a.tunggakanDuka
+    if (!t || (t.jumlahWajib === 0 && t.lamaJumlah === 0)) return ringkas ? null : <span className="text-ket text-muted">–</span>
+    if (t.jumlahNunggak === 0) {
+      return (
+        <span className="inline-flex items-center gap-1 text-ket font-semibold text-masuk">
+          <CircleCheck className="size-4" /> Duka lunas
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex flex-col leading-tight" title={t.lamaJumlah ? `Termasuk ${t.lamaJumlah} tunggakan lama (${formatRupiah(t.lamaRupiah)})` : undefined}>
+        <span className="inline-flex items-center gap-1 text-ket font-semibold text-keluar">
+          <HeartHandshake className="size-4" /> Nunggak {t.jumlahNunggak} duka
+        </span>
+        <span className="angka text-ket text-keluar">{formatRupiah(t.totalNunggak)}</span>
+      </span>
+    )
+  }
 
   const MenuAksi = ({ a }: { a: BarisAnggota }) => (
     <DropdownMenu>
@@ -311,6 +344,7 @@ export function DaftarAnggota({
                   <th className="px-4 py-3">Nama</th>
                   <th className="px-4 py-3">Alamat</th>
                   <th className="px-4 py-3">Keadaan</th>
+                  <th className="px-4 py-3">Iuran duka</th>
                   <th className="px-4 py-3 text-right">Total iuran</th>
                   <th className="px-4 py-3 text-right">Keluarga</th>
                   <th className="px-2 py-3"><span className="sr-only">Aksi</span></th>
@@ -337,6 +371,9 @@ export function DaftarAnggota({
                     <td className="px-4 py-3">
                       <Badge a={a} />
                       {a.status === 'meninggal' && a.tanggalMeninggal && <p className="mt-1 text-ket text-muted">{formatTanggal(a.tanggalMeninggal)}</p>}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <StatusDuka a={a} />
                     </td>
                     <td className="angka whitespace-nowrap px-4 py-3 text-right font-semibold text-masuk">
                       {formatRupiah(a.totalIuran)}
@@ -372,8 +409,9 @@ export function DaftarAnggota({
                     <span className="angka font-bold text-masuk">{formatRupiah(a.totalIuran)}</span>
                     <span className="text-ket text-muted"> · keluarga {a.jumlahKeluarga}</span>
                   </p>
-                  <div className="mt-1">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <Badge a={a} />
+                    <StatusDuka a={a} ringkas />
                   </div>
                 </div>
                 <MenuAksi a={a} />
@@ -422,6 +460,13 @@ export function DaftarAnggota({
               <Input id="alamat-anggota" value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} maxLength={255} placeholder="Contoh: Jl. Melati No. 12, Blok C" />
               <p className="text-ket text-muted">Titik di peta (boleh kosong) — klik peta atau seret pin. Peta butuh internet.</p>
               {panel && <PetaPinDinamis lat={form.lat} lng={form.lng} onUbah={(t) => setForm((f) => ({ ...f, lat: t?.lat ?? null, lng: t?.lng ?? null }))} />}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="tanggal-bergabung">
+                Tanggal bergabung <span className="font-normal text-muted">(boleh kosong)</span>
+              </Label>
+              <PilihTanggal id="tanggal-bergabung" nilai={form.tanggalBergabung} maks={hariIni()} onUbah={(v) => setForm({ ...form, tanggalBergabung: v })} placeholder="Kosong = anggota lama" />
+              <p className="text-ket text-muted">Dipakai Buku Duka: anggota tidak ditagih kejadian yang terjadi sebelum tanggal ini. Kosongkan untuk anggota lama.</p>
             </div>
             <div className="flex flex-col gap-2">
               <Label>Tim pengutip iuran?</Label>
@@ -492,6 +537,31 @@ export function DaftarAnggota({
                 </Button>
                 {galatField('keluarga')}
               </fieldset>
+            ) : null}
+            {panel?.mode === 'tambah' ? (
+              <fieldset className="flex flex-col gap-3 rounded-kartu border border-border bg-bg p-4">
+                <legend className="px-1 text-label font-semibold uppercase tracking-wide text-muted">Tunggakan iuran duka lama (boleh kosong)</legend>
+                <p className="text-ket text-muted">Dari buku manual: berapa kejadian yang belum dibayar dan iuran per kejadian saat itu. Satu baris per tarif, mis. 6 × Rp 5.000 dan 10 × Rp 7.000.</p>
+                {form.tunggakanLama.map((t, i) => (
+                  <div key={t.kunci} className="flex flex-col gap-3 rounded-input border border-border bg-surface p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-label font-semibold text-muted">Baris {i + 1}</span>
+                      <Button type="button" variant="halus" ukuran="ikon" aria-label={`Hapus baris tunggakan ${i + 1}`} onClick={() => setForm((f) => ({ ...f, tunggakanLama: f.tunggakanLama.filter((x) => x.kunci !== t.kunci) }))}>
+                        <X />
+                      </Button>
+                    </div>
+                    <FieldTunggakanLama b={t} awalan="anggota-tunggakan" galat={galat?.field === 'tunggakanLama' ? galat : null} onUbah={(u) => setForm((f) => ({ ...f, tunggakanLama: f.tunggakanLama.map((x) => (x.kunci === t.kunci ? { ...x, ...u } : x)) }))} />
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="sekunder"
+                  onClick={() => setForm((f) => ({ ...f, tunggakanLama: f.tunggakanLama.length === 0 && tarifSaran.length ? tarifSaran.map((x) => barisTunggakanBaru(x)) : [...f.tunggakanLama, barisTunggakanBaru()] }))}
+                >
+                  <Plus /> {form.tunggakanLama.length ? 'Tambah baris tarif lain' : 'Isi tunggakan duka lama'}
+                </Button>
+                {galatField('tunggakanLama')}
+              </fieldset>
             ) : (
               panel && (
                 <p className="text-ket text-muted">
@@ -503,7 +573,7 @@ export function DaftarAnggota({
                 </p>
               )
             )}
-            {galat && !['nomor', 'nama', 'tanggalMeninggal', 'keluarga'].includes(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
+            {galat && !['nomor', 'nama', 'tanggalMeninggal', 'keluarga', 'tunggakanLama'].includes(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
             <Button type="submit" ukuran="aksi" className="w-full" disabled={sedangKirim}>
               {sedangKirim ? 'Menyimpan…' : 'Simpan'}
             </Button>

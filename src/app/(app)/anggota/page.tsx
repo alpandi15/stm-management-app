@@ -1,5 +1,6 @@
 import { wajibSesi } from '@/server/auth/session'
 import { daftarAnggota, ringkasanAnggota, saranNomorAnggota } from '@/server/queries/anggota'
+import { tarifTunggakanLamaTerpakai } from '@/server/queries/duka'
 import { SARING_ANGGOTA, type SaringAnggota } from '@/lib/anggota'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { DaftarAnggota } from '@/components/anggota/DaftarAnggota'
@@ -16,7 +17,7 @@ export default async function HalamanAnggota({ searchParams }: { searchParams: {
   return (
     <div className="flex flex-col gap-6">
       <JudulHalaman>Anggota</JudulHalaman>
-      <DaftarAnggota baris={baris} total={total} halaman={halaman} cari={cari} saring={saring} ringkasan={ringkasanAnggota()} saranNomor={saranNomorAnggota()} />
+      <DaftarAnggota baris={baris} total={total} halaman={halaman} cari={cari} saring={saring} ringkasan={ringkasanAnggota()} saranNomor={saranNomorAnggota()} tarifSaran={tarifTunggakanLamaTerpakai()} />
     </div>
   )
 }

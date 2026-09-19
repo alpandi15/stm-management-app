@@ -37,6 +37,7 @@ function rapikanAnggota(d: InputAnggota) {
     pengutip: !!d.pengutip,
     status,
     tanggalMeninggal: status === 'meninggal' ? (d.tanggalMeninggal ?? null) : null,
+    tanggalBergabung: d.tanggalBergabung || null,
   }
 }
 
@@ -56,6 +57,7 @@ export const tambahAnggota = aksiTerlindungi(async (input: InputAnggotaBaru) => 
     const isu = hasil.error.issues[0]
     const field = isu?.path[0]?.toString()
     if (field === 'keluarga' && typeof isu?.path[1] === 'number') return gagal(`Keluarga ke-${isu.path[1] + 1}: ${isu.message}`, 'keluarga')
+    if (field === 'tunggakanLama' && typeof isu?.path[1] === 'number') return gagal(`Tunggakan baris ${isu.path[1] + 1}: ${isu.message}`, 'tunggakanLama')
     return gagal(isu?.message ?? 'Isian belum lengkap.', field)
   }
   const data = rapikanAnggota(hasil.data)
@@ -66,10 +68,15 @@ export const tambahAnggota = aksiTerlindungi(async (input: InputAnggotaBaru) => 
     if (v.galat) return gagal(`Keluarga ke-${i + 1}: ${v.galat.pesan}`, 'keluarga')
     keluarga.push(v.data!)
   }
+  const tunggakan = hasil.data.tunggakanLama ?? []
   const baris = sqlite.transaction(() => {
     const a = db.insert(schema.anggota).values({ ...data, aktif: true, dibuatPada: Date.now() }).returning().get()
     for (const k of keluarga) {
       db.insert(schema.anggotaKeluarga).values({ ...k, anggotaId: a.id, dibuatPada: Date.now(), diubahPada: Date.now() }).run()
+    }
+    // Tunggakan duka lama ikut tersimpan (docs/02 §5.1e) — satu baris per kelompok tarif
+    for (const t of tunggakan) {
+      db.insert(schema.tunggakanDukaLama).values({ anggotaId: a.id, jumlah: t.jumlah, tarif: t.tarif, keterangan: t.keterangan?.trim() || null, dibuatPada: Date.now(), diubahPada: Date.now() }).run()
     }
     return a
   })()
