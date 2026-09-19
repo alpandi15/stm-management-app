@@ -470,6 +470,19 @@ bawaan: kode yang sama dipakai seed untuk jenis bawaan yang ditambahkan pembarua
 (PM10–PM12), dan pernah bentrok sehingga seed melewati "Iuran Tahunan" pada pemasangan yang
 sudah punya jenis buatan sendiri. Migrasi 0004 memindahkan kode yang terlanjur bentrok.
 
+### 5.1d Ubin peta lewat server
+
+Leaflet tidak mengambil ubin langsung dari `tile.openstreetmap.org`, melainkan dari
+`/api/ubin/{z}/{x}/{y}` (`services/ubin.ts`). Server mengunduh ubin dengan `https` Node
+(memakai toko akar sertifikat bawaan Node, bukan toko Windows) lalu menyimpannya di
+`STM_DATA_DIR/ubin/z/x/y.png`; permintaan berikutnya dilayani dari cache, sehingga peta yang
+pernah dibuka tetap tampil tanpa internet. Alasan utamanya Windows 7: Chromium 108 di sana
+memverifikasi sertifikat lewat toko Windows yang sering tidak punya akar ISRG (Let's
+Encrypt), sehingga ubin gagal dan peta kosong. Ubin di luar jangkauan (`z` > 19, `x/y` ≥
+2^z) ditolak 400; offline tanpa cache → 404 (Leaflet menampilkan kotak kosong).
+Tautan "Buka di Google Maps" di detail/daftar anggota membuka `google.com/maps?q=lat,lng`
+di browser sistem.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat

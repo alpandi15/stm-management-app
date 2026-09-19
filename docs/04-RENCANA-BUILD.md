@@ -496,6 +496,17 @@ menyesuaikan: nominal terkunci + tanpa nama → kolom bisa diisi total, harus ke
 tanpa nama Rp 600.000 tersimpan (KM-2026-0042), Rp 75.000 ditolak, dengan nama Dewi tetap
 `readOnly` 50.000.
 
+**Peta di Windows 7, tautan Google Maps, bilah muat** (19 September 2026): laporan pemilik —
+peta OSM kosong di paket `.exe` pada Windows 7. Penyebab yang paling masuk akal: toko
+sertifikat Windows 7 tanpa akar Let's Encrypt (Chromium 108 memakai toko Windows). Solusi:
+ubin lewat `/api/ubin/{z}/{x}/{y}` dengan cache di folder data (`docs/02` §5.1d) — sekaligus
+peta tetap tampil offline untuk area yang pernah dibuka. Tautan peta di detail & daftar
+anggota → Google Maps. Bilah muat 3px di tepi atas saat tautan internal diklik
+(`kerangka/BilahMuat.tsx`) + `(app)/loading.tsx` (spinner "Memuat…") untuk komputer lambat.
+Uji Electron 22/Node 16: proxy 200 `image/png` 1.610 B, cache tertulis, ambil kedua 1 ms,
+ubin tak valid 400, halaman peta memuat 24 ubin dari `/api/ubin/15/…`, bilah muat aktif saat
+klik Laporan dan padam saat tiba, tautan detail `google.com/maps?q=3.5916998,98.7858193`.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

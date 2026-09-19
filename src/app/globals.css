@@ -145,6 +145,17 @@
   background-image: linear-gradient(135deg, var(--color-keluar), var(--color-keluar-tua));
 }
 
+/* Bilah muat di tepi atas saat pindah halaman (components/kerangka/BilahMuat.tsx) */
+@keyframes bilah-muat {
+  0% { transform: scaleX(0); }
+  60% { transform: scaleX(0.7); }
+  100% { transform: scaleX(0.92); }
+}
+@utility animasi-bilah-muat {
+  transform-origin: left;
+  animation: bilah-muat 6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
 @utility angka {
   /* Semua nominal uang: kolom angka berbaris rapi */
   font-variant-numeric: tabular-nums;

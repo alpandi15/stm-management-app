@@ -31,7 +31,7 @@ export function PetaPin({ lat, lng, onUbah }: { lat: number | null; lng: number 
   React.useEffect(() => {
     if (!wadah.current || peta.current) return
     const m = L.map(wadah.current, { center: lat != null && lng != null ? [lat, lng] : PUSAT_BAWAAN, zoom: lat != null ? 16 : 13, attributionControl: true })
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('/api/ubin/{z}/{x}/{y}', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(m)

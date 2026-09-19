@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { redirect } from 'next/navigation'
 import { wajibSesi } from '@/server/auth/session'
 import { ambilPengaturan } from '@/server/queries/pengaturan'
@@ -5,6 +6,7 @@ import { Sidebar } from '@/components/kerangka/Sidebar'
 import { BilahBawah } from '@/components/kerangka/BilahBawah'
 import { Header } from '@/components/kerangka/Header'
 import { Toaster } from '@/components/kerangka/Toaster'
+import { BilahMuat } from '@/components/kerangka/BilahMuat'
 import { cadanganOtomatisSaatBuka } from '@/server/services/cadangan'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +30,9 @@ export default async function LayoutAplikasi({ children }: { children: React.Rea
       </div>
       <BilahBawah />
       <Toaster />
+      <React.Suspense fallback={null}>
+        <BilahMuat />
+      </React.Suspense>
     </div>
   )
 }

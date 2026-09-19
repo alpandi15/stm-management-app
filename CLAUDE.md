@@ -65,7 +65,10 @@ alasannya di `docs/05`.
 6. **Jangan memakai fitur yang butuh server eksternal.** Tidak ada email, OAuth, API
    pihak ketiga, atau upload ke cloud. Aplikasi ini harus berjalan penuh tanpa internet.
    Satu pengecualian atas permintaan pemilik: pin peta alamat anggota memakai ubin
-   OpenStreetMap (Leaflet) — tanpa internet peta kosong, koordinat tetap tersimpan.
+   OpenStreetMap (Leaflet) lewat proxy `/api/ubin` yang menyimpan cache di folder data
+   (`docs/02` §5.1d) — tanpa internet hanya area yang pernah dibuka yang tampil; koordinat
+   tetap tersimpan. Jangan memuat ubin langsung dari `tile.openstreetmap.org` di klien:
+   Windows 7 tidak mempercayai sertifikatnya.
 7. **Kerjakan satu fase per sesi** sesuai `docs/04`, lalu laporkan berkas yang dibuat dan
    bukti selesai yang benar-benar dijalankan.
 8. **Bila dokumen bertentangan dengan kode yang ada, tanyakan.** Jangan menebak.

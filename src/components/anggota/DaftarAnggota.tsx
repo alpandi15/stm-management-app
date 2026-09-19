@@ -209,8 +209,8 @@ export function DaftarAnggota({
         </DropdownMenuItem>
         {a.lat != null && a.lng != null && (
           <DropdownMenuItem asChild>
-            <a href={`https://www.openstreetmap.org/?mlat=${a.lat}&mlon=${a.lng}#map=17/${a.lat}/${a.lng}`} target="_blank" rel="noreferrer">
-              <ExternalLink /> Buka di peta
+            <a href={`https://www.google.com/maps?q=${a.lat},${a.lng}`} target="_blank" rel="noreferrer">
+              <ExternalLink /> Buka di Google Maps
             </a>
           </DropdownMenuItem>
         )}

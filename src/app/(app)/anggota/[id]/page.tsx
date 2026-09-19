@@ -79,8 +79,8 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
           <dd>
             {a.alamat ?? '–'}
             {a.lat != null && a.lng != null && (
-              <a href={`https://www.openstreetmap.org/?mlat=${a.lat}&mlon=${a.lng}#map=17/${a.lat}/${a.lng}`} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary hover:underline">
-                <ExternalLink className="size-4" /> peta
+              <a href={`https://www.google.com/maps?q=${a.lat},${a.lng}`} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary hover:underline">
+                <ExternalLink className="size-4" /> Buka di Google Maps
               </a>
             )}
           </dd>

@@ -45,7 +45,7 @@ export function PetaSemua({ titik, totalAnggota }: { titik: TitikAnggota[]; tota
   React.useEffect(() => {
     if (!wadah.current || peta.current) return
     const m = L.map(wadah.current, { center: PUSAT_BAWAAN, zoom: 12, zoomControl: true })
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m)
+    L.tileLayer('/api/ubin/{z}/{x}/{y}', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m)
     const k = L.markerClusterGroup({ maxClusterRadius: 60, showCoverageOnHover: false, spiderfyOnMaxZoom: true })
     for (const a of titik) {
       const jenis = a.status === 'meninggal' ? 'meninggal' : a.aktif ? 'aktif' : 'nonaktif'
