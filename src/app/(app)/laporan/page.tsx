@@ -1,6 +1,7 @@
 import { wajibSesi } from '@/server/auth/session'
 import { susunLaporan } from '@/server/services/laporan'
-import { daftarCatatan, daftarJenisAktif, daftarPenyetor } from '@/server/queries/transaksi'
+import { daftarCatatan, daftarJenisAktif, daftarPenyetor, PER_HALAMAN } from '@/server/queries/transaksi'
+import { bacaUrut } from '@/lib/urut-catatan'
 import { RekapPenyetor } from '@/components/laporan/RekapPenyetor'
 import { bacaParameterLaporan } from '@/server/queries/laporan'
 import { kalimatRentang } from '@/lib/tanggal'
@@ -8,7 +9,7 @@ import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { KartuAngka } from '@/components/laporan/KartuAngka'
 import { RincianJenis } from '@/components/laporan/RincianJenis'
 import { PanelRentang } from '@/components/laporan/PanelRentang'
-import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
+import { TabelCatatan } from '@/components/keuangan/TabelCatatan'
 import { MenuCetak } from '@/components/laporan/MenuCetak'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +20,9 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
   const penyaring = { jenisId, metode, penyetor }
 
   const laporan = susunLaporan(rentang, penyaring)
-  const { baris } = daftarCatatan({ rentang, jenisId, penyetor }, 1)
+  const halaman = Math.max(1, Number(searchParams.hal) || 1)
+  const urut = bacaUrut(searchParams.urut)
+  const { baris, total } = daftarCatatan({ rentang, jenisId, penyetor }, halaman, urut)
   const daftarJenis = daftarJenisAktif()
   const r = laporan.ringkasan
 
@@ -67,7 +70,7 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
         {baris.length === 0 ? (
           <p className="text-isi text-muted">Tidak ada catatan dalam rentang ini.</p>
         ) : (
-          <DaftarCatatan baris={baris} />
+          <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={PER_HALAMAN} />
         )}
       </section>
     </div>

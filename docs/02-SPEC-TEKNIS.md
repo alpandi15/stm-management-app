@@ -483,6 +483,13 @@ Encrypt), sehingga ubin gagal dan peta kosong. Ubin di luar jangkauan (`z` > 19,
 Tautan "Buka di Google Maps" di detail/daftar anggota membuka `google.com/maps?q=lat,lng`
 di browser sistem.
 
+### 5.1d1 Urutan daftar dan ekspor
+
+`lib/urut-catatan.ts`: `dibuat-desc` (bawaan), `dibuat-asc`, `tanggal-desc`, `tanggal-asc`;
+`daftarCatatan(f, halaman, urut)` selalu menambahkan `id` sebagai pemutus seri. Dokumen cetak
+Buku Kas (`semuaCatatanDalamRentang`) diurutkan **waktu dicatat naik** — saldo berjalan mengikuti
+urutan pencatatan di buku manual, bukan tanggal transaksi yang bisa diisi mundur.
+
 ### 5.1d2 Data RT
 
 Tabel `rt` (nama unik, keterangan, urutan tampil; migrasi 0011) dan `anggota.rt_id` (set null

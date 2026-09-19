@@ -162,6 +162,14 @@ diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di 
 sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
 **lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
 
+**Daftar catatan berbentuk tabel** (Catatan Kas dan Laporan, permintaan pemilik 19 September
+2026): kolom Tanggal · No. Bukti (+ ikon foto bukti) · Keterangan (badge jenis berwarna arah +
+teks) · Dari/Untuk (nama pihak bertaut ke anggota, penyetor, nomor setoran) · Masuk · Keluar ·
+Dicatat (tanggal + jam input) · menu aksi; baris kaki = subtotal halaman; bilah halaman
+"Menampilkan 1–50 dari N". **Urutan bawaan: waktu dicatat terbaru dulu** (sesuai urutan buku
+manual); kepala kolom Tanggal dan Dicatat bisa diklik untuk mengurutkan (klik lagi membalik
+arah), tersimpan di URL `?urut=`. Di bawah 768px tetap kartu.
+
 **Tirai muat.** Saat pindah halaman, seluruh layar ditutup tirai tembus pandang berisi ikon
 berputar dan "Memuat…" (muncul setelah 100 ms agar halaman instan tidak berkedip). Komputer
 tua bisa butuh 1–2 detik per halaman; tanpa tirai pengguna mengira kliknya tidak masuk.

@@ -1,4 +1,5 @@
 import 'server-only'
+import { URUT_BAWAAN, type UrutCatatan } from '@/lib/urut-catatan'
 import { and, asc, count, desc, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { db } from '@/server/db'
@@ -104,13 +105,27 @@ function kondisi(f: FilterCatatan): SQL | undefined {
 
 export const PER_HALAMAN = 50
 
-/** Daftar catatan sesuai penyaring, terbaru dulu, dengan halaman. */
-export function daftarCatatan(f: FilterCatatan, halaman = 1): { baris: BarisCatatan[]; total: number } {
+function urutan(u: UrutCatatan) {
+  // id ikut diurutkan supaya dua catatan dengan tanggal/waktu sama tetap stabil urutannya
+  switch (u) {
+    case 'dibuat-asc':
+      return [asc(transaksi.dibuatPada), asc(transaksi.id)]
+    case 'tanggal-desc':
+      return [desc(transaksi.tanggal), desc(transaksi.dibuatPada), desc(transaksi.id)]
+    case 'tanggal-asc':
+      return [asc(transaksi.tanggal), asc(transaksi.dibuatPada), asc(transaksi.id)]
+    default:
+      return [desc(transaksi.dibuatPada), desc(transaksi.id)]
+  }
+}
+
+/** Daftar catatan sesuai penyaring, dengan halaman. Bawaan: yang terakhir dicatat di atas (docs/01 §5.4). */
+export function daftarCatatan(f: FilterCatatan, halaman = 1, urut: UrutCatatan = URUT_BAWAAN): { baris: BarisCatatan[]; total: number } {
   const where = kondisi(f)
   const total = db.select({ n: count() }).from(transaksi).where(where).get()?.n ?? 0
   const baris = dariCatatan()
     .where(where)
-    .orderBy(desc(transaksi.tanggal), desc(transaksi.id))
+    .orderBy(...urutan(urut))
     .limit(PER_HALAMAN)
     .offset((halaman - 1) * PER_HALAMAN)
     .all()
@@ -190,11 +205,11 @@ export function totalSemua(): { masuk: number; keluar: number } {
 }
 
 
-/** Seluruh catatan dalam rentang, urut naik (tanggal, id) — untuk Buku Kas dengan saldo berjalan. */
+/** Seluruh catatan dalam rentang, urut waktu dicatat naik — untuk Buku Kas dengan saldo berjalan (urutan buku manual). */
 export function semuaCatatanDalamRentang(rentang: Rentang): BarisCatatan[] {
   return dariCatatan()
     .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir)))
-    .orderBy(asc(transaksi.tanggal), asc(transaksi.id))
+    .orderBy(asc(transaksi.dibuatPada), asc(transaksi.id))
     .all()
 }
 

@@ -554,6 +554,12 @@ Baru bergabung 2026-09-01 → kolom duka "–"; 360px tanpa geser samping.
 "RT 01" di tabel dan detail, penyaring `?rt=1` (1 baris) dan `?rt=tanpa` (7), hapus RT terpakai
 nonaktif, hapus RT kosong berhasil.
 
+**Tabel catatan & urutan** (19 September 2026): `docs/01` §4, `docs/02` §5.1d1. Uji Electron 22
+(`uji-tabel.js`, 60 catatan dengan tanggal acak): bawaan "Uji tabel 60, 59, 58…" (dicatat
+terbaru) walau tanggalnya 22/15/08/01 Sep; klik Tanggal → 22 Sep semua, klik lagi → 01 Sep;
+halaman 2 mempertahankan `urut=tanggal-asc`; laporan memakai tabel + halaman yang sama;
+cetak Buku Kas urut "Uji tabel 1, 2, 3, 4"; 360px kartu tanpa geser samping.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

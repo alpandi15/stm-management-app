@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 import { BarisFilter } from '@/components/keuangan/BarisFilter'
-import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
+import { TabelCatatan } from '@/components/keuangan/TabelCatatan'
+import { bacaUrut } from '@/lib/urut-catatan'
 import { BannerKasMinus } from '@/components/keuangan/BannerKasMinus'
 import { TautanCatatanSetoran } from '@/components/setoran/TautanCatatanSetoran'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   const cari = satu(searchParams.cari)
   const penyetorParam = satu(searchParams.penyetor)
   const halaman = Math.max(1, Number(satu(searchParams.hal)) || 1)
+  const urut = bacaUrut(satu(searchParams.urut))
   const rentang = tentukanRentang(rentangPilihan, satu(searchParams.awal), satu(searchParams.akhir))
 
   const filter: FilterCatatan = {
@@ -40,18 +42,10 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   }
 
   const daftarJenis = daftarJenisAktif()
-  const { baris, total } = daftarCatatan(filter, halaman)
+  const { baris, total } = daftarCatatan(filter, halaman, urut)
   const ringkasan = ringkasanCatatan(filter)
   const sisaKas = hitungSisaKas()
-  const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN))
   const adaPenyaring = !!(filter.arah || filter.jenisId || filter.cari || filter.penyetor)
-
-  const tautanHalaman = (h: number) => {
-    const p = new URLSearchParams()
-    for (const [k, v] of Object.entries(searchParams)) if (typeof v === 'string' && v) p.set(k, v)
-    p.set('hal', String(h))
-    return `/catatan?${p.toString()}`
-  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -105,25 +99,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
           tombol={{ label: 'Catat Uang Masuk', href: '/catatan/baru?jenis=masuk' }}
         />
       ) : (
-        <DaftarCatatan baris={baris} />
-      )}
-
-      {totalHalaman > 1 && (
-        <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Halaman">
-          <Button asChild variant="sekunder" className={cn(halaman <= 1 && 'pointer-events-none opacity-50')}>
-            <Link href={tautanHalaman(halaman - 1)} aria-disabled={halaman <= 1}>
-              Sebelumnya
-            </Link>
-          </Button>
-          <span className="order-first w-full text-center text-isi text-muted sm:order-none sm:w-auto">
-            Halaman {halaman} dari {totalHalaman}
-          </span>
-          <Button asChild variant="sekunder" className={cn(halaman >= totalHalaman && 'pointer-events-none opacity-50')}>
-            <Link href={tautanHalaman(halaman + 1)} aria-disabled={halaman >= totalHalaman}>
-              Berikutnya
-            </Link>
-          </Button>
-        </nav>
+        <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={PER_HALAMAN} />
       )}
 
       {/* Ringkasan hasil penyaringan — dihitung di server dari seluruh hasil, bukan halaman ini */}
