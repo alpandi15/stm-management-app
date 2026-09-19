@@ -2,7 +2,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { Jenis } from '@/server/db/schema'
 import type { Periode } from '@/lib/tanggal'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { cn } from '@/lib/utils'
 
@@ -86,7 +86,7 @@ export function PanelRentang({
         </div>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan jenis"
           nilai={jenisId || null}
           onUbah={(v) => ubah({ jenis: v ?? undefined })}
@@ -95,7 +95,7 @@ export function PanelRentang({
           placeholderCari="Ketik nama jenis…"
           pilihan={daftarJenis.map((j) => ({ nilai: String(j.id), label: j.nama, kelompok: j.arah === 'masuk' ? 'Uang Masuk' : 'Uang Keluar' }))}
         />
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan cara bayar"
           nilai={metode || null}
           onUbah={(v) => ubah({ metode: v ?? undefined })}
@@ -106,7 +106,7 @@ export function PanelRentang({
             { nilai: 'transfer', label: 'Transfer saja' },
           ]}
         />
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan penyetor"
           nilai={penyetor || null}
           onUbah={(v) => ubah({ penyetor: v ?? undefined })}

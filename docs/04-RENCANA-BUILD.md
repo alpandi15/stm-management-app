@@ -560,6 +560,14 @@ terbaru) walau tanggalnya 22/15/08/01 Sep; klik Tanggal → 22 Sep semua, klik l
 halaman 2 mempertahankan `urut=tanggal-asc`; laporan memakai tabel + halaman yang sama;
 cetak Buku Kas urut "Uji tabel 1, 2, 3, 4"; 360px kartu tanpa geser samping.
 
+**Pilihan modal & bilah lengket** (19 September 2026): `docs/01` §4. `PilihanModal` mengganti
+`PilihanCari` di 10 berkas (API sama + `judul`). Uji Electron 22 (`uji-modal.js`): modal judul
+"Pilih dari daftar"/"Untuk apa uangnya?", fokus langsung di kotak cari, overlay rgba(0,0,0,.6),
+cari "wajib" → 1 cocok, pilih menutup modal, buka lagi terpilih bercentang; gulir 900px → bilah
+jenis di y=64 dan badge "Sabtu, 19 September 2026" tampil saat kalender di luar layar; nama
+bebas "Warga Baru" lewat modal; filter Catatan Kas memakai modal dengan "Semua untuk apa";
+360px modal 328px tanpa geser samping.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

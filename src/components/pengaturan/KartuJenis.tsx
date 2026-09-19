@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { InputRupiah } from '@/components/keuangan/InputRupiah'
 import { cn } from '@/lib/utils'
@@ -192,7 +192,7 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
             )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="periode-jenis">Periode</Label>
-              <PilihanCari<PeriodeJenis>
+              <PilihanModal<PeriodeJenis>
                 id="periode-jenis"
                 nilai={form.periode}
                 onUbah={(v) => v && setForm({ ...form, periode: v })}

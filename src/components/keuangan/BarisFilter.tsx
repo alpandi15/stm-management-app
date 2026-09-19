@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import type { Jenis } from '@/server/db/schema'
 import { Input } from '@/components/ui/input'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { cn } from '@/lib/utils'
 import type { PilihanRentang } from '@/lib/tanggal'
@@ -81,7 +81,7 @@ export function BarisFilter({ daftarJenis, daftarPenyetor, arah, jenisId, penyet
         </div>
       )}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan jenis"
           nilai={arah || null}
           onUbah={(v) => ubah({ arah: v ?? undefined, jenis: undefined })}
@@ -92,7 +92,7 @@ export function BarisFilter({ daftarJenis, daftarPenyetor, arah, jenisId, penyet
             { nilai: 'keluar', label: 'Uang Keluar saja' },
           ]}
         />
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan untuk apa"
           nilai={jenisId || null}
           onUbah={(v) => ubah({ jenis: v ?? undefined })}
@@ -101,7 +101,7 @@ export function BarisFilter({ daftarJenis, daftarPenyetor, arah, jenisId, penyet
           placeholderCari="Ketik nama jenis…"
           pilihan={jenisTersedia.map((j) => ({ nilai: String(j.id), label: j.nama, kelompok: arah ? undefined : j.arah === 'masuk' ? 'Uang Masuk' : 'Uang Keluar' }))}
         />
-        <PilihanCari<string>
+        <PilihanModal<string>
           label="Tampilkan penyetor"
           nilai={penyetor || null}
           onUbah={(v) => ubah({ penyetor: v ?? undefined })}

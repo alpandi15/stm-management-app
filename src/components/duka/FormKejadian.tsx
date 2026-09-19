@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { InputRupiah } from '@/components/keuangan/InputRupiah'
 
@@ -114,7 +114,7 @@ export function FormKejadian({
               <Label htmlFor="pilih-almarhum">
                 Pilih dari data anggota <span className="font-normal text-muted">(boleh kosong)</span>
               </Label>
-              <PilihanCari
+              <PilihanModal
                 id="pilih-almarhum"
                 nilai={kunciPilihan}
                 onUbah={pilihDariDaftar}

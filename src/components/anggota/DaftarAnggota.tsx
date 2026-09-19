@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PetaPinDinamis } from './PetaPinDinamis'
 import { PilihJenisKelamin } from './PilihJenisKelamin'
 import { FieldTunggakanLama, barisTunggakanBaru, type BarisTunggakanForm } from './FieldTunggakanLama'
@@ -305,7 +305,7 @@ export function DaftarAnggota({
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-label font-semibold text-muted">RT:</span>
             <div className="w-full sm:w-72">
-              <PilihanCari<string>
+              <PilihanModal<string>
                 id="saring-rt"
                 nilai={rtId === 'tanpa' ? 'tanpa' : rtId ? String(rtId) : null}
                 onUbah={(v) => ubahUrl({ rt: v ?? undefined, hal: undefined })}
@@ -497,7 +497,7 @@ export function DaftarAnggota({
               <Label htmlFor="rt-anggota">
                 RT <span className="font-normal text-muted">(boleh kosong)</span>
               </Label>
-              <PilihanCari<number>
+              <PilihanModal<number>
                 id="rt-anggota"
                 nilai={form.rtId}
                 onUbah={(v) => setForm({ ...form, rtId: v })}
@@ -578,7 +578,7 @@ export function DaftarAnggota({
                       </div>
                       <div className="flex flex-col gap-2">
                         <Label htmlFor={`hubungan-${k.kunci}`}>Hubungan</Label>
-                        <PilihanCari
+                        <PilihanModal
                           id={`hubungan-${k.kunci}`}
                           nilai={k.hubungan}
                           onUbah={(v) => ubahBarisKeluarga(k.kunci, { hubungan: v, jenisKelamin: jenisKelaminDariHubungan(v) ?? k.jenisKelamin })}

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { PilihPeriode } from '@/components/ui/pilih-periode'
@@ -220,7 +220,7 @@ export function FormSetoran({
             <Label htmlFor="penyetorAnggotaId" className="flex items-center gap-2">
               <HandCoins className="size-5 text-muted" /> Disetor oleh
             </Label>
-            <PilihanCari<number>
+            <PilihanModal<number>
               id="penyetorAnggotaId"
               nilai={penyetorId}
               onUbah={setPenyetorId}
@@ -269,7 +269,7 @@ export function FormSetoran({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1.3fr]">
           <div className="flex flex-col gap-2">
             <Label htmlFor="jenisUtama">Jenis</Label>
-            <PilihanCari<number>
+            <PilihanModal<number>
               id="jenisUtama"
               nilai={jenisUtamaId}
               onUbah={setJenisUtamaId}
@@ -353,7 +353,7 @@ export function FormSetoran({
                     return (
                       <li key={b.kunci} className="flex flex-col gap-2 rounded-input border border-border bg-surface p-2 sm:flex-row sm:flex-wrap sm:items-center">
                         <div className="min-w-0 flex-1 sm:min-w-56">
-                          <PilihanCari<number>
+                          <PilihanModal<number>
                             label="Jenis"
                             nilai={b.jenisId || null}
                             onUbah={(v) => {
@@ -376,7 +376,7 @@ export function FormSetoran({
                                   </button>
                                 </span>
                               ))}
-                              <PilihanCari<string>
+                              <PilihanModal<string>
                                 label="Tambah almarhum"
                                 nilai={null}
                                 onUbah={(v) => v && !b.almarhum.includes(v) && ubahBaris(k.kunci, b.kunci, { almarhum: [...b.almarhum, v], kelipatan: b.almarhum.length + 1 })}

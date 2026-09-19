@@ -5,18 +5,18 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Banknote, Landmark, HeartCrack, HandCoins, Info } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Banknote, CalendarDays, Landmark, HeartCrack, HandCoins, Info } from 'lucide-react'
 import Link from 'next/link'
 import { simpanCatatan, ubahCatatan, type HasilSimpanCatatan } from '@/server/actions/transaksi'
 import type { Jenis, Transaksi } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
 import { skemaJumlah, skemaTanggal } from '@/lib/validasi'
 import { formatRupiah } from '@/lib/rupiah'
-import { hariIni } from '@/lib/tanggal'
+import { formatTanggalLengkap, hariIni } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { PilihPeriode } from '@/components/ui/pilih-periode'
 import { bulanDari, periodeUntuk } from '@/lib/tanggal'
@@ -205,11 +205,30 @@ export function FormCatatan({
 
   const g = formState.errors
 
+  // Bilah atas lengket: tombol Uang Masuk/Keluar selalu terlihat; tanggal terpilih ikut tampil
+  // (teks saja) begitu kalender tergulung ke atas, supaya tidak perlu gulir balik untuk memastikan
+  const wadahKalender = React.useRef<HTMLDivElement>(null)
+  const [kalenderTerlihat, setKalenderTerlihat] = React.useState(true)
+  React.useEffect(() => {
+    const el = wadahKalender.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const ob = new IntersectionObserver(([e]) => setKalenderTerlihat(e.isIntersecting), { rootMargin: '-120px 0px 0px 0px', threshold: 0 })
+    ob.observe(el)
+    return () => ob.disconnect()
+  }, [])
+
   return (
     <form onSubmit={handleSubmit((v) => kirim(v))} noValidate className="flex flex-col gap-5">
-      {/* 1. Jenis (arah) */}
-      <div className="flex flex-col gap-2">
-        <Label>Jenis</Label>
+      {/* 1. Jenis (arah) — lengket di bawah header */}
+      <div className="sticky top-16 z-10 -mx-4 -mt-4 flex flex-col gap-2 border-b-2 border-border bg-surface px-4 pb-3 pt-4 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <Label>Jenis</Label>
+          {!kalenderTerlihat && tanggal && (
+            <span className="angka inline-flex items-center gap-2 rounded-badge bg-primary-soft px-3 py-1 text-ket font-semibold text-primary">
+              <CalendarDays className="size-4" /> {formatTanggalLengkap(tanggal)}
+            </span>
+          )}
+        </div>
         <Controller
           control={control}
           name="arah"
@@ -232,7 +251,7 @@ export function FormCatatan({
       </div>
 
       {/* 2. Tanggal — kalender langsung terlihat, sudah menunjuk hari ini; tanpa popover */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" ref={wadahKalender}>
         <Label htmlFor="tanggal">Tanggal</Label>
         <Controller
           control={control}
@@ -249,8 +268,9 @@ export function FormCatatan({
           control={control}
           name="jenisId"
           render={({ field }) => (
-            <PilihanCari
+            <PilihanModal
               id="jenisId"
+              judul="Untuk apa uangnya?"
               nilai={field.value ?? null}
               onUbah={(v) => field.onChange(v ?? undefined)}
               pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: labelJenis(j), keterangan: j.keterangan ?? undefined }))}
@@ -289,8 +309,9 @@ export function FormCatatan({
           control={control}
           name="pihak"
           render={({ field }) => (
-            <PilihanCari<string>
+            <PilihanModal<string>
               id="pihak"
+              judul={arah === 'keluar' ? 'Untuk siapa' : 'Dari anggota'}
               nilai={field.value || null}
               onUbah={(v) => field.onChange(v ?? '')}
               pilihan={daftarAnggota.map((a) => ({ nilai: a.nama, label: a.nama, keterangan: [a.nomor, a.status === 'meninggal' ? 'meninggal dunia' : null].filter(Boolean).join(' · ') || undefined }))}
@@ -327,8 +348,9 @@ export function FormCatatan({
           <Label htmlFor="anggotaKeluargaId" className="flex items-center gap-2 text-warning">
             <HeartCrack className="size-5" /> Siapa yang meninggal?
           </Label>
-          <PilihanCari<number>
+          <PilihanModal<number>
             id="anggotaKeluargaId"
+            judul="Siapa yang meninggal?"
             nilai={anggotaKeluargaId}
             onUbah={setAnggotaKeluargaId}
             labelKosong={`${anggotaTerpilih.nama} (anggota sendiri)`}
@@ -397,8 +419,9 @@ export function FormCatatan({
         <Label htmlFor="penyetorAnggotaId" className="flex items-center gap-2">
           <HandCoins className="size-5 text-muted" /> {arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
         </Label>
-        <PilihanCari<number>
+        <PilihanModal<number>
           id="penyetorAnggotaId"
+          judul={arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
           nilai={penyetorId}
           onUbah={setPenyetorId}
           labelKosong="Bendahara (sendiri)"

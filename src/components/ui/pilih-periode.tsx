@@ -1,5 +1,5 @@
 'use client'
-import { PilihanCari } from './pilihan-cari'
+import { PilihanModal } from './pilihan-modal'
 import { bulanDari, formatPeriode, hariIni, tambahBulan } from '@/lib/tanggal'
 
 /**
@@ -13,7 +13,7 @@ export function PilihPeriode({ id, jenisPeriode, nilai, onUbah, label }: { id?: 
       ? Array.from({ length: 30 }, (_, i) => tambahBulan(sekarang, 3 - i)).map((p) => ({ nilai: p, label: formatPeriode(p), keterangan: p === sekarang ? 'bulan ini' : undefined }))
       : Array.from({ length: 6 }, (_, i) => String(Number(sekarang.slice(0, 4)) + 1 - i)).map((p) => ({ nilai: p, label: p, keterangan: p === sekarang.slice(0, 4) ? 'tahun ini' : undefined }))
   return (
-    <PilihanCari<string>
+    <PilihanModal<string>
       id={id}
       label={label}
       nilai={nilai}

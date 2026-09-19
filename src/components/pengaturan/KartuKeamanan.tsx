@@ -8,7 +8,7 @@ import { Kartu } from '@/components/ui/kartu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { KodePemulihan } from '@/components/auth/KodePemulihan'
@@ -110,7 +110,7 @@ export function KartuKeamanan({ p }: { p: Pengaturan }) {
 
         <div className="flex flex-col gap-2 sm:max-w-xs">
           <Label htmlFor="auto-kunci">Kunci otomatis bila tidak dipakai selama</Label>
-          <PilihanCari<number>
+          <PilihanModal<number>
             id="auto-kunci"
             nilai={p.autoKunciMenit}
             onUbah={(v) => v !== null && ubahMenit(v)}

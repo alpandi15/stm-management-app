@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
-import { PilihanCari } from '@/components/ui/pilihan-cari'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihanGanda } from '@/components/ui/pilihan-ganda'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
@@ -185,7 +185,7 @@ export function DaftarKeluarga({ anggota, aktif, pecah }: { anggota: { id: numbe
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="hubungan">Hubungan dengan {anggota.nama}</Label>
-              <PilihanCari
+              <PilihanModal
                 id="hubungan"
                 nilai={form.hubungan}
                 onUbah={(v) => setForm({ ...form, hubungan: v, jenisKelamin: jenisKelaminDariHubungan(v) ?? form.jenisKelamin })}

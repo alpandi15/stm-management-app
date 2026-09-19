@@ -162,6 +162,17 @@ diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di 
 sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
 **lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
 
+**Pilihan lewat modal** (`ui/pilihan-modal.tsx`, menggantikan dropdown combobox; permintaan
+pemilik 19 September 2026): setiap pilihan yang bisa dicari terbuka sebagai modal di tengah
+layar dengan latar gelap — dropdown dinilai "menyatu dengan latar" oleh pengguna lanjut usia.
+Judul modal = pertanyaan kolomnya, kotak cari bertepi biru langsung terfokus, hitungan
+"12 pilihan · ketik untuk mencari", tiap pilihan kotak 48px bertepi, yang terpilih biru muda
+bercentang, tombol Batal lebar di bawah. Tetap memakai cmdk untuk navigasi keyboard.
+
+**Bilah lengket di form catat**: tombol Uang Masuk / Uang Keluar menempel di bawah header
+saat form digulir; begitu kalender tergulung ke atas, tanggal terpilih tampil sebagai badge
+teks di bilah itu (tanpa kalender) supaya pengguna yakin tanpa harus gulir balik.
+
 **Daftar catatan berbentuk tabel** (Catatan Kas dan Laporan, permintaan pemilik 19 September
 2026): kolom Tanggal · No. Bukti (+ ikon foto bukti) · Keterangan (badge jenis berwarna arah +
 teks) · Dari/Untuk (nama pihak bertaut ke anggota, penyetor, nomor setoran) · Masuk · Keluar ·
