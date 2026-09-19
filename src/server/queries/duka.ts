@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { anggota, anggotaKeluarga, kejadianDuka, pembayaranDuka, type KejadianDuka } from '@/server/db/schema'
+import { anggota, anggotaKeluarga, kejadianDuka, pembayaranDuka, tunggakanDukaLama, type KejadianDuka, type TunggakanDukaLama } from '@/server/db/schema'
 import { hitungTunggakan, wajibBayarDuka, type AnggotaUntukDuka, type KejadianUntukDuka, type TunggakanDuka } from '@/lib/duka'
 
 const kolomAnggotaDuka = {
@@ -11,12 +11,26 @@ const kolomAnggotaDuka = {
   tanggalMeninggal: anggota.tanggalMeninggal,
   tanggalBergabung: anggota.tanggalBergabung,
   tanggalNonaktif: anggota.tanggalNonaktif,
-  dukaLamaJumlah: anggota.dukaLamaJumlah,
-  dukaLamaRupiah: anggota.dukaLamaRupiah,
+}
+
+/** Baris tunggakan lama per anggota (map anggotaId → baris), sekali kueri. */
+function petaTunggakanLama(anggotaId?: number): Map<number, TunggakanDukaLama[]> {
+  const peta = new Map<number, TunggakanDukaLama[]>()
+  const q = db.select().from(tunggakanDukaLama).orderBy(asc(tunggakanDukaLama.id))
+  for (const t of (anggotaId ? q.where(eq(tunggakanDukaLama.anggotaId, anggotaId)) : q).all()) {
+    if (!peta.has(t.anggotaId)) peta.set(t.anggotaId, [])
+    peta.get(t.anggotaId)!.push(t)
+  }
+  return peta
 }
 
 function semuaAnggotaDuka(): AnggotaUntukDuka[] {
-  return db.select(kolomAnggotaDuka).from(anggota).all()
+  const lama = petaTunggakanLama()
+  return db
+    .select(kolomAnggotaDuka)
+    .from(anggota)
+    .all()
+    .map((a) => ({ ...a, tunggakanLama: lama.get(a.id) ?? [] }))
 }
 
 export type BarisKejadian = KejadianDuka & { jumlahWajib: number; jumlahBayar: number; totalTerkumpul: number; totalNunggak: number }
@@ -100,14 +114,17 @@ export function daftarAnggotaKejadian(kejadianId: number): BarisAnggotaKejadian[
 }
 
 export type RingkasanDukaAnggota = TunggakanDuka & {
-  lamaKeterangan: string | null
+  /** Baris tunggakan lama: "6 kejadian × Rp 5.000" dst. */
+  lama: TunggakanDukaLama[]
   daftar: Array<KejadianDuka & { sudahBayar: boolean; tanggalBayar: string | null }>
 }
 
 /** Untuk detail anggota: kejadian yang menjadi kewajibannya beserta status bayar. */
 export function ringkasanDukaAnggota(anggotaId: number): RingkasanDukaAnggota | null {
-  const a = db.select({ ...kolomAnggotaDuka, dukaLamaKeterangan: anggota.dukaLamaKeterangan }).from(anggota).where(eq(anggota.id, anggotaId)).get()
-  if (!a) return null
+  const dataAnggota = db.select(kolomAnggotaDuka).from(anggota).where(eq(anggota.id, anggotaId)).get()
+  if (!dataAnggota) return null
+  const lama = petaTunggakanLama(anggotaId).get(anggotaId) ?? []
+  const a: AnggotaUntukDuka = { ...dataAnggota, tunggakanLama: lama }
   const kejadian = db.select().from(kejadianDuka).orderBy(desc(kejadianDuka.tanggalMeninggal), desc(kejadianDuka.nomor)).all()
   const bayar = new Map(
     db
@@ -120,7 +137,7 @@ export function ringkasanDukaAnggota(anggotaId: number): RingkasanDukaAnggota | 
   const wajib = kejadian.filter((k) => wajibBayarDuka(a, k))
   return {
     ...hitungTunggakan(a, kejadian, new Set(bayar.keys())),
-    lamaKeterangan: a.dukaLamaKeterangan,
+    lama,
     daftar: wajib.map((k) => ({ ...k, sudahBayar: bayar.has(k.id), tanggalBayar: bayar.get(k.id) ?? null })),
   }
 }
@@ -129,7 +146,6 @@ export function ringkasanDukaAnggota(anggotaId: number): RingkasanDukaAnggota | 
 export function tunggakanSemuaAnggota(): Map<number, TunggakanDuka> {
   const kejadian: KejadianUntukDuka[] = db.select().from(kejadianDuka).all()
   const hasil = new Map<number, TunggakanDuka>()
-  if (kejadian.length === 0) return hasil
   const bayar = new Map<number, Set<number>>()
   for (const p of db.select({ kejadianId: pembayaranDuka.kejadianId, anggotaId: pembayaranDuka.anggotaId }).from(pembayaranDuka).all()) {
     if (!bayar.has(p.anggotaId)) bayar.set(p.anggotaId, new Set())
@@ -157,4 +173,14 @@ export function pilihanAlmarhum(): Array<{ kunci: string; nama: string; keterang
     .all()
     .map((x) => ({ kunci: `k-${x.id}`, nama: x.nama, keterangan: `${x.hubungan} dari ${x.namaAnggota}`, tanggalMeninggal: x.tanggalMeninggal, anggotaId: x.anggotaId, anggotaKeluargaId: x.id }))
   return [...a, ...k]
+}
+
+/** Tarif yang pernah dipakai di tunggakan lama (mis. 5.000 dan 7.000) — untuk mengisi form lebih cepat. */
+export function tarifTunggakanLamaTerpakai(): number[] {
+  return db
+    .selectDistinct({ tarif: tunggakanDukaLama.tarif })
+    .from(tunggakanDukaLama)
+    .orderBy(asc(tunggakanDukaLama.tarif))
+    .all()
+    .map((t) => t.tarif)
 }

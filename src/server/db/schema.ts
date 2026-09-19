@@ -90,11 +90,6 @@ export const anggota = sqliteTable(
     anggotaAsalId: integer('anggota_asal_id').references((): AnySQLiteColumn => anggota.id, { onDelete: 'set null' }), // pecah dari keluarga siapa
     tanggalBergabung: text('tanggal_bergabung'), // YYYY-MM-DD
     tanggalNonaktif: text('tanggal_nonaktif'), // YYYY-MM-DD, diisi saat dinonaktifkan; batas kewajiban iuran duka
-    // Tunggakan iuran duka dari masa sebelum Buku Duka dipakai (almarhumnya tidak tercatat):
-    // cukup berapa kejadian dan total rupiahnya, diturunkan saat dibayar (docs/02 §5.1e)
-    dukaLamaJumlah: integer('duka_lama_jumlah').notNull().default(0),
-    dukaLamaRupiah: integer('duka_lama_rupiah').notNull().default(0),
-    dukaLamaKeterangan: text('duka_lama_keterangan'),
     dibuatPada: integer('dibuat_pada').notNull(),
   },
   (t) => [uniqueIndex('idx_anggota_nomor').on(t.nomor), index('idx_anggota_penanda').on(t.ditandaiOlehTransaksiId)],
@@ -139,6 +134,27 @@ export const pembayaranDuka = sqliteTable(
   },
   (t) => [uniqueIndex('idx_bayar_duka_unik').on(t.kejadianId, t.anggotaId), index('idx_bayar_duka_anggota').on(t.anggotaId)],
 )
+/**
+ * Tunggakan iuran duka dari masa sebelum Buku Duka dipakai (almarhumnya tidak tercatat lagi),
+ * per anggota per kelompok tarif: "6 kejadian × Rp 5.000 (Jan–Mei 2026, pengurus lama)",
+ * "10 kejadian × Rp 7.000". `jumlah` diturunkan saat dibayar; baris dihapus saat 0 (docs/02 §5.1e).
+ */
+export const tunggakanDukaLama = sqliteTable(
+  'tunggakan_duka_lama',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    anggotaId: integer('anggota_id')
+      .notNull()
+      .references(() => anggota.id, { onDelete: 'cascade' }),
+    jumlah: integer('jumlah').notNull(), // berapa kejadian yang belum dibayar
+    tarif: integer('tarif').notNull(), // rupiah per kejadian
+    keterangan: text('keterangan'),
+    dibuatPada: integer('dibuat_pada').notNull(),
+    diubahPada: integer('diubah_pada').notNull(),
+  },
+  (t) => [index('idx_tunggakan_lama_anggota').on(t.anggotaId)],
+)
+export type TunggakanDukaLama = typeof tunggakanDukaLama.$inferSelect
 export type KejadianDuka = typeof kejadianDuka.$inferSelect
 export type PembayaranDuka = typeof pembayaranDuka.$inferSelect
 

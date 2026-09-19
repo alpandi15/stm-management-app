@@ -496,12 +496,15 @@ biasa/setoran kolektif).
   rupiah per anggota, bawaan = tarif kejadian terakhir), keterangan.
 - `pembayaran_duka`: centang (kejadian, anggota) unik + tanggal bayar. Tidak ada nominal.
 - `anggota.tanggal_nonaktif` diisi saat dinonaktifkan (dikosongkan saat diaktifkan lagi).
-- **Tunggakan lama** (`anggota.duka_lama_jumlah`, `duka_lama_rupiah`, `duka_lama_keterangan`,
-  migrasi 0009): iuran duka yang belum dibayar dari masa sebelum Buku Duka dipakai — pengurus
-  umumnya tidak tahu lagi siapa almarhumnya, hanya "si A masih kurang 3 kejadian". Cukup dua
-  angka + catatan, diisi/diturunkan di detail anggota (`aturTunggakanLama`), dan digabung ke
-  `jumlahNunggak`/`totalNunggak` (badge, penyaring, ringkasan). Buku Duka dipakai untuk
-  kejadian mulai sekarang.
+- **Tunggakan lama** (`tunggakan_duka_lama`, migrasi 0010; 0009 sementara memakai kolom di
+  `anggota` dan datanya dipindahkan): iuran duka yang belum dibayar dari masa sebelum Buku Duka
+  dipakai — almarhumnya tidak tercatat lagi, yang ada di buku manual hanya jumlahnya **per
+  kelompok tarif** karena tarif berganti saat pengurus berganti: "6 kejadian × Rp 5.000
+  (Jan–Mei 2026, pengurus lama)" dan "10 kejadian × Rp 7.000 (mulai Mei)". Satu baris per
+  kelompok (`jumlah`, `tarif`, `keterangan`); dibayar per baris (`bayarTunggakanLama` menurunkan
+  `jumlah`, baris hilang saat 0); form tambah bisa beberapa baris sekaligus dengan tarif yang
+  pernah dipakai sebagai bawaan. Digabung ke `jumlahNunggak`/`totalNunggak` (badge, penyaring,
+  ringkasan). Buku Duka dipakai untuk kejadian mulai sekarang.
 - **Siapa yang wajib** — satu-satunya aturan ada di `lib/duka.ts` (`wajibBayarDuka`), dipakai
   server dan klien, tidak ditiru di SQL: bergabung setelah kejadian → tidak; almarhum sendiri
   (kejadian atas namanya, bukan keluarganya) → tidak; meninggal sebelum kejadian → tidak;

@@ -529,11 +529,15 @@ hapus centang Budi → 3; detail Budi "Menunggak 2 kejadian Rp 12.000" (5.000 + 
 nunggak-duka: Budi 2, Dewi 1, Eko 1; cetak tunggakan kejadian 2: 3 baris. Form catat:
 kalender inline, tanpa Hari Ini/Kemarin, footer `sticky`, tepi input 2px `#8a93a6`.
 
-**Tunggakan lama & centang di detail anggota** (19 September 2026): `docs/02` §5.1e. Uji
-Electron 22 (`uji-duka2.js`): centang Karim langsung di detail → DB + ringkasan "Menunggak 1 ·
-Rp 7.000"; isi tunggakan lama 3 kejadian Rp 15.000 → "Menunggak 4 kejadian Rp 22.000", badge
-daftar "Nunggak duka 4"; validasi jumlah kosong; "Sudah dibayar semua" → 0; centang Sumi →
-"Lunas semua Rp 0".
+**Tunggakan lama & centang di detail anggota** (19 September 2026): `docs/02` §5.1e. Model
+pertama (satu angka per anggota) ditolak pemilik: buku manual mencatat per kelompok tarif
+("6 × 5.000 pengurus lama, 10 × 7.000 pengurus baru") dan itu harus tampil jelas — diganti tabel
+`tunggakan_duka_lama` (migrasi 0010 memindahkan data 0009). Uji Electron 22 (`uji-duka2/3.js`):
+centang Karim langsung di detail → DB + ringkasan; migrasi 0010 memindahkan baris Dewi 2 ×
+5.000; tambah dua baris sekaligus (tarif saran 5.000 terisi) → kartu "6 × Rp 5.000 = Rp 30.000"
+dan "10 × Rp 7.000 = Rp 70.000", ringkasan Menunggak 18 · Rp 112.000; bayar 4 dari 6 → sisa 2;
+Lunas Semua → baris hilang; bayar 11 dari 10 ditolak; badge daftar "Nunggak duka 12 (termasuk
+10 tunggakan lama)".
 
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat

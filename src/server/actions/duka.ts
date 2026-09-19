@@ -103,25 +103,67 @@ export const tandaiBanyakDuka = aksiTerlindungi(async (kejadianId: number, anggo
   return berhasil({ jumlah: n })
 })
 
-/** Tunggakan lama seorang anggota (almarhumnya tidak tercatat): berapa kejadian, total rupiah, catatan. */
-export const aturTunggakanLama = aksiTerlindungi(async (anggotaId: number, input: { jumlah: number; rupiah: number; keterangan?: string | null }) => {
-  const jumlah = Number(input.jumlah)
-  const rupiah = Number(input.rupiah)
-  if (!Number.isInteger(jumlah) || jumlah < 0 || jumlah > 1000) return gagal('Jumlah kejadian harus angka bulat 0–1000.', 'jumlah')
-  if (!Number.isInteger(rupiah) || rupiah < 0 || rupiah > JUMLAH_MAKS) return gagal('Total rupiah harus bilangan bulat tanpa koma.', 'rupiah')
-  if (jumlah === 0 && rupiah > 0) return gagal('Isi berapa kejadian yang belum dibayar.', 'jumlah')
-  if (jumlah > 0 && rupiah === 0) return gagal('Isi total rupiah tunggakannya.', 'rupiah')
-  const keterangan = (input.keterangan ?? '').trim().slice(0, 255) || null
-  const baris = db
-    .update(schema.anggota)
-    .set({ dukaLamaJumlah: jumlah, dukaLamaRupiah: rupiah, dukaLamaKeterangan: jumlah === 0 ? null : keterangan })
-    .where(eq(schema.anggota.id, anggotaId))
-    .returning()
-    .get()
-  if (!baris) return gagal('Anggota tidak ditemukan.')
+// ---------- Tunggakan lama (sebelum Buku Duka dipakai) ----------
+
+export type BarisTunggakanLamaInput = { jumlah: number; tarif: number; keterangan?: string | null }
+
+function periksaBarisLama(b: BarisTunggakanLamaInput): { galat?: string; field?: string; data?: { jumlah: number; tarif: number; keterangan: string | null } } {
+  const jumlah = Number(b.jumlah)
+  const tarif = Number(b.tarif)
+  if (!Number.isInteger(jumlah) || jumlah < 1 || jumlah > 1000) return { galat: 'Berapa kejadian harus angka bulat 1–1000.', field: 'jumlah' }
+  if (!Number.isInteger(tarif) || tarif < 1 || tarif > JUMLAH_MAKS) return { galat: 'Iuran per kejadian harus lebih dari nol, tanpa koma.', field: 'tarif' }
+  return { data: { jumlah, tarif, keterangan: (b.keterangan ?? '').trim().slice(0, 255) || null } }
+}
+
+/** Menambah satu atau beberapa baris tunggakan lama sekaligus ("6 × 5.000" dan "10 × 7.000"). */
+export const tambahTunggakanLama = aksiTerlindungi(async (anggotaId: number, baris: BarisTunggakanLamaInput[]) => {
+  if (!db.select({ id: schema.anggota.id }).from(schema.anggota).where(eq(schema.anggota.id, anggotaId)).get()) return gagal('Anggota tidak ditemukan.')
+  if (baris.length === 0) return gagal('Isi minimal satu baris tunggakan.')
+  const bersih: Array<{ jumlah: number; tarif: number; keterangan: string | null }> = []
+  for (const [i, b] of baris.entries()) {
+    const v = periksaBarisLama(b)
+    if (v.galat) return gagal(`Baris ${i + 1}: ${v.galat}`, `${v.field}-${i}`)
+    bersih.push(v.data!)
+  }
+  sqlite.transaction(() => {
+    for (const b of bersih) db.insert(schema.tunggakanDukaLama).values({ ...b, anggotaId, dibuatPada: Date.now(), diubahPada: Date.now() }).run()
+  })()
   revalidatePath('/anggota')
   revalidatePath(`/anggota/${anggotaId}`)
-  return berhasil({ jumlah, rupiah, keterangan: baris.dukaLamaKeterangan })
+  return berhasil({ jumlah: bersih.length })
+})
+
+export const ubahTunggakanLama = aksiTerlindungi(async (id: number, baris: BarisTunggakanLamaInput) => {
+  const v = periksaBarisLama(baris)
+  if (v.galat) return gagal(v.galat, v.field)
+  const hasil = db.update(schema.tunggakanDukaLama).set({ ...v.data!, diubahPada: Date.now() }).where(eq(schema.tunggakanDukaLama.id, id)).returning().get()
+  if (!hasil) return gagal('Baris tunggakan tidak ditemukan.')
+  revalidatePath('/anggota')
+  revalidatePath(`/anggota/${hasil.anggotaId}`)
+  return berhasil(hasil)
+})
+
+/** Membayar n kejadian dari satu baris: jumlah berkurang; baris hilang bila lunas. */
+export const bayarTunggakanLama = aksiTerlindungi(async (id: number, jumlahBayar: number) => {
+  const b = db.select().from(schema.tunggakanDukaLama).where(eq(schema.tunggakanDukaLama.id, id)).get()
+  if (!b) return gagal('Baris tunggakan tidak ditemukan.')
+  const n = Number(jumlahBayar)
+  if (!Number.isInteger(n) || n < 1) return gagal('Isi berapa kejadian yang dibayar.', 'jumlahBayar')
+  if (n > b.jumlah) return gagal(`Tunggakan di baris ini hanya ${b.jumlah} kejadian.`, 'jumlahBayar')
+  const sisa = b.jumlah - n
+  if (sisa === 0) db.delete(schema.tunggakanDukaLama).where(eq(schema.tunggakanDukaLama.id, id)).run()
+  else db.update(schema.tunggakanDukaLama).set({ jumlah: sisa, diubahPada: Date.now() }).where(eq(schema.tunggakanDukaLama.id, id)).run()
+  revalidatePath('/anggota')
+  revalidatePath(`/anggota/${b.anggotaId}`)
+  return berhasil({ sisa, dibayar: n, rupiah: n * b.tarif })
+})
+
+export const hapusTunggakanLama = aksiTerlindungi(async (id: number) => {
+  const b = db.delete(schema.tunggakanDukaLama).where(eq(schema.tunggakanDukaLama.id, id)).returning().get()
+  if (!b) return gagal('Baris tunggakan tidak ditemukan.')
+  revalidatePath('/anggota')
+  revalidatePath(`/anggota/${b.anggotaId}`)
+  return berhasil(b)
 })
 
 /** Centang semua kejadian wajib yang belum dibayar untuk satu anggota (dari detail anggota). */

@@ -13,7 +13,7 @@ import { DaftarCatatan } from '@/components/keuangan/DaftarCatatan'
 import { MatriksPeriode } from '@/components/anggota/MatriksPeriode'
 import { DaftarTanggungan } from '@/components/anggota/DaftarTanggungan'
 import { RingkasanDuka } from '@/components/anggota/RingkasanDuka'
-import { ringkasanDukaAnggota } from '@/server/queries/duka'
+import { ringkasanDukaAnggota, tarifTunggakanLamaTerpakai } from '@/server/queries/duka'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -134,7 +134,7 @@ export default async function HalamanDetailAnggota({ params, searchParams }: { p
 
       {(() => {
         const duka = ringkasanDukaAnggota(a.id)
-        return duka ? <RingkasanDuka anggotaId={a.id} ringkasan={duka} /> : null
+        return duka ? <RingkasanDuka anggotaId={a.id} ringkasan={duka} tarifSaran={tarifTunggakanLamaTerpakai()} /> : null
       })()}
 
       <section className="flex flex-col gap-3" aria-label="Pembayaran per periode">

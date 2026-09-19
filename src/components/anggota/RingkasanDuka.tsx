@@ -2,37 +2,29 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CheckSquare, HeartHandshake, Pencil, Square } from 'lucide-react'
+import { CheckSquare, HeartHandshake, Square } from 'lucide-react'
 import { toast } from 'sonner'
-import { aturPembayaranDuka, aturTunggakanLama, tandaiSemuaDukaAnggota } from '@/server/actions/duka'
+import { aturPembayaranDuka, tandaiSemuaDukaAnggota } from '@/server/actions/duka'
 import type { RingkasanDukaAnggota } from '@/server/queries/duka'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatTanggal } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { PesanGalat } from '@/components/ui/pesan-galat'
-import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
-import { InputRupiah } from '@/components/keuangan/InputRupiah'
 import { cn } from '@/lib/utils'
+import { TunggakanLama } from './TunggakanLama'
 
 /**
  * Bagian "Iuran Duka" di detail anggota. Admin bisa mencentang langsung di sini (tersimpan
  * seketika, sama seperti di Buku Duka), menandai semua, dan mengisi tunggakan lama — kejadian
  * sebelum Buku Duka dipakai yang almarhumnya tidak tercatat: cukup berapa kejadian + rupiah.
  */
-export function RingkasanDuka({ anggotaId, ringkasan: r }: { anggotaId: number; ringkasan: RingkasanDukaAnggota }) {
+export function RingkasanDuka({ anggotaId, ringkasan: r, tarifSaran }: { anggotaId: number; ringkasan: RingkasanDukaAnggota; tarifSaran: number[] }) {
   const router = useRouter()
   const [bayar, setBayar] = React.useState<Map<number, string | null>>(() => new Map(r.daftar.filter((k) => k.sudahBayar).map((k) => [k.id, k.tanggalBayar])))
   const [sibuk, setSibuk] = React.useState<Set<number>>(new Set())
-  const [ubahLama, setUbahLama] = React.useState(false)
-  const [lama, setLama] = React.useState({ jumlah: String(r.lamaJumlah || ''), rupiah: r.lamaRupiah || null, keterangan: r.lamaKeterangan ?? '' })
-  const [galat, setGalat] = React.useState<{ pesan: string; field?: string } | null>(null)
   const [sedangKirim, mulai] = React.useTransition()
 
   React.useEffect(() => {
     setBayar(new Map(r.daftar.filter((k) => k.sudahBayar).map((k) => [k.id, k.tanggalBayar])))
-    setLama({ jumlah: String(r.lamaJumlah || ''), rupiah: r.lamaRupiah || null, keterangan: r.lamaKeterangan ?? '' })
   }, [r])
 
   const nunggakKejadian = r.daftar.filter((k) => !bayar.has(k.id))
@@ -82,35 +74,6 @@ export function RingkasanDuka({ anggotaId, ringkasan: r }: { anggotaId: number; 
     })
   }
 
-  function simpanLama(e: React.FormEvent) {
-    e.preventDefault()
-    mulai(async () => {
-      const hasil = await aturTunggakanLama(anggotaId, { jumlah: Number(lama.jumlah || 0), rupiah: lama.rupiah ?? 0, keterangan: lama.keterangan })
-      if (!hasil.ok) {
-        setGalat({ pesan: hasil.pesan, field: hasil.field })
-        return
-      }
-      setGalat(null)
-      setUbahLama(false)
-      toast.success(hasil.data.jumlah === 0 ? 'Tunggakan lama dinyatakan lunas.' : 'Tunggakan lama tersimpan.')
-      router.refresh()
-    })
-  }
-
-  function lunasiLama() {
-    mulai(async () => {
-      const hasil = await aturTunggakanLama(anggotaId, { jumlah: 0, rupiah: 0 })
-      if (!hasil.ok) {
-        toast.error(hasil.pesan)
-        return
-      }
-      toast.success('Tunggakan lama dinyatakan lunas.')
-      router.refresh()
-    })
-  }
-
-  const galatField = (k: string) => (galat?.field === k ? <PesanGalat>{galat.pesan}</PesanGalat> : null)
-
   return (
     <section className="rounded-kartu border border-border bg-surface p-6 shadow-kartu" aria-label="Iuran duka">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -141,31 +104,8 @@ export function RingkasanDuka({ anggotaId, ringkasan: r }: { anggotaId: number; 
         </div>
       )}
 
-      {/* Tunggakan lama: sebelum Buku Duka dipakai, almarhumnya tidak tercatat */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-input border-2 border-dashed border-border-kuat px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-label font-semibold">Tunggakan lama <span className="font-normal text-muted">(sebelum Buku Duka dipakai)</span></p>
-          {r.lamaJumlah > 0 ? (
-            <p className="text-isi">
-              <span className="font-semibold text-keluar">
-                {r.lamaJumlah} kejadian · {formatRupiah(r.lamaRupiah)}
-              </span>
-              {r.lamaKeterangan && <span className="text-muted"> · {r.lamaKeterangan}</span>}
-            </p>
-          ) : (
-            <p className="text-ket text-muted">Tidak ada. Isi bila anggota ini masih punya iuran duka yang belum dibayar dari tahun-tahun lalu.</p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {r.lamaJumlah > 0 && (
-            <Button variant="sekunder" onClick={lunasiLama} disabled={sedangKirim}>
-              <CheckSquare /> Sudah dibayar semua
-            </Button>
-          )}
-          <Button variant={r.lamaJumlah > 0 ? 'halus' : 'sekunder'} onClick={() => { setGalat(null); setUbahLama(true) }}>
-            <Pencil /> {r.lamaJumlah > 0 ? 'Ubah tunggakan lama' : 'Isi tunggakan lama'}
-          </Button>
-        </div>
+      <div className="mt-4">
+        <TunggakanLama anggotaId={anggotaId} baris={r.lama} tarifSaran={tarifSaran} />
       </div>
 
       {r.daftar.length > 0 && (
@@ -204,42 +144,6 @@ export function RingkasanDuka({ anggotaId, ringkasan: r }: { anggotaId: number; 
         </ul>
       )}
 
-      <Dialog open={ubahLama} onOpenChange={(o) => !o && setUbahLama(false)}>
-        <DialogContent judul="Tunggakan lama iuran duka">
-          <DialogDescription className="text-isi text-muted">
-            Untuk iuran duka yang belum dibayar dari masa sebelum Buku Duka dipakai — almarhumnya tidak perlu tahu, cukup jumlahnya. Turunkan angkanya setiap kali sebagian dibayar, atau tekan “Sudah dibayar semua”.
-          </DialogDescription>
-          <form onSubmit={simpanLama} className="flex flex-col gap-4" noValidate>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="lama-jumlah">Berapa kejadian</Label>
-                <Input id="lama-jumlah" inputMode="numeric" className="angka" value={lama.jumlah} onChange={(e) => setLama({ ...lama, jumlah: e.target.value.replace(/\D/g, '') })} aria-invalid={galat?.field === 'jumlah'} autoFocus />
-                {galatField('jumlah')}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="lama-rupiah">Total rupiah</Label>
-                <InputRupiah id="lama-rupiah" nilai={lama.rupiah} onUbah={(n) => setLama({ ...lama, rupiah: n })} galat={galat?.field === 'rupiah'} />
-                {galatField('rupiah')}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lama-ket">
-                Catatan <span className="font-normal text-muted">(boleh kosong)</span>
-              </Label>
-              <Input id="lama-ket" value={lama.keterangan} onChange={(e) => setLama({ ...lama, keterangan: e.target.value })} maxLength={255} placeholder="Contoh: belum bayar 3 kejadian sepanjang 2025" />
-            </div>
-            {galat && !['jumlah', 'rupiah'].includes(galat.field ?? '') && <PesanGalat>{galat.pesan}</PesanGalat>}
-            <div className="flex flex-col gap-2 sm:flex-row-reverse">
-              <Button type="submit" ukuran="aksi" className="sm:flex-1" disabled={sedangKirim}>
-                {sedangKirim ? 'Menyimpan…' : 'Simpan'}
-              </Button>
-              <Button type="button" variant="sekunder" ukuran="aksi" className="sm:flex-1" onClick={() => setUbahLama(false)}>
-                Batal
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </section>
   )
 }

@@ -40,8 +40,11 @@ test('tunggakan mengikuti tarif tiap kejadian, bukan tarif terbaru', () => {
 })
 
 test('tunggakan lama (almarhum tidak tercatat) ikut digabung ke total', () => {
-  const t = hitungTunggakan({ ...dasar, dukaLamaJumlah: 3, dukaLamaRupiah: 15000 }, [k(1, '2026-01-01', 7000)], new Set())
-  assert.equal(t.jumlahNunggak, 4)
-  assert.equal(t.totalNunggak, 22000)
+  // 6 × 5.000 (pengurus lama) + 10 × 7.000 (pengurus baru) + 1 kejadian tercatat 7.000
+  const t = hitungTunggakan({ ...dasar, tunggakanLama: [{ jumlah: 6, tarif: 5000 }, { jumlah: 10, tarif: 7000 }] }, [k(1, '2026-01-01', 7000)], new Set())
+  assert.equal(t.lamaJumlah, 16)
+  assert.equal(t.lamaRupiah, 100000)
+  assert.equal(t.jumlahNunggak, 17)
+  assert.equal(t.totalNunggak, 107000)
   assert.equal(t.jumlahNunggakKejadian, 1)
 })

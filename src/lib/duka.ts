@@ -8,9 +8,8 @@ export type AnggotaUntukDuka = {
   tanggalMeninggal: string | null
   tanggalBergabung: string | null
   tanggalNonaktif: string | null
-  /** Tunggakan lama (sebelum Buku Duka dipakai): berapa kejadian dan total rupiah */
-  dukaLamaJumlah?: number
-  dukaLamaRupiah?: number
+  /** Tunggakan lama (sebelum Buku Duka dipakai), per kelompok tarif */
+  tunggakanLama?: Array<{ jumlah: number; tarif: number }>
 }
 
 export type KejadianUntukDuka = {
@@ -65,8 +64,12 @@ export function hitungTunggakan(a: AnggotaUntukDuka, kejadian: KejadianUntukDuka
     if (sudahBayar.has(k.id)) jumlahBayar += 1
     else totalNunggakKejadian += k.tarif
   }
-  const lamaJumlah = a.dukaLamaJumlah ?? 0
-  const lamaRupiah = a.dukaLamaRupiah ?? 0
+  let lamaJumlah = 0
+  let lamaRupiah = 0
+  for (const t of a.tunggakanLama ?? []) {
+    lamaJumlah += t.jumlah
+    lamaRupiah += t.jumlah * t.tarif
+  }
   const jumlahNunggakKejadian = jumlahWajib - jumlahBayar
   return {
     jumlahWajib,
