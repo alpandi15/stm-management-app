@@ -11,7 +11,7 @@ import { adaBiayaKutip, hitungBiayaKutip } from '@/lib/biaya-kutip'
 import { Checkbox } from '@/components/ui/checkbox'
 import { formatPeriode, hariIni, periodeUntuk, tambahBulan } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { PesanGalat } from '@/components/ui/pesan-galat'
 import { PilihanModal } from '@/components/ui/pilihan-modal'
@@ -54,7 +54,6 @@ export function FormSetoran({
   const [penyetorId, setPenyetorId] = React.useState<number | null>(null)
   const [metode, setMetode] = React.useState<'tunai' | 'transfer'>('tunai')
   const [keterangan, setKeterangan] = React.useState('')
-  const [ketOtomatis, setKetOtomatis] = React.useState(true)
   const [bukti, setBukti] = React.useState<File | null | undefined>(undefined)
   const [jenisUtamaId, setJenisUtamaId] = React.useState<number | null>(null)
   const [periodeUtama, setPeriodeUtama] = React.useState<string | null>(null)
@@ -69,10 +68,9 @@ export function FormSetoran({
   const periodeJenisUtama = jenisUtama?.periode === 'bulanan' || jenisUtama?.periode === 'tahunan' ? jenisUtama.periode : null
   const periodeUtamaTampil = periodeJenisUtama ? periodeUntuk(periodeJenisUtama, tanggal, periodeUtama) : null
 
-  // Jenis utama berganti: keterangan otomatis, nominal bawaan, periode ulang
+  // Jenis utama berganti: nominal bawaan, periode ulang (keterangan tidak diisi otomatis — wajib ditulis sendiri)
   React.useEffect(() => {
     if (!jenisUtama) return
-    if (ketOtomatis) setKeterangan(jenisUtama.nama)
     setNominalUtama(jenisUtama.nominalBawaan ?? null)
     setPeriodeUtama(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,15 +246,13 @@ export function FormSetoran({
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="keterangan">Keterangan</Label>
-            <Input
+            <Textarea
               id="keterangan"
               value={keterangan}
-              onChange={(e) => {
-                setKeterangan(e.target.value)
-                setKetOtomatis(false)
-              }}
+              onChange={(e) => setKeterangan(e.target.value)}
               maxLength={200}
-              placeholder="Contoh: Kutipan RT 03 minggu ke-2"
+              rows={2}
+              placeholder="Tulis keterangan setoran, mis. Kutipan iuran RT 03 minggu ke-2"
               aria-invalid={galat?.field === 'keterangan'}
             />
             {galatField('keterangan')}

@@ -1,13 +1,13 @@
 'use client'
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarRange, HeartCrack, Lock, MoreVertical, Pencil, Percent, Plus, Power, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { aturAktifJenis, hapusJenis, tambahJenis, ubahJenis } from '@/server/actions/jenis'
 import type { BarisJenis } from '@/server/queries/jenis'
 import type { PeriodeJenis } from '@/server/db/schema'
 import { formatRupiah } from '@/lib/rupiah'
-import { Kartu } from '@/components/ui/kartu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -80,71 +80,123 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
   }
 
   const galatField = (k: string) => (galat?.field === k ? <PesanGalat>{galat.pesan}</PesanGalat> : null)
+  const [tab, setTab] = React.useState<'masuk' | 'keluar'>('masuk')
 
-  const kelompok = (arah: 'masuk' | 'keluar', judul: string) => (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className={cn('text-label font-semibold', arah === 'masuk' ? 'text-masuk' : 'text-keluar')}>{judul}</h3>
-        <Button variant="halus" onClick={() => bukaTambah(arah)}>
-          <Plus /> Tambah
-        </Button>
-      </div>
-      <ul className="divide-y divide-border rounded-input border border-border">
-        {daftar
-          .filter((j) => j.arah === arah)
-          .map((j) => (
-            <li key={j.id} className={cn('flex flex-wrap items-center gap-2 px-3 py-2', !j.aktif && 'opacity-60')}>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">
-                  {j.nama}
-                  {!j.aktif && <span className="ml-2 rounded-badge bg-border px-2 py-0.5 text-ket text-muted">Nonaktif</span>}
-                  {j.menandaiMeninggal && <span className="ml-2 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">Menandai meninggal</span>}
-                  {!!j.biayaKutipPersen && <span className="ml-2 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">Biaya kutip {j.biayaKutipPersen}%</span>}
-                </p>
-                <p className="angka text-ket text-muted">
-                  {j.kode} · {j.bawaan ? 'bawaan' : 'buatan sendiri'} · dipakai {j.dipakai} catatan
-                </p>
-                <p className="angka text-ket">
-                  <span className="text-muted">Nominal: </span>
-                  {j.nominalBawaan != null ? (
-                    <>
-                      <span className="font-semibold">{formatRupiah(j.nominalBawaan)}</span>
-                      {j.nominalDikunci && (
-                        <span className="ml-1 inline-flex items-center gap-1 rounded-badge bg-primary-soft px-2 py-0.5 text-ket font-semibold text-primary">
-                          <Lock className="size-3" /> terkunci
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-muted">–</span>
+  /** Kartu per jenis: ikon arah, nama + badge, tiga fakta (nominal, periode, dipakai), menu aksi. */
+  const kartuJenis = (j: BarisJenis) => {
+    const masuk = j.arah === 'masuk'
+    return (
+      <li key={j.id} className={cn('flex gap-4 rounded-kartu border border-border bg-surface p-4 shadow-kartu transition-colors hover:border-primary', !j.aktif && 'opacity-60')}>
+        <span className={cn('flex size-12 shrink-0 items-center justify-center rounded-input', masuk ? 'bg-masuk-soft text-masuk' : 'bg-keluar-soft text-keluar')} aria-hidden>
+          {masuk ? <ArrowDownLeft className="size-6" /> : <ArrowUpRight className="size-6" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-judul-kartu font-semibold leading-tight">{j.nama}</p>
+            <span className="angka rounded-badge bg-bg px-2 py-0.5 text-ket font-semibold text-muted">{j.kode}</span>
+            {!j.aktif && <span className="rounded-badge bg-border px-2 py-0.5 text-ket font-semibold text-muted">Nonaktif</span>}
+            {!j.bawaan && <span className="rounded-badge border border-primary px-2 py-0.5 text-ket font-medium text-primary">Buatan sendiri</span>}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-ket text-muted">
+            <span className="angka inline-flex items-center gap-1">
+              <span className="text-muted">Nominal</span>
+              {j.nominalBawaan != null ? (
+                <>
+                  <span className="font-semibold text-text">{formatRupiah(j.nominalBawaan)}</span>
+                  {j.nominalDikunci && (
+                    <span className="inline-flex items-center gap-1 rounded-badge bg-primary-soft px-2 py-0.5 font-semibold text-primary">
+                      <Lock className="size-3" /> terkunci
+                    </span>
                   )}
-                  <span className="text-muted"> · Periode: </span>
-                  <span className="font-semibold">{LABEL_PERIODE[j.periode]}</span>
-                </p>
-              </div>
-              <Button variant="sekunder" onClick={() => bukaUbah(j)}>
-                <Pencil /> Ubah
-              </Button>
-              <Button variant="halus" onClick={() => aktif(j)} disabled={sedangKirim}>
-                {j.aktif ? 'Nonaktifkan' : 'Aktifkan'}
-              </Button>
-              {!j.bawaan && (
-                <Button variant="halus" ukuran="ikon" className="text-keluar" aria-label={`Hapus ${j.nama}`} onClick={() => hapus(j)} disabled={sedangKirim}>
-                  <Trash2 />
-                </Button>
+                </>
+              ) : (
+                <span className="text-text">bebas</span>
               )}
-            </li>
-          ))}
-      </ul>
-    </div>
-  )
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <CalendarRange className="size-3.5" /> <span className="font-semibold text-text">{LABEL_PERIODE[j.periode]}</span>
+            </span>
+            <span className="angka">
+              dipakai <span className="font-semibold text-text">{j.dipakai}</span> catatan
+            </span>
+          </div>
+          {(j.menandaiMeninggal || !!j.biayaKutipPersen) && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {j.menandaiMeninggal && (
+                <span className="inline-flex items-center gap-1 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">
+                  <HeartCrack className="size-3.5" /> Menandai meninggal
+                </span>
+              )}
+              {!!j.biayaKutipPersen && (
+                <span className="inline-flex items-center gap-1 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">
+                  <Percent className="size-3.5" /> Biaya kutip {j.biayaKutipPersen}%
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex shrink-0 items-start gap-1">
+          <Button variant="sekunder" onClick={() => bukaUbah(j)}>
+            <Pencil /> Ubah
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="flex size-sentuh items-center justify-center rounded-input text-muted hover:bg-bg hover:text-text" aria-label={`Menu ${j.nama}`}>
+                <MoreVertical className="size-6" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => aktif(j)} disabled={sedangKirim}>
+                <Power /> {j.aktif ? 'Nonaktifkan' : 'Aktifkan'}
+              </DropdownMenuItem>
+              {!j.bawaan && (
+                <DropdownMenuItem bahaya onSelect={() => hapus(j)} disabled={sedangKirim}>
+                  <Trash2 /> Hapus
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </li>
+    )
+  }
+
+  const jumlah = { masuk: daftar.filter((j) => j.arah === 'masuk').length, keluar: daftar.filter((j) => j.arah === 'keluar').length }
+  const tampil = daftar.filter((j) => j.arah === tab)
 
   return (
-    <Kartu judul="Jenis Uang Masuk & Keluar" keterangan="Pilihan “Untuk apa” di form catatan. Nominal yang ditetapkan di sini terisi otomatis saat mencatat. Jenis bawaan tidak bisa dihapus; jenis yang sudah dipakai cukup dinonaktifkan.">
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {kelompok('masuk', 'Uang Masuk')}
-        {kelompok('keluar', 'Uang Keluar')}
+    <div className="flex flex-col gap-4">
+      <p className="-mt-3 text-isi text-muted">Pilihan “Untuk apa” di form catatan. Nominal yang ditetapkan di sini terisi otomatis saat mencatat. Jenis bawaan tidak bisa dihapus; jenis yang sudah dipakai cukup dinonaktifkan.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div role="tablist" aria-label="Arah" className="grid grid-cols-2 gap-2 sm:w-[30rem]">
+          {(
+            [
+              ['masuk', 'Uang Masuk', jumlah.masuk, ArrowDownLeft],
+              ['keluar', 'Uang Keluar', jumlah.keluar, ArrowUpRight],
+            ] as const
+          ).map(([nilai, label, n, Ikon]) => (
+            <button
+              key={nilai}
+              type="button"
+              role="tab"
+              aria-selected={tab === nilai}
+              onClick={() => setTab(nilai)}
+              className={cn(
+                'flex min-h-aksi items-center justify-center gap-2 rounded-input border-2 px-3 text-form font-semibold transition-colors',
+                tab === nilai ? (nilai === 'masuk' ? 'border-masuk bg-masuk text-arah-fg' : 'border-keluar bg-keluar text-arah-fg') : 'border-border-kuat bg-input text-text hover:bg-bg',
+              )}
+            >
+              <Ikon className="size-5" /> {label} <span className={cn('angka rounded-badge px-2 py-0.5 text-ket', tab === nilai ? 'border border-arah-fg' : 'bg-bg text-muted')}>{n}</span>
+            </button>
+          ))}
+        </div>
+        <Button ukuran="aksi" onClick={() => bukaTambah(tab)}>
+          <Plus /> Tambah Jenis {tab === 'masuk' ? 'Uang Masuk' : 'Uang Keluar'}
+        </Button>
       </div>
+      <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2" role="tabpanel">
+        {tampil.map(kartuJenis)}
+      </ul>
 
       <Sheet open={panel !== null} onOpenChange={(o) => !o && setPanel(null)}>
         <SheetContent judul={panel?.mode === 'ubah' ? 'Ubah Jenis Uang' : 'Tambah Jenis Uang'}>
@@ -256,6 +308,6 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
           </form>
         </SheetContent>
       </Sheet>
-    </Kartu>
+    </div>
   )
 }

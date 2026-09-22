@@ -1,4 +1,5 @@
 'use client'
+import { mulaiNavigasi } from '@/lib/navigasi'
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -87,6 +88,8 @@ export function DaftarAnggota({
         if (v) p.set(k, v)
         else p.delete(k)
       }
+      // Ketikan pencarian memakai penanda kecil "mencari…"; penyaring/halaman memakai tirai muat
+      if (!('cari' in perubahan)) mulaiNavigasi()
       mulaiCari(() => router.replace(`${pathname}?${p.toString()}`, { scroll: false }))
     },
     [params, pathname, router],

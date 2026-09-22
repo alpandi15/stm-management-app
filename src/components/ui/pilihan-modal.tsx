@@ -109,9 +109,9 @@ export function PilihanModal<T extends string | number>({
         </button>
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/60" />
+        <DialogPrimitive.Overlay className="animasi-overlay fixed inset-0 z-40 bg-black/60" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-[8vh] z-50 flex max-h-[84vh] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 flex-col overflow-hidden rounded-kartu border-2 border-border-kuat bg-surface text-text shadow-kartu focus:outline-none"
+          className="animasi-modal-atas fixed left-1/2 top-[8vh] z-50 flex max-h-[84vh] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 flex-col overflow-hidden rounded-kartu border-2 border-border-kuat bg-surface text-text shadow-kartu focus:outline-none"
           onOpenAutoFocus={(e) => {
             // Fokus ke kotak cari, bukan ke elemen pertama
             e.preventDefault()

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Plus, Users } from 'lucide-react'
 import { wajibSesi } from '@/server/auth/session'
-import { daftarCatatan, daftarJenisAktif, daftarPenyetor, ringkasanCatatan, PER_HALAMAN, type FilterCatatan } from '@/server/queries/transaksi'
+import { daftarCatatan, daftarJenisAktif, daftarPenyetor, ringkasanCatatan, type FilterCatatan } from '@/server/queries/transaksi'
 import { hitungSisaKas } from '@/server/services/laporan'
 import { apakahPilihanRentang, kalimatRentang, tentukanRentang, type PilihanRentang } from '@/lib/tanggal'
 import { formatRupiah } from '@/lib/rupiah'
@@ -10,7 +10,7 @@ import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
 import { BarisFilter } from '@/components/keuangan/BarisFilter'
 import { TabelCatatan } from '@/components/keuangan/TabelCatatan'
-import { bacaUrut } from '@/lib/urut-catatan'
+import { bacaUrut, bacaPerHalaman } from '@/lib/urut-catatan'
 import { BannerKasMinus } from '@/components/keuangan/BannerKasMinus'
 import { TautanCatatanSetoran } from '@/components/setoran/TautanCatatanSetoran'
 import { cn } from '@/lib/utils'
@@ -31,6 +31,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   const penyetorParam = satu(searchParams.penyetor)
   const halaman = Math.max(1, Number(satu(searchParams.hal)) || 1)
   const urut = bacaUrut(satu(searchParams.urut))
+  const perHalaman = bacaPerHalaman(satu(searchParams.n))
   const rentang = tentukanRentang(rentangPilihan, satu(searchParams.awal), satu(searchParams.akhir))
 
   const filter: FilterCatatan = {
@@ -42,7 +43,7 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
   }
 
   const daftarJenis = daftarJenisAktif()
-  const { baris, total } = daftarCatatan(filter, halaman, urut)
+  const { baris, total } = daftarCatatan(filter, halaman, urut, perHalaman)
   const ringkasan = ringkasanCatatan(filter)
   const sisaKas = hitungSisaKas()
   const adaPenyaring = !!(filter.arah || filter.jenisId || filter.cari || filter.penyetor)
@@ -88,20 +89,6 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
         {total > 0 && ` · ${total} catatan`}
       </p>
 
-      {baris.length === 0 ? (
-        <KeadaanKosong
-          judul={adaPenyaring || rentangPilihan !== 'bulan-ini' ? 'Tidak ada catatan yang cocok' : 'Belum ada catatan bulan ini'}
-          kalimat={
-            adaPenyaring || rentangPilihan !== 'bulan-ini'
-              ? 'Coba ubah rentang tanggal atau pilihan di atas.'
-              : 'Setiap uang yang masuk dan keluar dicatat di sini. Mulai dengan mencatat yang pertama.'
-          }
-          tombol={{ label: 'Catat Uang Masuk', href: '/catatan/baru?jenis=masuk' }}
-        />
-      ) : (
-        <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={PER_HALAMAN} />
-      )}
-
       {/* Ringkasan hasil penyaringan — dihitung di server dari seluruh hasil, bukan halaman ini */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Ringkasan">
         <div className="rounded-kartu border border-border bg-surface p-4 shadow-kartu">
@@ -117,6 +104,21 @@ export default async function HalamanCatatan({ searchParams }: { searchParams: P
           <p className={cn('angka mt-1 text-judul-kartu font-bold', ringkasan.selisih < 0 ? 'text-keluar' : 'text-text')}>{formatRupiah(ringkasan.selisih)}</p>
         </div>
       </section>
+
+
+      {baris.length === 0 ? (
+        <KeadaanKosong
+          judul={adaPenyaring || rentangPilihan !== 'bulan-ini' ? 'Tidak ada catatan yang cocok' : 'Belum ada catatan bulan ini'}
+          kalimat={
+            adaPenyaring || rentangPilihan !== 'bulan-ini'
+              ? 'Coba ubah rentang tanggal atau pilihan di atas.'
+              : 'Setiap uang yang masuk dan keluar dicatat di sini. Mulai dengan mencatat yang pertama.'
+          }
+          tombol={{ label: 'Catat Uang Masuk', href: '/catatan/baru?jenis=masuk' }}
+        />
+      ) : (
+        <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={perHalaman} />
+      )}
 
       {/* Tombol mengambang di layar sempit (docs/01 §5.4) */}
       <Button asChild ukuran="aksi" className="fixed bottom-20 right-4 z-20 rounded-badge px-5 shadow-kartu sm:hidden">

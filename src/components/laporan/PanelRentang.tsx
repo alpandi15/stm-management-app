@@ -1,4 +1,5 @@
 'use client'
+import { mulaiNavigasi } from '@/lib/navigasi'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { Jenis } from '@/server/db/schema'
 import type { Periode } from '@/lib/tanggal'
@@ -46,6 +47,7 @@ export function PanelRentang({
       if (v) p.set(k, v)
       else p.delete(k)
     }
+    mulaiNavigasi()
     router.push(`${pathname}?${p.toString()}`)
   }
 

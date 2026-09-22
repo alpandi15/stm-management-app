@@ -1,5 +1,5 @@
 import 'server-only'
-import { URUT_BAWAAN, type UrutCatatan } from '@/lib/urut-catatan'
+import { URUT_BAWAAN, PER_HALAMAN_BAWAAN, type UrutCatatan } from '@/lib/urut-catatan'
 import { and, asc, count, desc, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { db } from '@/server/db'
@@ -105,7 +105,7 @@ function kondisi(f: FilterCatatan): SQL | undefined {
   )
 }
 
-export const PER_HALAMAN = 50
+export const PER_HALAMAN = PER_HALAMAN_BAWAAN
 
 function urutan(u: UrutCatatan) {
   // id ikut diurutkan supaya dua catatan dengan tanggal/waktu sama tetap stabil urutannya
@@ -122,14 +122,14 @@ function urutan(u: UrutCatatan) {
 }
 
 /** Daftar catatan sesuai penyaring, dengan halaman. Bawaan: yang terakhir dicatat di atas (docs/01 §5.4). */
-export function daftarCatatan(f: FilterCatatan, halaman = 1, urut: UrutCatatan = URUT_BAWAAN): { baris: BarisCatatan[]; total: number } {
+export function daftarCatatan(f: FilterCatatan, halaman = 1, urut: UrutCatatan = URUT_BAWAAN, perHalaman = PER_HALAMAN): { baris: BarisCatatan[]; total: number } {
   const where = kondisi(f)
   const total = db.select({ n: count() }).from(transaksi).where(where).get()?.n ?? 0
   const baris = dariCatatan()
     .where(where)
     .orderBy(...urutan(urut))
-    .limit(PER_HALAMAN)
-    .offset((halaman - 1) * PER_HALAMAN)
+    .limit(perHalaman)
+    .offset((halaman - 1) * perHalaman)
     .all()
   return { baris, total }
 }

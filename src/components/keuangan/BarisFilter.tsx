@@ -1,4 +1,5 @@
 'use client'
+import { mulaiNavigasi } from '@/lib/navigasi'
 import * as React from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
@@ -37,6 +38,7 @@ export function BarisFilter({ daftarJenis, daftarPenyetor, arah, jenisId, penyet
       else p.delete(k)
     }
     p.delete('hal')
+    mulaiNavigasi()
     router.push(`${pathname}?${p.toString()}`)
   }
 

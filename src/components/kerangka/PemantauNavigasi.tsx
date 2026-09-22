@@ -2,6 +2,7 @@
 import * as React from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { TiraiMuat } from './TiraiMuat'
+import { PERISTIWA_NAVIGASI } from '@/lib/navigasi'
 
 /**
  * Tirai muat satu layar dari klik tautan sampai router mulai merender halaman tujuan.
@@ -31,8 +32,13 @@ export function PemantauNavigasi() {
       if (tujuan.pathname === location.pathname && tujuan.search === location.search) return
       setAktif(true)
     }
+    const terprogram = () => setAktif(true)
     document.addEventListener('click', klik, true)
-    return () => document.removeEventListener('click', klik, true)
+    window.addEventListener(PERISTIWA_NAVIGASI, terprogram)
+    return () => {
+      document.removeEventListener('click', klik, true)
+      window.removeEventListener(PERISTIWA_NAVIGASI, terprogram)
+    }
   }, [])
 
   // Pengaman: bila navigasi tidak pernah selesai (mis. dibatalkan), padamkan sendiri

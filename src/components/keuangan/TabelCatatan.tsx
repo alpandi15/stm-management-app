@@ -1,4 +1,5 @@
 'use client'
+import { mulaiNavigasi } from '@/lib/navigasi'
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -7,7 +8,8 @@ import type { BarisCatatan } from '@/server/queries/transaksi'
 import { kalimatMeninggal } from '@/lib/catatan'
 import { formatRupiah } from '@/lib/rupiah'
 import { formatJam, formatTanggalPendek, formatWaktu, keISO } from '@/lib/tanggal'
-import { URUT_BAWAAN, type UrutCatatan } from '@/lib/urut-catatan'
+import { URUT_BAWAAN, PER_HALAMAN_PILIHAN, type UrutCatatan } from '@/lib/urut-catatan'
+import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -41,6 +43,7 @@ export function TabelCatatan({ baris, urut = URUT_BAWAAN, total, halaman, perHal
   function gantiUrut(kolom: 'dibuat' | 'tanggal') {
     // Klik kolom yang sama membalik arah; kolom lain mulai dari terbaru dulu
     const arah = kolomUrut === kolom && arahUrut === 'desc' ? 'asc' : 'desc'
+    mulaiNavigasi()
     router.replace(tautan({ urut: `${kolom}-${arah}`, hal: undefined }), { scroll: false })
   }
 
@@ -205,8 +208,26 @@ export function TabelCatatan({ baris, urut = URUT_BAWAAN, total, halaman, perHal
 
       {(totalHalaman > 1 || total > 0) && (
         <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Halaman">
-          <span className="text-ket text-muted">
-            Menampilkan {dari}–{sampai} dari {total} catatan
+          <span className="flex flex-wrap items-center gap-3 text-ket text-muted">
+            <span>
+              Menampilkan {dari}–{sampai} dari {total} catatan
+            </span>
+            <span className="flex items-center gap-2">
+              <span>Per halaman</span>
+              <span className="w-28">
+                <PilihanModal<string>
+                  label="Baris per halaman"
+                  judul="Baris per halaman"
+                  nilai={String(perHalaman)}
+                  onUbah={(v) => {
+                    mulaiNavigasi()
+                    router.replace(tautan({ n: v ?? undefined, hal: undefined }), { scroll: false })
+                  }}
+                  pilihan={PER_HALAMAN_PILIHAN.map((n) => ({ nilai: String(n), label: `${n} baris` }))}
+                  className="min-h-10 px-3 text-isi"
+                />
+              </span>
+            </span>
           </span>
           {totalHalaman > 1 && (
             <span className="flex items-center gap-2">

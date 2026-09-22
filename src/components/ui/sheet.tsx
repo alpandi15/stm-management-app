@@ -13,11 +13,11 @@ const SheetContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { judul: string }
 >(({ className, children, judul, ...props }, ref) => (
   <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/60" />
+    <DialogPrimitive.Overlay className="animasi-overlay fixed inset-0 z-40 bg-black/60" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-border bg-surface p-6 text-text shadow-kartu focus:outline-none',
+        'animasi-panel fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-border bg-surface p-6 text-text shadow-kartu focus:outline-none',
         className,
       )}
       {...props}

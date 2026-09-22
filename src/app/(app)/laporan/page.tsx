@@ -1,7 +1,7 @@
 import { wajibSesi } from '@/server/auth/session'
 import { susunLaporan } from '@/server/services/laporan'
-import { daftarCatatan, daftarJenisAktif, daftarPenyetor, PER_HALAMAN } from '@/server/queries/transaksi'
-import { bacaUrut } from '@/lib/urut-catatan'
+import { daftarCatatan, daftarJenisAktif, daftarPenyetor } from '@/server/queries/transaksi'
+import { bacaUrut, bacaPerHalaman } from '@/lib/urut-catatan'
 import { RekapPenyetor } from '@/components/laporan/RekapPenyetor'
 import { bacaParameterLaporan } from '@/server/queries/laporan'
 import { kalimatRentang } from '@/lib/tanggal'
@@ -22,7 +22,8 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
   const laporan = susunLaporan(rentang, penyaring)
   const halaman = Math.max(1, Number(searchParams.hal) || 1)
   const urut = bacaUrut(searchParams.urut)
-  const { baris, total } = daftarCatatan({ rentang, jenisId, penyetor }, halaman, urut)
+  const perHalaman = bacaPerHalaman(searchParams.n)
+  const { baris, total } = daftarCatatan({ rentang, jenisId, penyetor }, halaman, urut, perHalaman)
   const daftarJenis = daftarJenisAktif()
   const r = laporan.ringkasan
 
@@ -70,7 +71,7 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
         {baris.length === 0 ? (
           <p className="text-isi text-muted">Tidak ada catatan dalam rentang ini.</p>
         ) : (
-          <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={PER_HALAMAN} />
+          <TabelCatatan baris={baris} urut={urut} total={total} halaman={halaman} perHalaman={perHalaman} />
         )}
       </section>
     </div>

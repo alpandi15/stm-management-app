@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { formatTanggalLengkap, hariIni } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { PilihanModal } from '@/components/ui/pilihan-modal'
 import { PilihTanggal } from '@/components/ui/pilih-tanggal'
@@ -93,13 +93,13 @@ export function FormCatatan({
       arah: awal?.arah ?? jenisAwalDariKode?.arah ?? arahAwal,
       tanggal: tanggalAwal,
       jenisId: awal?.jenisId ?? jenisAwalDariKode?.id,
-      keterangan: awal?.keterangan ?? (jenisAwalDariKode ? jenisAwalDariKode.nama : ''),
+      keterangan: awal?.keterangan ?? '',
       pihak: awal?.namaPihak ?? anggotaAwal?.nama ?? '',
       jumlah: awal?.jumlah ?? jenisAwalDariKode?.nominalBawaan ?? undefined,
       metode: awal?.metode ?? 'tunai',
     },
   })
-  const { register, control, handleSubmit, watch, setValue, getValues, setError, formState } = form
+  const { register, control, handleSubmit, watch, setValue, setError, formState } = form
   const arah = watch('arah')
   const jenisId = watch('jenisId')
   const pihak = watch('pihak')
@@ -142,15 +142,10 @@ export function FormCatatan({
     const j = daftarJenis.find((x) => x.id === jenisId)
     if (j?.nominalBawaan != null) setValue('jumlah', j.nominalBawaan, { shouldValidate: true })
     else if (j) setValue('jumlah', undefined as unknown as number)
-    // Keterangan bawaan = nama jenis; hanya diganti bila masih kosong atau masih berupa nama jenis lama
-    if (j) {
-      const sekarang = getValues('keterangan').trim()
-      const namaJenisLama = daftarJenis.map((x) => x.nama)
-      if (!sekarang || namaJenisLama.includes(sekarang)) setValue('keterangan', j.nama, { shouldValidate: !!sekarang })
-    }
+    // Keterangan sengaja TIDAK diisi otomatis dari nama jenis (permintaan pemilik): wajib ditulis sendiri
     setAnggotaKeluargaId(null) // tanggungan milik jenis/anggota lama tidak boleh terbawa (Spec 2 §A5)
     setPeriode(null)
-  }, [jenisId, daftarJenis, setValue, getValues])
+  }, [jenisId, daftarJenis, setValue])
   const anggotaSebelumnya = React.useRef<number | undefined>(anggotaTerpilih?.id)
   React.useEffect(() => {
     if (anggotaSebelumnya.current === anggotaTerpilih?.id) return
@@ -304,7 +299,7 @@ export function FormCatatan({
       {/* 4. Keterangan */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="keterangan">Keterangan</Label>
-        <Input id="keterangan" placeholder="Contoh: Iuran wajib Januari 2026" maxLength={255} {...register('keterangan')} aria-invalid={!!g.keterangan} />
+        <Textarea id="keterangan" placeholder="Tulis untuk apa uang ini, mis. Iuran wajib Januari 2026 dari 12 anggota Blok C" maxLength={255} {...register('keterangan')} aria-invalid={!!g.keterangan} />
         <PesanGalat>{g.keterangan?.message}</PesanGalat>
       </div>
 

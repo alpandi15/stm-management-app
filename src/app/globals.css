@@ -160,6 +160,32 @@
   animation: tirai-muncul 150ms ease-out 100ms both;
 }
 
+/* Animasi modal/panel (Radix memberi data-state=open|closed; animasi keluar menahan unmount) */
+@keyframes tirai-masuk { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tirai-keluar { from { opacity: 1; } to { opacity: 0; } }
+@keyframes dialog-masuk { from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes dialog-keluar { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(0.96); } }
+@keyframes modal-atas-masuk { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes modal-atas-keluar { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -8px); } }
+@keyframes panel-masuk { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes panel-keluar { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@utility animasi-overlay {
+  &[data-state='open'] { animation: tirai-masuk 180ms ease-out; }
+  &[data-state='closed'] { animation: tirai-keluar 150ms ease-in forwards; }
+}
+@utility animasi-dialog {
+  &[data-state='open'] { animation: dialog-masuk 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+  &[data-state='closed'] { animation: dialog-keluar 150ms ease-in forwards; }
+}
+@utility animasi-modal-atas {
+  &[data-state='open'] { animation: modal-atas-masuk 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+  &[data-state='closed'] { animation: modal-atas-keluar 150ms ease-in forwards; }
+}
+@utility animasi-panel {
+  &[data-state='open'] { animation: panel-masuk 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+  &[data-state='closed'] { animation: panel-keluar 180ms ease-in forwards; }
+}
+
 @utility angka {
   /* Semua nominal uang: kolom angka berbaris rapi */
   font-variant-numeric: tabular-nums;
