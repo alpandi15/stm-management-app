@@ -182,7 +182,7 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
               aria-selected={tab === nilai}
               onClick={() => setTab(nilai)}
               className={cn(
-                'flex min-h-aksi items-center justify-center gap-2 rounded-input border-2 px-3 text-form font-semibold transition-colors',
+                'flex min-h-aksi items-center justify-center gap-2 whitespace-nowrap rounded-input border-2 px-3 text-form font-semibold transition-colors',
                 tab === nilai ? (nilai === 'masuk' ? 'border-masuk bg-masuk text-arah-fg' : 'border-keluar bg-keluar text-arah-fg') : 'border-border-kuat bg-input text-text hover:bg-bg',
               )}
             >
