@@ -12,6 +12,9 @@ import type { Jenis, Transaksi } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
 import { skemaJumlah, skemaTanggal } from '@/lib/validasi'
 import { formatRupiah } from '@/lib/rupiah'
+import { adaBiayaKutip, hitungBiayaKutip } from '@/lib/biaya-kutip'
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 import { formatTanggalLengkap, hariIni } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -107,6 +110,10 @@ export function FormCatatan({
   // Tanpa nama = uang gabungan banyak orang: jumlahnya boleh diisi total (kelipatan nominal bila terkunci)
   const tanpaNama = !pihak.trim()
   const jumlahSekarang = watch('jumlah')
+  // Biaya kutip (docs/02 §5.1f): tampil bila jenis punya persen; bisa dimatikan per catatan
+  const [biayaKutipAktif, setBiayaKutipAktif] = React.useState(true)
+  const punyaBiayaKutip = !!jenisTerpilih && adaBiayaKutip(jenisTerpilih) && !modeUbah
+  const nilaiBiayaKutip = punyaBiayaKutip ? hitungBiayaKutip(jumlahSekarang ?? 0, jenisTerpilih!.biayaKutipPersen) : 0
   const petunjukJumlah = (() => {
     const nominal = jenisTerpilih?.nominalBawaan
     if (nominalTerkunci && nominal != null) {
@@ -182,6 +189,7 @@ export function FormCatatan({
       if (bukti) fd.set('bukti', bukti)
       if (bukti === null) fd.set('hapusBukti', '1')
       if (abaikanDuplikat) fd.set('abaikanDuplikat', '1')
+      if (!biayaKutipAktif) fd.set('biayaKutip', '0')
 
       const hasil = modeUbah ? await ubahCatatan(awal!.id, fd) : await simpanCatatan(fd)
       if (!hasil.ok) {
@@ -391,6 +399,31 @@ export function FormCatatan({
           )}
         />
         <PesanGalat>{g.jumlah?.message}</PesanGalat>
+        {punyaBiayaKutip && (
+          <div className={cn('mt-1 flex flex-col gap-3 rounded-input border-2 px-4 py-3', biayaKutipAktif ? 'border-warning bg-warning-soft' : 'border-border bg-bg')}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5" />
+              <span className="min-w-0">
+                <span className="block text-isi font-semibold">Catat biaya kutip {jenisTerpilih!.biayaKutipPersen}% otomatis</span>
+                <span className="block text-ket text-muted">
+                  {biayaKutipAktif
+                    ? `Uang masuk tetap dicatat ${jumlahSekarang ? formatRupiah(jumlahSekarang) : 'sepenuhnya'}; bagian pengutip ${formatRupiah(nilaiBiayaKutip)} dicatat sendiri sebagai uang keluar. Anda tidak perlu mencatat dua kali.`
+                    : 'Tidak ada uang keluar yang dicatat — pakai bila uang ini tidak lewat pengutip.'}
+                </span>
+              </span>
+            </label>
+            {biayaKutipAktif && nilaiBiayaKutip > 0 && (
+              <dl className="angka grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-warning/40 pt-2 text-isi">
+                <dt className="text-muted">Uang masuk dicatat</dt>
+                <dd className="text-right font-semibold text-masuk">{formatRupiah(jumlahSekarang ?? 0)}</dd>
+                <dt className="text-muted">Biaya kutip {jenisTerpilih!.biayaKutipPersen}% (uang keluar otomatis)</dt>
+                <dd className="text-right font-semibold text-keluar">− {formatRupiah(nilaiBiayaKutip)}</dd>
+                <dt className="font-semibold">Bersih bertambah di kas</dt>
+                <dd className="text-right font-bold">{formatRupiah((jumlahSekarang ?? 0) - nilaiBiayaKutip)}</dd>
+              </dl>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 7. Cara bayar */}

@@ -39,6 +39,9 @@ function nilaiJenis(d: InputJenis) {
     nominalDikunci: nominalBawaan != null && !!d.nominalDikunci,
     periode: d.periode ?? 'bebas',
     menandaiMeninggal: d.arah === 'keluar' && !!d.menandaiMeninggal,
+    // Biaya kutip hanya untuk uang masuk; jenis keluarnya bawaan PK11 bila tidak dipilih
+    biayaKutipPersen: d.arah === 'masuk' && d.biayaKutipPersen ? d.biayaKutipPersen : null,
+    biayaKutipJenisId: d.arah === 'masuk' && d.biayaKutipPersen ? (d.biayaKutipJenisId ?? null) : null,
   }
 }
 

@@ -68,6 +68,10 @@ export const jenis = sqliteTable('jenis', {
   nominalBawaan: integer('nominal_bawaan'), // rupiah penuh
   nominalDikunci: integer('nominal_dikunci', { mode: 'boolean' }).notNull().default(false),
   periode: text('periode', { enum: PERIODE_JENIS }).notNull().default('bebas'),
+  // Biaya kutip (docs/02 §5.1f): untuk jenis uang masuk tertentu, sekian persen otomatis
+  // dicatat sebagai uang keluar (bagian pengutip). 0/null = tidak ada.
+  biayaKutipPersen: integer('biaya_kutip_persen'),
+  biayaKutipJenisId: integer('biaya_kutip_jenis_id'), // jenis uang keluar yang dipakai; tanpa FK (rujukan ke tabel sendiri)
 })
 
 /** RT (rukun tetangga) tempat anggota tinggal — data induk sederhana, dikelola di /anggota/rt. */
@@ -222,11 +226,15 @@ export const transaksi = sqliteTable(
     dihapusPada: integer('dihapus_pada'), // soft delete, unix ms
     dibuatPada: integer('dibuat_pada').notNull(),
     diubahPada: integer('diubah_pada').notNull(),
+    // Catatan yang dibuat otomatis (biaya kutip): mengikuti induknya, tidak bisa diubah/dihapus sendiri
+    otomatis: integer('otomatis', { mode: 'boolean' }).notNull().default(false),
+    indukId: integer('induk_id'), // catatan uang masuk sumbernya (kosong bila sumbernya setoran → lihat setoranId)
   },
   (t) => [
     index('idx_trx_tanggal').on(t.tanggal),
     index('idx_trx_arah_tanggal').on(t.arah, t.tanggal),
     index('idx_trx_jenis').on(t.jenisId),
+    index('idx_trx_induk').on(t.indukId),
     index('idx_trx_penyetor').on(t.penyetorAnggotaId),
     index('idx_trx_periode').on(t.jenisId, t.anggotaId, t.periode),
     index('idx_trx_setoran').on(t.setoranId),

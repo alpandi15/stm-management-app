@@ -533,6 +533,32 @@ biasa/setoran kolektif).
   (`aturPembayaranDuka`), "tandai semua" (`tandaiSemuaDukaAnggota`), dan blok tunggakan lama. Daftar anggota: badge "Nunggak duka N" dan
   penyaring `nunggak-duka`.
 
+### 5.1f Biaya kutip otomatis
+
+Beberapa jenis uang masuk (mis. Iuran Duka, Iuran Tahunan) memberi bagian sekian persen
+kepada pengutip. Aturan yang dipilih pemilik: **uang masuk tetap dicatat bruto** (Rp 100.000)
+dan bagian pengutip dicatat **sebagai catatan uang keluar terpisah yang dibuat otomatis**
+(Rp 10.000) — saldo kas tetap masuk − keluar, bendahara tidak mencatat dua kali, dan laporan
+tetap menunjukkan uang yang benar-benar diterima. Bukan neto, bukan rumus di laporan.
+
+- `jenis.biaya_kutip_persen` (0–100, kosong = tidak ada; hanya uang masuk) dan
+  `jenis.biaya_kutip_jenis_id` (jenis uang keluar; kosong = bawaan **PK11 "Biaya Kutip Iuran"**,
+  migrasi 0012). Diatur di Jenis Uang.
+- `transaksi.otomatis` + `transaksi.induk_id`: anak biaya kutip menunjuk catatan uang masuk
+  induknya (untuk setoran kolektif: `setoran_id` sama, satu anak per kelompok persen —
+  "Biaya kutip 10% setoran SI-2026-0015"). `lib/biaya-kutip.ts`: `hitungBiayaKutip` =
+  `floor(bruto × persen / 100)` (tanpa pembulatan ke ribuan; pecahan dibuang).
+- `services/transaksi.ts` `selaraskanBiayaKutip`: dipanggil dalam transaksi SQLite yang sama
+  saat induk dibuat/diubah — anak dibuat (nomor bukti KK berikutnya, penyetor & nama pengutip
+  sama, keterangan "Biaya kutip 10% — KM-…"), diperbarui, atau dihapus lunak bila persen
+  dimatikan. Hapus induk → anak ikut terhapus lunak; kembalikan → ikut kembali. Anak **tidak
+  bisa** diubah/dihapus/dikembalikan sendiri (`tolakBilaOtomatis`); halaman ubah menampilkan
+  arahan ke induknya; tabel/kartu menampilkan badge "Otomatis" tanpa menu aksi.
+- Form catat & setoran: kotak kuning "Catat biaya kutip 10% otomatis" dengan rincian
+  masuk / keluar / bersih, dan centang untuk mematikannya per catatan (`biayaKutip: false`,
+  mis. bila bayar langsung ke bendahara). Rekap penyetor di laporan otomatis memuat biaya
+  kutip di kolom keluar pengutip.
+
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)
 
 - `jenis.nominalBawaan` mengisi kolom Jumlah saat jenis dipilih; `nominalDikunci` membuat

@@ -20,8 +20,8 @@ import { cn } from '@/lib/utils'
 
 export const LABEL_PERIODE: Record<PeriodeJenis, string> = { bebas: 'Bebas', sekali: 'Sekali', bulanan: 'Bulanan', tahunan: 'Tahunan' }
 
-type Form = { nama: string; arah: 'masuk' | 'keluar'; keterangan: string; nominalBawaan: number | null; nominalDikunci: boolean; periode: PeriodeJenis; menandaiMeninggal: boolean }
-const kosong: Form = { nama: '', arah: 'masuk', keterangan: '', nominalBawaan: null, nominalDikunci: false, periode: 'bebas', menandaiMeninggal: false }
+type Form = { nama: string; arah: 'masuk' | 'keluar'; keterangan: string; nominalBawaan: number | null; nominalDikunci: boolean; periode: PeriodeJenis; menandaiMeninggal: boolean; biayaKutipPersen: string; biayaKutipJenisId: number | null }
+const kosong: Form = { nama: '', arah: 'masuk', keterangan: '', nominalBawaan: null, nominalDikunci: false, periode: 'bebas', menandaiMeninggal: false, biayaKutipPersen: '', biayaKutipJenisId: null }
 
 export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
   const router = useRouter()
@@ -36,7 +36,7 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
     setPanel({ mode: 'tambah' })
   }
   function bukaUbah(j: BarisJenis) {
-    setForm({ nama: j.nama, arah: j.arah, keterangan: j.keterangan ?? '', nominalBawaan: j.nominalBawaan, nominalDikunci: j.nominalDikunci, periode: j.periode, menandaiMeninggal: j.menandaiMeninggal })
+    setForm({ nama: j.nama, arah: j.arah, keterangan: j.keterangan ?? '', nominalBawaan: j.nominalBawaan, nominalDikunci: j.nominalDikunci, periode: j.periode, menandaiMeninggal: j.menandaiMeninggal, biayaKutipPersen: j.biayaKutipPersen ? String(j.biayaKutipPersen) : '', biayaKutipJenisId: j.biayaKutipJenisId })
     setGalat(null)
     setPanel({ mode: 'ubah', id: j.id, bawaan: j.bawaan })
   }
@@ -45,7 +45,7 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
     e.preventDefault()
     if (!panel) return
     mulai(async () => {
-      const input = { ...form, keterangan: form.keterangan || null, nominalDikunci: form.nominalBawaan != null && form.nominalDikunci }
+      const input = { ...form, keterangan: form.keterangan || null, nominalDikunci: form.nominalBawaan != null && form.nominalDikunci, biayaKutipPersen: form.biayaKutipPersen ? Number(form.biayaKutipPersen) : null, biayaKutipJenisId: form.biayaKutipJenisId }
       const hasil = panel.mode === 'tambah' ? await tambahJenis(input) : await ubahJenis(panel.id, input)
       if (!hasil.ok) {
         setGalat({ pesan: hasil.pesan, field: hasil.field })
@@ -99,6 +99,7 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
                   {j.nama}
                   {!j.aktif && <span className="ml-2 rounded-badge bg-border px-2 py-0.5 text-ket text-muted">Nonaktif</span>}
                   {j.menandaiMeninggal && <span className="ml-2 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">Menandai meninggal</span>}
+                  {!!j.biayaKutipPersen && <span className="ml-2 rounded-badge bg-warning-soft px-2 py-0.5 text-ket font-semibold text-warning">Biaya kutip {j.biayaKutipPersen}%</span>}
                 </p>
                 <p className="angka text-ket text-muted">
                   {j.kode} · {j.bawaan ? 'bawaan' : 'buatan sendiri'} · dipakai {j.dipakai} catatan
@@ -201,6 +202,33 @@ export function KartuJenis({ daftar }: { daftar: BarisJenis[] }) {
               <p className="text-ket text-muted">Dipakai untuk mengingatkan bila anggota yang sama dicatat dua kali dalam periode yang sama.</p>
               {galatField('periode')}
             </div>
+            {form.arah === 'masuk' && (
+              <div className="flex flex-col gap-3 rounded-input border border-warning bg-warning-soft p-4">
+                <Label htmlFor="biaya-kutip">Biaya kutip untuk pengutip <span className="font-normal text-muted">(kosong = tidak ada)</span></Label>
+                <div className="flex items-center gap-2">
+                  <Input id="biaya-kutip" inputMode="numeric" className="angka w-28" value={form.biayaKutipPersen} onChange={(e) => setForm({ ...form, biayaKutipPersen: e.target.value.replace(/\D/g, '').slice(0, 3) })} aria-invalid={galat?.field === 'biayaKutipPersen'} placeholder="10" />
+                  <span className="text-form font-semibold">%</span>
+                </div>
+                {galatField('biayaKutipPersen')}
+                {form.biayaKutipPersen && (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="biaya-kutip-jenis">Dicatat sebagai uang keluar jenis</Label>
+                    <PilihanModal<number>
+                      id="biaya-kutip-jenis"
+                      nilai={form.biayaKutipJenisId}
+                      onUbah={(v) => setForm({ ...form, biayaKutipJenisId: v })}
+                      pilihan={daftar.filter((j) => j.arah === 'keluar' && j.aktif).map((j) => ({ nilai: j.id, label: j.nama, keterangan: j.kode }))}
+                      labelKosong="Bawaan: Biaya Kutip Iuran (PK11)"
+                      placeholder="Bawaan: Biaya Kutip Iuran"
+                      judul="Jenis uang keluar biaya kutip"
+                    />
+                  </div>
+                )}
+                <p className="text-ket text-warning">
+                  Setiap kali jenis ini dicatat sebagai uang masuk, {form.biayaKutipPersen || '…'}% dari jumlahnya otomatis dicatat sebagai uang keluar (bagian pengutip). Uang masuk tetap dicatat penuh — mis. masuk Rp 100.000, keluar Rp {form.biayaKutipPersen ? formatRupiah(Math.floor((100000 * Number(form.biayaKutipPersen)) / 100)).replace('Rp ', '') : '…'}.
+                </p>
+              </div>
+            )}
             {form.arah === 'keluar' && (
               <div className="flex flex-col gap-2 rounded-input border border-warning bg-warning-soft p-4">
                 <Label>Menandai orang meninggal dunia?</Label>

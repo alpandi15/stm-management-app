@@ -4,6 +4,9 @@ import { db, sqlite } from '@/server/db'
 import { anggota, jenis, setoran, transaksi, type Jenis, type Setoran } from '@/server/db/schema'
 import { GalatPengguna } from '@/server/galat'
 import { buatCatatan, hapusCatatan } from './transaksi'
+import { nomorBuktiBerikutnya } from './nomor-bukti'
+import { catatLog } from './log'
+import { adaBiayaKutip, hitungBiayaKutip } from '@/lib/biaya-kutip'
 import { pastikanTidakTerkunci } from './penguncian'
 import { formatPeriode, periodeUntuk, tambahBulan } from '@/lib/tanggal'
 import type { Metode } from '@/server/db/schema'
@@ -47,6 +50,8 @@ export type InputSetoran = {
   jenisUtamaId?: number | null
   periodeUtama?: string | null
   kartu: KartuInput[]
+  /** false = jangan catat biaya kutip otomatis untuk setoran ini */
+  biayaKutip?: boolean
 }
 
 /** SI-2026-0001 — urut per tahun, dihitung sebagai angka, di dalam transaksi. */
@@ -110,6 +115,7 @@ export function buatSetoran(input: InputSetoran): { setoran: Setoran; jumlahCata
 
     let jumlahCatatan = 0
     let total = 0
+    const himpunKutip = new Map<string, { persen: number; jenisKeluarId: number | null; bruto: number }>()
     for (const k of kartu) {
       const a = k.anggotaId ? db.select({ id: anggota.id, nama: anggota.nama }).from(anggota).where(eq(anggota.id, k.anggotaId)).get() : null
       if (k.anggotaId && !a) throw new GalatPengguna('Ada anggota yang tidak ditemukan. Muat ulang halaman lalu coba lagi.', 'kartu')
@@ -136,11 +142,16 @@ export function buatSetoran(input: InputSetoran): { setoran: Setoran; jumlahCata
               buktiFile: null,
               abaikanDuplikat: true, // daftar centang sudah menandai yang sudah bayar
             },
-            { setoranId: kepala.id, kelipatan },
+            { setoranId: kepala.id, kelipatan, tanpaBiayaKutip: true },
           )
           if (hasil.perluKonfirmasi) throw new GalatPengguna('Terjadi kesalahan tak terduga saat menyimpan.')
           jumlahCatatan += 1
           total += hasil.catatan.jumlah
+          // Biaya kutip dihimpun per persen, dicatat satu kali untuk seluruh setoran (docs/02 §5.1f)
+          if (input.biayaKutip !== false && adaBiayaKutip(j)) {
+            const kunci = `${j.biayaKutipPersen}|${j.biayaKutipJenisId ?? 0}`
+            himpunKutip.set(kunci, { persen: j.biayaKutipPersen!, jenisKeluarId: j.biayaKutipJenisId, bruto: (himpunKutip.get(kunci)?.bruto ?? 0) + hasil.catatan.jumlah })
+          }
         }
         if (berperiode && !a) {
           // Kartu tanpa nama: n = jumlah orang, satu catatan untuk periode itu bernilai nominal × n
@@ -157,7 +168,38 @@ export function buatSetoran(input: InputSetoran): { setoran: Setoran; jumlahCata
         }
       }
     }
-    return { setoran: kepala, jumlahCatatan, total }
+    // Satu catatan uang keluar per kelompok persen: "Biaya kutip 10% setoran SI-2026-0015"
+    let biayaKutip = 0
+    const namaPengutip = kepala.penyetorAnggotaId ? (db.select({ nama: anggota.nama }).from(anggota).where(eq(anggota.id, kepala.penyetorAnggotaId)).get()?.nama ?? null) : null
+    for (const h of himpunKutip.values()) {
+      const jumlah = hitungBiayaKutip(h.bruto, h.persen)
+      if (jumlah <= 0) continue
+      const jk = (h.jenisKeluarId ? db.select().from(jenis).where(eq(jenis.id, h.jenisKeluarId)).get() : null) ?? db.select().from(jenis).where(eq(jenis.kode, 'PK11')).get()
+      if (!jk || jk.arah !== 'keluar') throw new GalatPengguna('Jenis uang keluar untuk biaya kutip tidak ditemukan. Periksa Pengaturan › Jenis Uang.')
+      const noBukti = nomorBuktiBerikutnya(db, 'keluar', tahun)
+      const baris = db
+        .insert(transaksi)
+        .values({
+          noBukti,
+          tanggal: input.tanggal,
+          arah: 'keluar',
+          jenisId: jk.id,
+          penyetorAnggotaId: kepala.penyetorAnggotaId,
+          setoranId: kepala.id,
+          namaPihak: namaPengutip ?? 'Pengutip',
+          keterangan: `Biaya kutip ${h.persen}% setoran ${kepala.nomor}`,
+          metode: input.metode,
+          jumlah,
+          otomatis: true,
+          dibuatPada: Date.now(),
+          diubahPada: Date.now(),
+        })
+        .returning()
+        .get()
+      catatLog(db, 'buat', null, baris)
+      biayaKutip += jumlah
+    }
+    return { setoran: kepala, jumlahCatatan, total, biayaKutip }
   })()
 }
 
@@ -173,7 +215,7 @@ export function hapusSetoran(id: number): { jumlahCatatan: number } {
       .where(and(eq(transaksi.setoranId, id), isNull(transaksi.dihapusPada)))
       .orderBy(asc(transaksi.id))
       .all()
-    for (const b of baris) hapusCatatan(b.id)
+    for (const b of baris) hapusCatatan(b.id, true)
     db.update(setoran).set({ dihapusPada: Date.now(), diubahPada: Date.now() }).where(eq(setoran.id, id)).run()
     return { jumlahCatatan: baris.length }
   })()

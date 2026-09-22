@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { Db } from './index'
 import { jenis, type Arah, type PeriodeJenis } from './schema'
 
-// 22 jenis bawaan (docs/02 §3.4 + Spec 2 §B3). Idempoten berdasarkan `kode`:
+// 23 jenis bawaan (docs/02 §3.4 + Spec 2 §B3). Idempoten berdasarkan `kode`:
 // yang sudah ada tidak disentuh — nama, nominal, dan sakelar milik pengurus tidak boleh
 // tertimpa seed. Periode dan penanda meninggal untuk pemasangan lama diisi migrasi 0001.
 const JENIS_BAWAAN: ReadonlyArray<{ kode: string; nama: string; arah: Arah; periode?: PeriodeJenis; menandaiMeninggal?: boolean }> = [
@@ -28,6 +28,7 @@ const JENIS_BAWAAN: ReadonlyArray<{ kode: string; nama: string; arah: Arah; peri
   { kode: 'PK08', nama: 'Biaya Administrasi Bank', arah: 'keluar' },
   { kode: 'PK09', nama: 'Sumbangan Sosial Keluar', arah: 'keluar' },
   { kode: 'PK10', nama: 'Pengeluaran Lain-lain', arah: 'keluar' },
+  { kode: 'PK11', nama: 'Biaya Kutip Iuran', arah: 'keluar' },
 ]
 
 /** Menyisipkan jenis bawaan yang belum ada. Mengembalikan jumlah yang baru ditambahkan. */

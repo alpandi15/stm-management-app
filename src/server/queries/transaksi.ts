@@ -58,6 +58,8 @@ const kolomBaris = {
   dihapusPada: transaksi.dihapusPada,
   dibuatPada: transaksi.dibuatPada,
   diubahPada: transaksi.diubahPada,
+  otomatis: transaksi.otomatis,
+  indukId: transaksi.indukId,
   namaJenis: jenis.nama,
   menandaiMeninggal: jenis.menandaiMeninggal,
   namaMeninggal: anggotaKeluarga.nama,

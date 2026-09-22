@@ -53,6 +53,7 @@ export const simpanSetoran = aksiTerlindungi(async (fd: FormData) => {
       jenisUtamaId: Number(teks('jenisUtamaId')) || null,
       periodeUtama: teks('periodeUtama') || null,
       kartu,
+      biayaKutip: teks('biayaKutip') !== '0',
     }),
   )
   if (!hasil.ok && namaBukti) hapusBerkasBukti(namaBukti)

@@ -60,8 +60,10 @@ export function KartuCatatan({
         <p className="angka mt-1 text-ket text-muted">
           {formatTanggalPendek(catatan.tanggal)} · {catatan.metode === 'tunai' ? 'Tunai' : 'Transfer'} · {catatan.noBukti}
           {catatan.buktiFile && ' · ada foto'}
+          {catatan.otomatis && <span className="ml-2 rounded-badge border border-warning px-2 py-0.5 font-medium text-warning">Otomatis</span>}
         </p>
       </div>
+      {catatan.otomatis ? null : (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button type="button" className="-mr-2 flex size-sentuh shrink-0 items-center justify-center rounded-input text-muted hover:bg-bg hover:text-text" aria-label={`Menu catatan ${catatan.noBukti}`}>
@@ -82,6 +84,7 @@ export function KartuCatatan({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      )}
     </article>
   )
 }

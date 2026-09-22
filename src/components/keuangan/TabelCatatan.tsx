@@ -111,6 +111,11 @@ export function TabelCatatan({ baris, urut = URUT_BAWAAN, total, halaman, perHal
                   </td>
                   <td className="max-w-md px-3 py-3">
                     <span className={cn('mr-2 inline-block rounded-badge px-2 py-0.5 text-ket font-semibold', masuk ? 'bg-masuk-soft text-masuk' : 'bg-keluar-soft text-keluar')}>{c.namaJenis}</span>
+                    {c.otomatis && (
+                      <span className="mr-2 inline-block rounded-badge border border-warning px-2 py-0.5 text-ket font-medium text-warning" title="Dibuat otomatis dari catatan uang masuk; mengikuti induknya">
+                        Otomatis
+                      </span>
+                    )}
                     <span className="block text-isi">{c.keterangan}</span>
                     {meninggal && <span className="block text-ket font-medium text-keluar">Meninggal: {meninggal}</span>}
                   </td>
@@ -147,6 +152,9 @@ export function TabelCatatan({ baris, urut = URUT_BAWAAN, total, halaman, perHal
                     <span className="block">{formatJam(c.dibuatPada)}</span>
                   </td>
                   <td className="px-2 py-2 text-right">
+                    {c.otomatis ? (
+                      <span className="sr-only">Mengikuti catatan induknya</span>
+                    ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button type="button" className="flex size-sentuh items-center justify-center rounded-input text-muted hover:bg-bg hover:text-text" aria-label={`Menu catatan ${c.noBukti}`}>
@@ -167,6 +175,7 @@ export function TabelCatatan({ baris, urut = URUT_BAWAAN, total, halaman, perHal
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    )}
                   </td>
                 </tr>
               )

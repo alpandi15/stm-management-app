@@ -45,6 +45,8 @@ export const skemaCatatan = z.object({
   metode: z.enum(METODE, { error: 'Pilih cara pembayarannya.' }),
   buktiFile: z.string().nullable().optional(),
   abaikanDuplikat: z.boolean().optional(),
+  /** false = jangan catat biaya kutip otomatis walau jenisnya punya (mis. bayar langsung ke bendahara) */
+  biayaKutip: z.boolean().optional(),
 })
 export type InputCatatan = z.infer<typeof skemaCatatan>
 
@@ -158,6 +160,14 @@ export const skemaJenis = z
     nominalDikunci: z.boolean({ error: 'Pilihan kunci nominal tidak terbaca. Pilih ulang dari daftar.' }).nullable().optional(),
     periode: z.enum(PERIODE_JENIS, { error: 'Periode tidak dikenali. Pilih ulang dari daftar.' }).nullable().optional(),
     menandaiMeninggal: z.boolean().nullable().optional(),
+    biayaKutipPersen: z
+      .number({ error: 'Persen biaya kutip hanya boleh berisi angka.' })
+      .int('Persen biaya kutip harus bilangan bulat.')
+      .min(0, 'Persen biaya kutip tidak boleh negatif.')
+      .max(100, 'Persen biaya kutip maksimal 100.')
+      .nullable()
+      .optional(),
+    biayaKutipJenisId: z.number().int().positive().nullable().optional(),
   })
   .refine((v) => !v.nominalDikunci || v.nominalBawaan != null, { message: 'Nominal belum diisi, jadi belum ada yang bisa dikunci.', path: ['nominalDikunci'] })
 export type InputJenis = z.infer<typeof skemaJenis>

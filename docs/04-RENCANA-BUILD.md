@@ -568,6 +568,17 @@ jenis di y=64 dan badge "Sabtu, 19 September 2026" tampil saat kalender di luar 
 bebas "Warga Baru" lewat modal; filter Catatan Kas memakai modal dengan "Semua untuk apa";
 360px modal 328px tanpa geser samping.
 
+**Biaya kutip otomatis** (22 September 2026): `docs/02` §5.1f. Migrasi 0012, seed PK11 (jenis
+bawaan kini 23). Tes service `biaya-kutip.test.ts` (4 tes, DB sementara, `server-only` di-stub):
+bruto tetap + anak 10%; ubah induk → anak ikut; matikan → anak terhapus, nyalakan → dibuat
+ulang; hapus/kembalikan induk; anak ditolak diubah langsung; jenis tanpa persen tanpa anak.
+Uji Electron 22 (`uji-kutip.js`): PM12 diset 10% di Jenis Uang (badge tampil); catat Rp 100.000
+via Rahmat → KM-2026-0001 100.000 + KK-2026-0001 10.000 "Biaya kutip 10% — KM-2026-0001"
+otomatis, nama pihak pengutip, tabel: badge Otomatis tanpa menu, ringkasan 100.000 / 10.000 /
+90.000; ubah induk 150.000 → anak 15.000; halaman ubah anak menolak; setoran 3 × 10.000 →
+satu KK 3.000 "Biaya kutip 10% setoran SI-2026-0001", detail setoran menampilkannya; hapus
+setoran → semua terhapus.
+
 **Sidebar tablet & tombol Kembali**: sidebar penuh 240px di laptop dan desktop (≥ 1024px);
 di 768–1023px sidebar ikon melebar ke 240px saat
 kursor/fokus keyboard berada di atasnya (menimpa isi, bukan menggeser; `z-20` di atas header)

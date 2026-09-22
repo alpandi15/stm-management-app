@@ -59,7 +59,9 @@ alasannya di `docs/05`.
 3. **Akses database hanya dari `src/server/`.** Komponen tidak pernah mengimpor Drizzle
    secara langsung.
 4. **Semua uang adalah `INTEGER` rupiah penuh.** Tidak ada desimal, tidak ada `float`,
-   tidak ada sen. Alasannya ada di `docs/02`.
+   tidak ada sen. Alasannya ada di `docs/02`. Uang masuk selalu dicatat **bruto**; potongan
+   (biaya kutip, `docs/02` §5.1f) adalah catatan uang keluar terpisah — jangan pernah
+   menyimpan angka neto.
 5. **Jangan menambah dependensi** di luar daftar di atas tanpa menuliskan alasannya
    dalam laporan fase.
 6. **Jangan memakai fitur yang butuh server eksternal.** Tidak ada email, OAuth, API

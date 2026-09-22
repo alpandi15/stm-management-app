@@ -7,6 +7,8 @@ import { cekSudahBayar, simpanSetoran } from '@/server/actions/setoran'
 import type { Jenis } from '@/server/db/schema'
 import type { AnggotaUntukForm } from '@/server/queries/transaksi'
 import { formatRupiah, formatAngka, parseRupiah, terbilangRupiah } from '@/lib/rupiah'
+import { adaBiayaKutip, hitungBiayaKutip } from '@/lib/biaya-kutip'
+import { Checkbox } from '@/components/ui/checkbox'
 import { formatPeriode, hariIni, periodeUntuk, tambahBulan } from '@/lib/tanggal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -150,6 +152,15 @@ export function FormSetoran({
     return [...m.values()]
   })()
   const totalCatatan = rekapJenis.reduce((t, r) => t + r.catatan, 0)
+  // Biaya kutip: dihimpun per persen dari baris jenis yang punya, dicatat satu kali per setoran
+  const [biayaKutipAktif, setBiayaKutipAktif] = React.useState(true)
+  const biayaKutip = (() => {
+    const perPersen = new Map<number, number>()
+    for (const k of kartu) for (const b of k.baris) { const j = jenisMap.get(b.jenisId); if (j && adaBiayaKutip(j)) perPersen.set(j.biayaKutipPersen!, (perPersen.get(j.biayaKutipPersen!) ?? 0) + subtotalBaris(b)) }
+    let total = 0
+    for (const [persen, bruto] of perPersen) total += hitungBiayaKutip(bruto, persen)
+    return { total, persen: [...perPersen.keys()] }
+  })()
 
   function simpan() {
     setGalat(null)
@@ -171,6 +182,7 @@ export function FormSetoran({
       if (bukti) fd.set('bukti', bukti)
       if (jenisUtamaId) fd.set('jenisUtamaId', String(jenisUtamaId))
       if (periodeUtamaTampil) fd.set('periodeUtama', periodeUtamaTampil)
+      if (!biayaKutipAktif) fd.set('biayaKutip', '0')
       fd.set(
         'kartu',
         JSON.stringify(
@@ -434,6 +446,17 @@ export function FormSetoran({
             )}
             <p className="angka text-judul font-bold">{formatRupiah(total)}</p>
             <p className="text-ket text-muted">{total > 0 ? terbilangRupiah(total) : ''}</p>
+            {biayaKutip.total > 0 && (
+              <label className="mt-2 flex cursor-pointer items-start gap-2 rounded-input border border-warning bg-warning-soft px-3 py-2">
+                <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5 size-6" />
+                <span className="angka text-ket">
+                  <span className="block font-semibold text-text">
+                    Biaya kutip {biayaKutip.persen.join('% & ')}%: {formatRupiah(biayaKutip.total)} {biayaKutipAktif ? 'dicatat otomatis sebagai uang keluar' : 'tidak dicatat'}
+                  </span>
+                  {biayaKutipAktif && <span className="block text-muted">Bersih ke kas {formatRupiah(total - biayaKutip.total)} · uang masuk tetap dicatat {formatRupiah(total)}</span>}
+                </span>
+              </label>
+            )}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="halus" ukuran="aksi" onClick={() => router.back()} disabled={sedangKirim}>
