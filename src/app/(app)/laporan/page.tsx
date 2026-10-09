@@ -8,6 +8,7 @@ import { kalimatRentang } from '@/lib/tanggal'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { KartuAngka } from '@/components/laporan/KartuAngka'
 import { RincianJenis } from '@/components/laporan/RincianJenis'
+import { GrafikLaporan } from '@/components/laporan/GrafikLaporan'
 import { PanelRentang } from '@/components/laporan/PanelRentang'
 import { TabelCatatan } from '@/components/keuangan/TabelCatatan'
 import { MenuCetak } from '@/components/laporan/MenuCetak'
@@ -58,6 +59,8 @@ export default async function HalamanLaporan({ searchParams }: { searchParams: R
       <p className="-mt-2 text-ket text-muted">
         Sisa Kas Awal dan Akhir menunjukkan uang kas sebenarnya, jadi tidak ikut disaring oleh pilihan jenis di atas.
       </p>
+
+      <GrafikLaporan deret={laporan.deret} sisaAwal={r.sisaAwal} rentangKalimat={kalimatRentang(rentang)} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <RincianJenis judul="Rincian Uang Masuk per Jenis" baris={laporan.rincianMasuk} arah="masuk" />

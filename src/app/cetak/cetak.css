@@ -30,6 +30,11 @@
   .dokumen.lanskap { max-width: 297mm; }
 }
 
+.dokumen .grafik-cetak { break-inside: avoid; page-break-inside: avoid; }
+/* Batang grafik harus tetap berwarna saat dicetak, bukan putih polos */
+.dokumen .grafik-cetak svg { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.dokumen .grafik-cetak h2 { break-after: avoid; page-break-after: avoid; }
+
 .dokumen table { width: 100%; border-collapse: collapse; }
 .dokumen th, .dokumen td { border: 1px solid #9ca3af; padding: 4pt 6pt; vertical-align: top; }
 .dokumen th { background: #f3f4f6; font-weight: 600; text-align: left; }

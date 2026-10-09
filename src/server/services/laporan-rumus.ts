@@ -3,7 +3,8 @@
 import { and, count, eq, gte, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '@/server/db'
 import { anggota, jenis, transaksi, type Arah, type Metode } from '@/server/db/schema'
-import type { Rentang } from '@/lib/tanggal'
+import { dariISO, keISO, type Rentang } from '@/lib/tanggal'
+import { labelTitik, satuanDeret } from '@/lib/grafik'
 
 export type PenyaringLaporan = { jenisId?: number; metode?: Metode; cari?: string; penyetor?: number | 'bendahara' }
 
@@ -21,6 +22,7 @@ export type RingkasanPeriode = {
 export type RincianJenis = { jenisId: number; nama: string; total: number; jumlah: number; persen: number }
 
 export type BulanGrafik = { bulan: string; masuk: number; keluar: number }
+export type TitikLaporan = { kunci: string; label: string; masuk: number; keluar: number }
 
 const belumDihapus = () => isNull(transaksi.dihapusPada)
 
@@ -111,6 +113,33 @@ export function grafikBulanan(db: Db, tahun: number): BulanGrafik[] {
     const b = peta.get(bulan)
     return { bulan, masuk: Number(b?.masuk ?? 0), keluar: Number(b?.keluar ?? 0) }
   })
+}
+
+/**
+ * Deret waktu dalam rentang laporan untuk grafik: per hari bila rentangnya pendek,
+ * per bulan bila panjang (lib/grafik.ts yang menentukan). Titik tanpa catatan tetap ada
+ * dengan nilai 0 supaya grafiknya tidak bolong.
+ */
+export function deretLaporan(db: Db, rentang: Rentang, penyaring?: PenyaringLaporan): TitikLaporan[] {
+  const satuan = satuanDeret(rentang.awal, rentang.akhir)
+  const potong = satuan === 'hari' ? 10 : 7
+  const baris = db
+    .select({ kunci: sql<string>`substr(${transaksi.tanggal}, 1, ${potong})`, masuk: jumlahArah('masuk'), keluar: jumlahArah('keluar') })
+    .from(transaksi)
+    .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir), kondisiPenyaring(penyaring)))
+    .groupBy(sql`substr(${transaksi.tanggal}, 1, ${potong})`)
+    .all()
+  const peta = new Map(baris.map((b) => [b.kunci, b]))
+
+  const titik: TitikLaporan[] = []
+  const akhir = dariISO(rentang.akhir)
+  for (const d = dariISO(rentang.awal); d <= akhir; satuan === 'hari' ? d.setDate(d.getDate() + 1) : d.setMonth(d.getMonth() + 1)) {
+    const kunci = keISO(d).slice(0, potong)
+    if (titik.some((t) => t.kunci === kunci)) continue
+    const b = peta.get(kunci)
+    titik.push({ kunci, label: labelTitik(kunci, satuan), masuk: Number(b?.masuk ?? 0), keluar: Number(b?.keluar ?? 0) })
+  }
+  return titik
 }
 
 /** Rekap per penyetor dalam rentang: siapa menyetor/menyerahkan berapa. null = bendahara sendiri. */

@@ -1,6 +1,7 @@
 import type { Laporan } from '@/server/services/laporan'
 import type { Pengaturan } from '@/server/db/schema'
 import { formatRupiah } from '@/lib/rupiah'
+import { GrafikArusKasCetak, GrafikJenisCetak, GrafikSaldoCetak } from './GrafikCetak'
 import { Kop } from './Kop'
 import { TandaTangan } from './TandaTangan'
 
@@ -72,8 +73,12 @@ export function DokumenRingkas({ laporan, p }: { laporan: Laporan; p: Pengaturan
           </tbody>
         </table>
       </section>
+      <GrafikArusKasCetak deret={laporan.deret} />
+      <GrafikSaldoCetak deret={laporan.deret} sisaAwal={r.sisaAwal} />
       <Rincian judul="Rincian Uang Masuk per Jenis" baris={laporan.rincianMasuk} />
+      <GrafikJenisCetak judul="Grafik Uang Masuk per Jenis" baris={laporan.rincianMasuk} arah="masuk" />
       <Rincian judul="Rincian Uang Keluar per Jenis" baris={laporan.rincianKeluar} />
+      <GrafikJenisCetak judul="Grafik Uang Keluar per Jenis" baris={laporan.rincianKeluar} arah="keluar" />
       <section style={{ marginTop: '14pt' }}>
         <h2 style={{ fontSize: '12pt', margin: '0 0 6pt' }}>Rekap per Penyetor</h2>
         <table>

@@ -162,6 +162,14 @@ diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di 
 sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
 **lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
 
+**Grafik laporan** (9 Oktober 2026): halaman Laporan memuat dua grafik berdampingan tepat di
+bawah kartu ringkasan — **Arus Kas** (batang masuk vs keluar per hari bila rentangnya ≤ 62 hari,
+per bulan bila lebih panjang) dan **Saldo Berjalan** (area dari sisa kas awal, garis putus-putus
+di angka nol). Satu sumbu Y rupiah, legenda urutan tetap berwarna teks biasa, dan "Lihat sebagai
+tabel" untuk yang lebih suka angka. Dokumen cetak Laporan Ringkas memuat grafik yang sama
+ditambah batang mendatar komposisi per jenis — digambar sebagai **SVG polos**, bukan Recharts,
+supaya tidak pernah tercetak kosong.
+
 **Pilihan lewat modal** (`ui/pilihan-modal.tsx`, menggantikan dropdown combobox; permintaan
 pemilik 19 September 2026): setiap pilihan yang bisa dicari terbuka sebagai modal di tengah
 layar dengan latar gelap — dropdown dinilai "menyatu dengan latar" oleh pengguna lanjut usia.
