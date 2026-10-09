@@ -8,6 +8,14 @@ Bentuknya **aplikasi desktop Windows** (installer `.exe` dan versi portable) yan
 SQLite — **tanpa internet, tanpa server, tanpa akun**. Masih berjalan di **Windows 7 SP1**
 (32-bit maupun 64-bit), karena komputer di balai warga sering seumur itu.
 
+**Gratis dan terbuka. Tidak untuk diperjualbelikan. Dikembangkan bersama-sama.**
+Dibuat untuk pengurus perkumpulan warga yang selama ini mencatat kas di buku tulis — silakan
+dipakai, dipelajari, dan dikembangkan, tanpa biaya sepeser pun.
+
+![Gratis dan terbuka](https://img.shields.io/badge/Gratis%20%26%20Terbuka-ya-2e7d32)
+![Dilarang diperjualbelikan](https://img.shields.io/badge/Dilarang-diperjualbelikan-c62828)
+![Kolaborasi terbuka](https://img.shields.io/badge/Kolaborasi-dibuka-1d4ed8)
+
 > Versi saat ini: **0.2.0** · Lihat seluruh tampilan di
 > **[docs/tangkapan-layar/](docs/tangkapan-layar/README.md)** (42 tangkapan layar dengan data contoh).
 
@@ -25,8 +33,9 @@ SQLite — **tanpa internet, tanpa server, tanpa akun**. Masih berjalan di **Win
 - [Struktur proyek](#struktur-proyek)
 - [Teknologi](#teknologi)
 - [Dokumentasi](#dokumentasi)
+- [Ikut mengembangkan](#ikut-mengembangkan)
 - [Dukung pengembangan](#dukung-pengembangan)
-- [Lisensi](#lisensi)
+- [Lisensi & ketentuan pemakaian](#lisensi--ketentuan-pemakaian)
 
 ---
 
@@ -306,6 +315,33 @@ alasannya ada di [`docs/05`](docs/05-DUKUNGAN-WINDOWS-7.md). Jangan menaikkannya
 
 ---
 
+## Ikut mengembangkan
+
+Proyek ini dibuka supaya tidak berhenti di satu orang. Setiap STM punya kebiasaan yang
+berbeda — tarif iuran, cara pengutipan, bentuk laporan yang diminta saat rapat — dan justru
+perbedaan itu yang membuat aplikasinya makin matang. Kontribusi apa pun diterima dengan
+senang hati:
+
+| Anda bisa | Caranya |
+| --- | --- |
+| **Melaporkan masalah** | Buka *Issue*: ceritakan langkahnya, apa yang terjadi, dan apa yang Anda harapkan. Bila aplikasi gagal terbuka, lampirkan `%APPDATA%\Aplikasi Kas STM\data\aplikasi.log`. |
+| **Mengusulkan fitur** | Buka *Issue* berisi kasus nyata di perkumpulan Anda — bukan sekadar nama fitur. Keputusan desain di sini hampir selalu berangkat dari cerita pengurus di lapangan. |
+| **Mengirim perubahan kode** | *Fork* → buat cabang → `npm run lint && npm run typecheck && npm test` → *Pull Request* yang menjelaskan **kenapa**, bukan hanya apa. |
+| **Membantu tanpa menulis kode** | Menguji di Windows sungguhan (terutama Windows 7), merapikan dokumentasi, menyusun panduan pemakaian untuk pengurus, atau menerjemahkan istilah agar lebih mudah dipahami. |
+
+Sebelum menyentuh kode, baca dulu [`CLAUDE.md`](CLAUDE.md) dan [`docs/02-SPEC-TEKNIS.md`](docs/02-SPEC-TEKNIS.md).
+Dua hal yang dipegang teguh di repo ini:
+
+1. **Ini aplikasi keuangan.** Kesalahan angka tidak terlihat sampai tutup buku, jadi setiap
+   aturan uang ditulis sebagai fungsi murni di `src/lib/` **beserta pengujiannya**.
+2. **Penggunanya bendahara berusia 50 tahun ke atas.** Tambahan fitur tidak boleh membuat
+   layar jadi ramai; bila sebuah pilihan bisa dihitung sendiri oleh aplikasi, hitung sendiri.
+
+Punya pertanyaan atau ingin mengerjakan sesuatu yang besar? Buka *Issue* lebih dulu supaya
+arahnya bisa dibicarakan sebelum Anda menghabiskan waktu.
+
+---
+
 ## Dukung pengembangan
 
 Aplikasi ini gratis dan dikembangkan di waktu luang. Kalau bermanfaat untuk STM atau
@@ -329,6 +365,28 @@ bagikan aplikasinya ke pengurus perkumpulan lain.
 
 ---
 
-## Lisensi
+## Lisensi & ketentuan pemakaian
 
-Belum ditentukan. Hubungi pemilik repositori sebelum memakainya di luar lingkungan sendiri.
+**Gratis untuk dipakai siapa saja.** STM, arisan, paguyuban, pengurus RT/RW, atau perkumpulan
+mana pun boleh memasang dan memakai aplikasi ini tanpa biaya, tanpa izin khusus, dan tanpa
+batas jumlah anggota. Kode sumbernya terbuka untuk dipelajari dan dimodifikasi sesuai kebutuhan
+perkumpulan masing-masing.
+
+**Dilarang diperjualbelikan.** Aplikasi ini — baik berkas `.exe`, kode sumbernya, maupun
+turunannya — tidak boleh dijual, disewakan, dijadikan produk berlangganan, atau dipaketkan ke
+dalam layanan berbayar. Memungut biaya kepada pengurus atau warga untuk mendapatkan aplikasi
+ini bertentangan dengan tujuan dibuatnya. Mengganti nama dan logonya lalu menjualnya sebagai
+produk sendiri juga tidak diperbolehkan.
+
+Yang **boleh**: membagikan `.exe` secara cuma-cuma, memasangnya di banyak komputer, mengubah
+kodenya untuk kebutuhan perkumpulan sendiri, dan membagikan hasil modifikasinya selama tetap
+gratis serta tetap menyebut sumbernya. Menerima upah atas jasa pemasangan atau pelatihan masih
+wajar — yang dilarang adalah menjual aplikasinya.
+
+Yang **tidak**: menjual, memasang kunci berbayar, atau menghapus keterangan sumber.
+
+Ringkasnya: **ambil, pakai, kembangkan, bagikan — jangan dijual.** Untuk pemakaian di luar
+ketentuan ini, hubungi pemilik repositori lebih dulu.
+
+Aplikasi diberikan apa adanya, tanpa jaminan. Pembukuan tetap tanggung jawab bendahara —
+biasakan menyimpan cadangan berkala (menu Pengaturan › Cadangan).
