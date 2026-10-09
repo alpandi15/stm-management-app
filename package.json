@@ -19,7 +19,8 @@
     "build:app": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next build && node scripts/salin-standalone.mjs",
     "dev:electron": "node scripts/dev-electron.mjs",
     "native:win": "node scripts/unduh-native.mjs win32-ia32,win32-x64",
-    "dist:win": "npm run build:app && npm run native:win && electron-builder --win --ia32 --x64"
+    "dist:win": "npm run build:app && npm run native:win && electron-builder --win --ia32 --x64",
+    "rilis": "node scripts/rilis.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

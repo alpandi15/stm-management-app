@@ -30,6 +30,7 @@ dipakai, dipelajari, dan dikembangkan, tanpa biaya sepeser pun.
 - [Perintah yang tersedia](#perintah-yang-tersedia)
 - [Database & migrasi](#database--migrasi)
 - [Membuat `.exe` untuk Windows](#membuat-exe-untuk-windows)
+- [Merilis versi baru](#merilis-versi-baru)
 - [Struktur proyek](#struktur-proyek)
 - [Teknologi](#teknologi)
 - [Dokumentasi](#dokumentasi)
@@ -201,6 +202,7 @@ ke `docs/tangkapan-layar/`.
 | `npm run build:app` | Build Next standalone + salin `static`/`public`/`drizzle` |
 | `npm run native:win` | Unduh prebuild `better-sqlite3` untuk Windows ia32 + x64 (sekali saja) |
 | `npm run dist:win` | **Membuat `.exe`**: `build:app` + `native:win` + electron-builder |
+| `npm run rilis` | **Merilis**: naikkan versi → build `.exe` → tag → unggah ke GitHub Releases |
 
 Sebelum mengirim perubahan, jalankan ketiganya:
 
@@ -257,6 +259,47 @@ Beberapa hal yang perlu diketahui:
 - Memasang versi baru di atas versi lama **tidak menghapus data**; mencopot aplikasi juga tidak.
 - Bila aplikasi gagal terbuka di komputer pengguna, catatan galatnya ada di
   `%APPDATA%\Aplikasi Kas STM\data\aplikasi.log`.
+
+---
+
+## Merilis versi baru
+
+Satu perintah mengerjakan seluruh rangkaian: memeriksa mutu kode, menaikkan versi, membuat
+`.exe`, membuat tag, mendorongnya ke GitHub, lalu **mengunggah berkas `.exe` ke GitHub Releases**
+beserta catatan rilis yang disusun otomatis dari pesan commit sejak tag sebelumnya.
+
+```bash
+nvm use
+npm run rilis -- patch      # 0.2.0 → 0.2.1
+npm run rilis -- minor      # 0.2.0 → 0.3.0
+npm run rilis -- major      # 0.2.0 → 1.0.0
+npm run rilis -- 1.0.0      # versi persis
+```
+
+Pilihan tambahan:
+
+| Bendera | Kegunaan |
+| --- | --- |
+| `--kering` | Latihan: menampilkan seluruh langkah dan contoh catatan rilis **tanpa mengubah apa pun**. Jalankan ini dulu bila ragu. |
+| `--draf` | Rilis dibuat sebagai draf di GitHub, baru diterbitkan manual setelah diperiksa. |
+| `--lewati-build` | Memakai berkas `.exe` yang sudah ada di `release/` (mis. mengulang unggahan yang gagal). |
+
+Yang dikerjakan berurutan:
+
+1. Memastikan Node 20, `gh` sudah login, pohon kerja bersih, dan tag tujuan belum ada.
+2. `npm run lint`, `npm run typecheck`, `npm test` — berhenti bila ada yang gagal.
+3. Menaikkan `version` di `package.json` (+ `package-lock.json`).
+4. `npm run dist:win` → installer dan dua berkas portable.
+5. Commit `Versi x.y.z`, membuat tag `vx.y.z`, mendorong cabang dan tag.
+6. `gh release create` dengan ketiga `.exe` sebagai lampiran dan catatan rilis berbahasa
+   Indonesia (termasuk cara memasang dan catatan SmartScreen untuk pengguna awam).
+
+Sekali saja di komputer baru:
+
+```bash
+brew install gh      # atau unduh dari https://cli.github.com
+gh auth login
+```
 
 ---
 
@@ -387,6 +430,10 @@ Yang **tidak**: menjual, memasang kunci berbayar, atau menghapus keterangan sumb
 
 Ringkasnya: **ambil, pakai, kembangkan, bagikan — jangan dijual.** Untuk pemakaian di luar
 ketentuan ini, hubungi pemilik repositori lebih dulu.
+
+Secara hukum, ketentuan di atas dituangkan dalam lisensi
+**[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](LICENSE)**
+(CC BY-NC-SA 4.0) — teks lengkapnya ada di berkas [`LICENSE`](LICENSE).
 
 Aplikasi diberikan apa adanya, tanpa jaminan. Pembukuan tetap tanggung jawab bendahara —
 biasakan menyimpan cadangan berkala (menu Pengaturan › Cadangan).
