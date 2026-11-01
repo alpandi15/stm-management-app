@@ -162,6 +162,13 @@ diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di 
 sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
 **lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
 
+**Pengingat di form catat** (1 November 2026): di atas form Catat ada panel kecil berisi
+**sisa uang kas sekarang**, uang masuk/keluar bulan ini, dan **tiga catatan terakhir** (jenis,
+nama pihak, tanggal, jam dicatat, nomor bukti, nominal) dengan tautan "Lihat semua". Tujuannya
+supaya bendahara tidak perlu membuka Laporan hanya untuk memastikan "tadi sudah dicatat belum"
+atau "kasnya tinggal berapa". Saat belum ada catatan, panel berbunyi "Yang Anda isi di bawah ini
+menjadi yang pertama".
+
 **Grafik laporan** (9 Oktober 2026): halaman Laporan memuat dua grafik berdampingan tepat di
 bawah kartu ringkasan — **Arus Kas** (batang masuk vs keluar per hari bila rentangnya ≤ 62 hari,
 per bulan bila lebih panjang) dan **Saldo Berjalan** (area dari sisa kas awal, garis putus-putus
