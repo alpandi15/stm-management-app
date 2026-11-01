@@ -181,7 +181,7 @@ export function buatCatatan(input: InputCatatan, ekstra: { setoranId?: number; k
     catatLog(db, 'buat', null, baris)
     penanda.terapkan(db, baris)
     // Biaya kutip otomatis (setoran kolektif membuat satu catatan gabungan sendiri)
-    if (!ekstra.tanpaBiayaKutip) selaraskanBiayaKutip(baris, j, input.biayaKutip !== false)
+    if (!ekstra.tanpaBiayaKutip) selaraskanBiayaKutip(baris, j, input.biayaKutip ?? true)
     return baris
   })()
 
@@ -209,6 +209,10 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
     )
   }
 
+  // Keadaan biaya kutip sekarang: bila form tidak menyatakan apa-apa, keadaan itu dipertahankan
+  // (catatan yang dulu sengaja tanpa biaya kutip tidak boleh tiba-tiba punya saat diubah).
+  const adaAnakSebelum = anakBiayaKutip(id) !== null
+
   const baru = sqlite.transaction(() => {
     const baris = db
       .update(transaksi)
@@ -232,7 +236,7 @@ export function ubahCatatan(id: number, input: InputCatatan): HasilSimpan {
     catatLog(db, 'ubah', lama, baris)
     penanda.segarkan(db, baris) // sasaran lama bebas, sasaran baru ditandai (Spec 2 §A3)
     // Catatan dari setoran kolektif memakai biaya kutip gabungan di setorannya, bukan per catatan
-    if (!lama.setoranId) selaraskanBiayaKutip(baris, j, input.biayaKutip !== false)
+    if (!lama.setoranId) selaraskanBiayaKutip(baris, j, input.biayaKutip ?? adaAnakSebelum)
     return baris
   })()
 

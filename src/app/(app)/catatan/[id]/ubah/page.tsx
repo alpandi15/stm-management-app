@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { wajibSesi } from '@/server/auth/session'
-import { ambilCatatan, daftarAnggotaAktif, daftarJenisAktif, daftarPenyetor } from '@/server/queries/transaksi'
+import { ambilCatatan, biayaKutipCatatan, daftarAnggotaAktif, daftarJenisAktif, daftarPenyetor } from '@/server/queries/transaksi'
 import { JudulHalaman } from '@/components/ui/judul-halaman'
 import { FormCatatan } from '@/components/keuangan/FormCatatan'
 import { KeadaanKosong } from '@/components/ui/keadaan-kosong'
@@ -30,7 +30,7 @@ export default async function HalamanUbahCatatan({ params }: { params: { id: str
       <JudulHalaman>Ubah Catatan</JudulHalaman>
       <p className="angka -mt-3 text-isi text-muted">{catatan.noBukti}</p>
       <div className="rounded-kartu border border-border bg-surface p-4 shadow-kartu sm:p-6">
-        <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} awal={catatan} />
+        <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} awal={catatan} biayaKutipAwal={biayaKutipCatatan(catatan.id)} />
       </div>
     </div>
   )

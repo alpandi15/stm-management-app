@@ -563,7 +563,13 @@ tetap menunjukkan uang yang benar-benar diterima. Bukan neto, bukan rumus di lap
   arahan ke induknya; tabel/kartu menampilkan badge "Otomatis" tanpa menu aksi.
 - Form catat & setoran: kotak kuning "Catat biaya kutip 10% otomatis" dengan rincian
   masuk / keluar / bersih, dan centang untuk mematikannya per catatan (`biayaKutip: false`,
-  mis. bila bayar langsung ke bendahara). Rekap penyetor di laporan otomatis memuat biaya
+  mis. bila bayar langsung ke bendahara).
+- **Saat mengubah catatan** kotak itu tetap tampil ("Perbarui biaya kutip 10% mengikuti jumlah
+  ini"), menyebut nomor bukti dan nominal anak yang sekarang, dan rinciannya menampilkan nilai
+  lama dicoret di samping nilai baru (1.000.000 → 1.200.000 berarti 100.000 → 120.000). Centang
+  dimatikan = anaknya dihapus lunak saat disimpan. Keadaan awal centang mengikuti ada/tidaknya
+  anak, dan `input.biayaKutip` yang **tidak dikirim** berarti *pertahankan keadaan sekarang* —
+  catatan yang dulu sengaja tanpa biaya kutip tidak boleh tiba-tiba punya hanya karena diubah. Rekap penyetor di laporan otomatis memuat biaya
   kutip di kolom keluar pengutip.
 
 ### 5.2a Nominal per jenis dan penanda meninggal (Spec 2)

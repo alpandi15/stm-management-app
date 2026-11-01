@@ -155,6 +155,17 @@ export function ambilCatatan(id: number): BarisCatatan | null {
 }
 
 /** Lima catatan terakhir untuk Beranda. */
+/** Catatan biaya kutip yang menempel pada satu catatan uang masuk (docs/02 §5.1f). */
+export function biayaKutipCatatan(indukId: number): { id: number; noBukti: string; jumlah: number } | null {
+  return (
+    db
+      .select({ id: transaksi.id, noBukti: transaksi.noBukti, jumlah: transaksi.jumlah })
+      .from(transaksi)
+      .where(and(eq(transaksi.indukId, indukId), isNull(transaksi.dihapusPada)))
+      .get() ?? null
+  )
+}
+
 export function catatanTerakhir(n = 5): BarisCatatan[] {
   return dariCatatan().where(belumDihapus()).orderBy(desc(transaksi.tanggal), desc(transaksi.id)).limit(n).all()
 }

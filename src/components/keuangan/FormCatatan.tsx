@@ -56,6 +56,7 @@ export function FormCatatan({
   daftarAnggota,
   daftarPenyetor,
   awal,
+  biayaKutipAwal,
   arahAwal,
   kodeJenisAwal,
   anggotaIdAwal,
@@ -66,6 +67,8 @@ export function FormCatatan({
   daftarPenyetor: Array<{ id: number; nama: string; nomor: string | null; pengutip: boolean }>
   /** Catatan yang diubah; kosong berarti catatan baru */
   awal?: Transaksi & { namaPihak: string | null }
+  /** Saat mengubah: catatan biaya kutip yang sekarang menempel (null = belum ada) */
+  biayaKutipAwal?: { id: number; noBukti: string; jumlah: number } | null
   arahAwal?: 'masuk' | 'keluar'
   /** Dari ?tipe=PM11 (Spec 2 §C2) */
   kodeJenisAwal?: string
@@ -111,8 +114,9 @@ export function FormCatatan({
   const tanpaNama = !pihak.trim()
   const jumlahSekarang = watch('jumlah')
   // Biaya kutip (docs/02 §5.1f): tampil bila jenis punya persen; bisa dimatikan per catatan
-  const [biayaKutipAktif, setBiayaKutipAktif] = React.useState(true)
-  const punyaBiayaKutip = !!jenisTerpilih && adaBiayaKutip(jenisTerpilih) && !modeUbah
+  // Saat mengubah, keadaan awal mengikuti ada/tidaknya catatan biaya kutip yang menempel
+  const [biayaKutipAktif, setBiayaKutipAktif] = React.useState(modeUbah ? !!biayaKutipAwal : true)
+  const punyaBiayaKutip = !!jenisTerpilih && adaBiayaKutip(jenisTerpilih)
   const nilaiBiayaKutip = punyaBiayaKutip ? hitungBiayaKutip(jumlahSekarang ?? 0, jenisTerpilih!.biayaKutipPersen) : 0
   const petunjukJumlah = (() => {
     const nominal = jenisTerpilih?.nominalBawaan
@@ -184,7 +188,7 @@ export function FormCatatan({
       if (bukti) fd.set('bukti', bukti)
       if (bukti === null) fd.set('hapusBukti', '1')
       if (abaikanDuplikat) fd.set('abaikanDuplikat', '1')
-      if (!biayaKutipAktif) fd.set('biayaKutip', '0')
+      if (punyaBiayaKutip) fd.set('biayaKutip', biayaKutipAktif ? '1' : '0')
 
       const hasil = modeUbah ? await ubahCatatan(awal!.id, fd) : await simpanCatatan(fd)
       if (!hasil.ok) {
@@ -198,7 +202,8 @@ export function FormCatatan({
         setKonfirmasi({ mirip: data.mirip, kalimat: data.kalimat })
         return
       }
-      toast.success(`${modeUbah ? 'Perubahan tersimpan' : 'Tersimpan'}. ${data.catatan.noBukti} · ${formatRupiah(data.catatan.jumlah)}`)
+      const ikut = punyaBiayaKutip && biayaKutipAktif && nilaiBiayaKutip > 0 ? ` Biaya kutip ${jenisTerpilih!.biayaKutipPersen}% ikut ${modeUbah ? 'diperbarui' : 'dicatat'}: ${formatRupiah(nilaiBiayaKutip)}.` : ''
+      toast.success(`${modeUbah ? 'Perubahan tersimpan' : 'Tersimpan'}. ${data.catatan.noBukti} · ${formatRupiah(data.catatan.jumlah)}.${ikut}`)
       router.push('/catatan')
       router.refresh()
     } finally {
@@ -399,11 +404,19 @@ export function FormCatatan({
             <label className="flex cursor-pointer items-start gap-3">
               <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5" />
               <span className="min-w-0">
-                <span className="block text-isi font-semibold">Catat biaya kutip {jenisTerpilih!.biayaKutipPersen}% otomatis</span>
+                <span className="block text-isi font-semibold">
+                  {modeUbah ? `Perbarui biaya kutip ${jenisTerpilih!.biayaKutipPersen}% mengikuti jumlah ini` : `Catat biaya kutip ${jenisTerpilih!.biayaKutipPersen}% otomatis`}
+                </span>
                 <span className="block text-ket text-muted">
                   {biayaKutipAktif
-                    ? `Uang masuk tetap dicatat ${jumlahSekarang ? formatRupiah(jumlahSekarang) : 'sepenuhnya'}; bagian pengutip ${formatRupiah(nilaiBiayaKutip)} dicatat sendiri sebagai uang keluar. Anda tidak perlu mencatat dua kali.`
-                    : 'Tidak ada uang keluar yang dicatat — pakai bila uang ini tidak lewat pengutip.'}
+                    ? modeUbah
+                      ? biayaKutipAwal
+                        ? `Catatan uang keluar ${biayaKutipAwal.noBukti} (sekarang ${formatRupiah(biayaKutipAwal.jumlah)}) ikut diperbarui saat Anda menyimpan. Anda tidak perlu mengubahnya sendiri.`
+                        : 'Catatan uang keluar untuk bagian pengutip akan dibuat saat Anda menyimpan.'
+                      : `Uang masuk tetap dicatat ${jumlahSekarang ? formatRupiah(jumlahSekarang) : 'sepenuhnya'}; bagian pengutip ${formatRupiah(nilaiBiayaKutip)} dicatat sendiri sebagai uang keluar. Anda tidak perlu mencatat dua kali.`
+                    : modeUbah && biayaKutipAwal
+                      ? `Catatan uang keluar ${biayaKutipAwal.noBukti} akan dihapus saat Anda menyimpan.`
+                      : 'Tidak ada uang keluar yang dicatat — pakai bila uang ini tidak lewat pengutip.'}
                 </span>
               </span>
             </label>
@@ -412,7 +425,12 @@ export function FormCatatan({
                 <dt className="text-muted">Uang masuk dicatat</dt>
                 <dd className="text-right font-semibold text-masuk">{formatRupiah(jumlahSekarang ?? 0)}</dd>
                 <dt className="text-muted">Biaya kutip {jenisTerpilih!.biayaKutipPersen}% (uang keluar otomatis)</dt>
-                <dd className="text-right font-semibold text-keluar">− {formatRupiah(nilaiBiayaKutip)}</dd>
+                <dd className="text-right font-semibold text-keluar">
+                  {modeUbah && biayaKutipAwal && biayaKutipAwal.jumlah !== nilaiBiayaKutip && (
+                    <span className="mr-2 font-normal text-muted line-through">{formatRupiah(biayaKutipAwal.jumlah)}</span>
+                  )}
+                  − {formatRupiah(nilaiBiayaKutip)}
+                </dd>
                 <dt className="font-semibold">Bersih bertambah di kas</dt>
                 <dd className="text-right font-bold">{formatRupiah((jumlahSekarang ?? 0) - nilaiBiayaKutip)}</dd>
               </dl>

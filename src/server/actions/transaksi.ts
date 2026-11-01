@@ -56,7 +56,8 @@ function bacaForm(fd: FormData): { input: InputCatatan | null; galat?: { pesan: 
     jumlah: angka('jumlah'),
     metode: teks('metode'),
     abaikanDuplikat: fd.get('abaikanDuplikat') === '1',
-    biayaKutip: fd.get('biayaKutip') !== '0',
+    // Tidak dikirim = pertahankan keadaan sekarang (penting saat mengubah catatan lama)
+    biayaKutip: fd.has('biayaKutip') ? fd.get('biayaKutip') === '1' : undefined,
   })
   if (!hasil.success) {
     const isu = hasil.error.issues[0]

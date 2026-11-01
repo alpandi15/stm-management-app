@@ -54,7 +54,8 @@ test('ubah jumlah induk → biaya kutip ikut; matikan biaya kutip → anak terha
   assert.equal(hidup[0].jumlah, 30000)
   m.svc.ubahCatatan(induk.id, input(300000, { biayaKutip: false }))
   assert.equal(anak(induk.id).filter((a) => !a.dihapusPada).length, 0)
-  m.svc.ubahCatatan(induk.id, input(300000))
+  // Dinyalakan lagi harus eksplisit — tanpa bendera, keadaan terakhir dipertahankan
+  m.svc.ubahCatatan(induk.id, input(300000, { biayaKutip: true }))
   assert.equal(anak(induk.id).filter((a) => !a.dihapusPada).length, 1)
 })
 
@@ -74,4 +75,28 @@ test('anak otomatis tidak bisa diubah/dihapus langsung; jenis tanpa persen tidak
   const pm02 = m.db.db.select().from(m.schema.jenis).where(m.eq(m.schema.jenis.kode, 'PM02')).get()!.id
   const lain = (m.svc.buatCatatan(input(50000, { jenisId: pm02 })) as { catatan: { id: number } }).catatan
   assert.equal(anak(lain.id).length, 0)
+})
+
+test('mengubah catatan lama tanpa biaya kutip tidak membuat anak baru; eksplisit true membuatnya', () => {
+  const induk = (m.svc.buatCatatan(input(100000, { biayaKutip: false })) as { catatan: { id: number } }).catatan
+  assert.equal(anak(induk.id).length, 0)
+  // Form lama / pemanggil lain tidak mengirim apa-apa → keadaan dipertahankan
+  m.svc.ubahCatatan(induk.id, input(120000))
+  assert.equal(anak(induk.id).filter((a) => !a.dihapusPada).length, 0)
+  // Pengguna mencentang kotaknya → anak dibuat mengikuti jumlah terbaru
+  m.svc.ubahCatatan(induk.id, input(120000, { biayaKutip: true }))
+  const a = anak(induk.id).filter((x) => !x.dihapusPada)
+  assert.equal(a.length, 1)
+  assert.equal(a[0].jumlah, 12000)
+})
+
+test('kasus pemilik: 1.000.000 salah, diubah jadi 1.200.000 — biaya kutip ikut jadi 120.000', () => {
+  const induk = (m.svc.buatCatatan(input(1000000)) as { catatan: { id: number } }).catatan
+  assert.equal(anak(induk.id)[0].jumlah, 100000)
+  m.svc.ubahCatatan(induk.id, input(1200000))
+  const hidup = anak(induk.id).filter((a) => !a.dihapusPada)
+  assert.equal(hidup.length, 1, 'tetap satu catatan biaya kutip, bukan menumpuk')
+  assert.equal(hidup[0].jumlah, 120000)
+  // Nomor buktinya tidak berubah — kuitansi yang sudah tercetak tetap sah
+  assert.equal(hidup[0].noBukti, anak(induk.id)[0].noBukti)
 })
