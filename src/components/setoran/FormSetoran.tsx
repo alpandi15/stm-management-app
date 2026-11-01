@@ -39,11 +39,14 @@ export function FormSetoran({
   daftarAnggota,
   daftarPenyetor,
   almarhum,
+  sisaKas,
 }: {
   daftarJenis: Jenis[]
   daftarAnggota: AnggotaUntukForm[]
   daftarPenyetor: Array<{ id: number; nama: string; nomor: string | null; pengutip: boolean }>
   almarhum: Array<{ label: string; nama: string }>
+  /** Sisa kas saat form dibuka — dipakai menghitung perkiraan kas setelah setoran disimpan */
+  sisaKas: number
 }) {
   const router = useRouter()
   const jenisMasuk = daftarJenis.filter((j) => j.arah === 'masuk')
@@ -442,6 +445,12 @@ export function FormSetoran({
             )}
             <p className="angka text-judul font-bold">{formatRupiah(total)}</p>
             <p className="text-ket text-muted">{total > 0 ? terbilangRupiah(total) : ''}</p>
+            {total > 0 && (
+              <p className="angka mt-1 text-ket text-muted">
+                Kas sekarang <span className="font-semibold text-text">{formatRupiah(sisaKas)}</span> → setelah disimpan{' '}
+                <span className="font-semibold text-text">{formatRupiah(sisaKas + total - (biayaKutipAktif ? biayaKutip.total : 0))}</span>
+              </p>
+            )}
             {biayaKutip.total > 0 && (
               <label className="mt-2 flex cursor-pointer items-start gap-2 rounded-input border border-warning bg-warning-soft px-3 py-2">
                 <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5 size-6" />

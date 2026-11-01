@@ -167,7 +167,12 @@ sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Si
 nama pihak, tanggal, jam dicatat, nomor bukti, nominal) dengan tautan "Lihat semua". Tujuannya
 supaya bendahara tidak perlu membuka Laporan hanya untuk memastikan "tadi sudah dicatat belum"
 atau "kasnya tinggal berapa". Saat belum ada catatan, panel berbunyi "Yang Anda isi di bawah ini
-menjadi yang pertama".
+menjadi yang pertama". Panel yang sama ada di form **Catat Iuran Kolektif**.
+
+Supaya angkanya tetap terlihat saat form digulir, bilah lengket di form catat menampilkan
+**Kas Rp …** (merah bila kas minus) di samping tanggal terpilih, dan ringkasan lengket di form
+setoran kolektif menambahkan baris *"Kas sekarang Rp 11.862.000 → setelah disimpan
+Rp 12.062.000"* (sudah memperhitungkan biaya kutip bila dicentang).
 
 **Grafik laporan** (9 Oktober 2026): halaman Laporan memuat dua grafik berdampingan tepat di
 bawah kartu ringkasan — **Arus Kas** (batang masuk vs keluar per hari bila rentangnya ≤ 62 hari,

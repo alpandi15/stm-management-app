@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Banknote, CalendarDays, Landmark, HeartCrack, HandCoins, Info } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Banknote, CalendarDays, Landmark, HeartCrack, HandCoins, Info, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { simpanCatatan, ubahCatatan, type HasilSimpanCatatan } from '@/server/actions/transaksi'
 import type { Jenis, Transaksi } from '@/server/db/schema'
@@ -57,6 +57,7 @@ export function FormCatatan({
   daftarPenyetor,
   awal,
   biayaKutipAwal,
+  sisaKas,
   arahAwal,
   kodeJenisAwal,
   anggotaIdAwal,
@@ -67,6 +68,8 @@ export function FormCatatan({
   daftarPenyetor: Array<{ id: number; nama: string; nomor: string | null; pengutip: boolean }>
   /** Catatan yang diubah; kosong berarti catatan baru */
   awal?: Transaksi & { namaPihak: string | null }
+  /** Sisa kas saat form dibuka — ikut tampil di bilah lengket supaya terlihat walau digulir */
+  sisaKas?: number
   /** Saat mengubah: catatan biaya kutip yang sekarang menempel (null = belum ada) */
   biayaKutipAwal?: { id: number; noBukti: string; jumlah: number } | null
   arahAwal?: 'masuk' | 'keluar'
@@ -231,11 +234,21 @@ export function FormCatatan({
       <div className="sticky top-16 z-10 -mx-4 -mt-4 flex flex-col gap-2 border-b-2 border-border bg-surface px-4 pb-3 pt-4 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <Label>Jenis</Label>
-          {!kalenderTerlihat && tanggal && (
-            <span className="angka inline-flex items-center gap-2 rounded-badge bg-primary-soft px-3 py-1 text-ket font-semibold text-primary">
-              <CalendarDays className="size-4" /> {formatTanggalLengkap(tanggal)}
-            </span>
-          )}
+          <span className="flex flex-wrap items-center justify-end gap-2">
+            {sisaKas != null && (
+              <span
+                className={cn('angka inline-flex items-center gap-2 rounded-badge px-3 py-1 text-ket font-semibold', sisaKas < 0 ? 'bg-keluar-soft text-keluar' : 'bg-bg text-text')}
+                title="Sisa uang kas sebelum catatan ini disimpan"
+              >
+                <Wallet className="size-4" /> Kas {formatRupiah(sisaKas)}
+              </span>
+            )}
+            {!kalenderTerlihat && tanggal && (
+              <span className="angka inline-flex items-center gap-2 rounded-badge bg-primary-soft px-3 py-1 text-ket font-semibold text-primary">
+                <CalendarDays className="size-4" /> {formatTanggalLengkap(tanggal)}
+              </span>
+            )}
+          </span>
         </div>
         <Controller
           control={control}

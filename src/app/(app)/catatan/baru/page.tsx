@@ -16,12 +16,13 @@ export default async function HalamanCatatBaru({ searchParams }: { searchParams:
   const anggotaIdAwal = Number(searchParams.anggota) || undefined
   // Pengingat keadaan kas supaya bendahara tidak perlu membuka Laporan dulu (docs/01 §5.4)
   const bulanIni = ringkasanCatatan({ rentang: rentangBulanIni() })
+  const sisaKas = hitungSisaKas()
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <JudulHalaman aksi={<TombolKembali />}>{arahAwal === 'masuk' ? 'Catat Uang Masuk' : arahAwal === 'keluar' ? 'Catat Uang Keluar' : 'Catat'}</JudulHalaman>
-      <RingkasCepat sisaKas={hitungSisaKas()} bulanIni={bulanIni} terakhir={catatanTerakhir(3)} />
+      <RingkasCepat sisaKas={sisaKas} bulanIni={bulanIni} terakhir={catatanTerakhir(3)} />
       <div className="rounded-kartu border border-border bg-surface p-4 shadow-kartu sm:p-6">
-        <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} arahAwal={arahAwal} kodeJenisAwal={kodeJenisAwal} anggotaIdAwal={anggotaIdAwal} />
+        <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} arahAwal={arahAwal} kodeJenisAwal={kodeJenisAwal} anggotaIdAwal={anggotaIdAwal} sisaKas={sisaKas} />
       </div>
     </div>
   )
