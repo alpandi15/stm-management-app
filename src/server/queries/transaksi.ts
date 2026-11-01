@@ -207,11 +207,15 @@ export function totalSemua(): { masuk: number; keluar: number } {
 }
 
 
-/** Seluruh catatan dalam rentang, urut waktu dicatat naik — untuk Buku Kas dengan saldo berjalan (urutan buku manual). */
+/**
+ * Seluruh catatan dalam rentang untuk dokumen cetak (Buku Kas dengan saldo berjalan),
+ * urut **tanggal transaksi** naik — bukan waktu input: laporan yang dibawa ke rapat dibaca
+ * menurut tanggal kejadiannya. Waktu input hanya jadi pemutus seri bila tanggalnya sama.
+ */
 export function semuaCatatanDalamRentang(rentang: Rentang): BarisCatatan[] {
   return dariCatatan()
     .where(and(belumDihapus(), gte(transaksi.tanggal, rentang.awal), lte(transaksi.tanggal, rentang.akhir)))
-    .orderBy(asc(transaksi.dibuatPada), asc(transaksi.id))
+    .orderBy(asc(transaksi.tanggal), asc(transaksi.dibuatPada), asc(transaksi.id))
     .all()
 }
 

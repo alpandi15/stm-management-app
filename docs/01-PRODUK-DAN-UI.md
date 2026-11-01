@@ -185,9 +185,10 @@ teks di bilah itu (tanpa kalender) supaya pengguna yakin tanpa harus gulir balik
 2026): kolom Tanggal · No. Bukti (+ ikon foto bukti) · Keterangan (badge jenis berwarna arah +
 teks) · Dari/Untuk (nama pihak bertaut ke anggota, penyetor, nomor setoran) · Masuk · Keluar ·
 Dicatat (tanggal + jam input) · menu aksi; baris kaki = subtotal halaman; bilah halaman
-"Menampilkan 1–50 dari N". **Urutan bawaan: waktu dicatat terbaru dulu** (sesuai urutan buku
-manual); kepala kolom Tanggal dan Dicatat bisa diklik untuk mengurutkan (klik lagi membalik
-arah), tersimpan di URL `?urut=`. Di bawah 768px tetap kartu.
+"Menampilkan 1–50 dari N". Urutan bawaan **di Catatan Kas: waktu dicatat terbaru dulu**
+(sesuai urutan buku manual), sedangkan **di Laporan: tanggal terbaru dulu** karena laporan dibaca
+menurut tanggal kejadian. Kepala kolom Tanggal dan Dicatat bisa diklik untuk mengurutkan (klik
+lagi membalik arah), tersimpan di URL `?urut=`. Di bawah 768px tetap kartu.
 
 **Tirai muat.** Saat pindah halaman, seluruh layar ditutup tirai tembus pandang berisi ikon
 berputar dan "Memuat…" (muncul setelah 100 ms agar halaman instan tidak berkedip). Komputer

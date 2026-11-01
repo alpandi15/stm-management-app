@@ -485,10 +485,17 @@ di browser sistem.
 
 ### 5.1d1 Urutan daftar dan ekspor
 
-`lib/urut-catatan.ts`: `dibuat-desc` (bawaan), `dibuat-asc`, `tanggal-desc`, `tanggal-asc`;
-`daftarCatatan(f, halaman, urut)` selalu menambahkan `id` sebagai pemutus seri. Dokumen cetak
-Buku Kas (`semuaCatatanDalamRentang`) diurutkan **waktu dicatat naik** — saldo berjalan mengikuti
-urutan pencatatan di buku manual, bukan tanggal transaksi yang bisa diisi mundur.
+`lib/urut-catatan.ts`: `dibuat-desc`, `dibuat-asc`, `tanggal-desc`, `tanggal-asc`;
+`daftarCatatan(f, halaman, urut)` selalu menambahkan `id` sebagai pemutus seri. Bawaannya berbeda
+per halaman (permintaan pemilik, 1 November 2026):
+
+- **Catatan Kas** → `dibuat-desc`: yang baru saja dicatat ada di paling atas, seperti bendahara
+  menulis di baris berikutnya pada buku manual.
+- **Laporan** (`URUT_BAWAAN_LAPORAN`) → `tanggal-desc`: laporan dibaca menurut tanggal kejadian.
+- **Dokumen cetak** Buku Kas (`semuaCatatanDalamRentang`) → **tanggal naik**, dengan waktu input
+  hanya sebagai pemutus seri bila tanggalnya sama.
+
+Pengguna tetap bisa mengganti urutan lewat kepala kolom Tanggal/Dicatat (`?urut=`).
 
 ### 5.1d2 Data RT
 
