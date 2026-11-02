@@ -83,7 +83,7 @@ export function DokumenBukuKas({ baris, sisaAwal, rentang, p }: { baris: BarisCa
           </tr>
         </tbody>
       </table>
-      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} />
+      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} namaSekretaris={p.namaSekretaris} />
     </>
   )
 }

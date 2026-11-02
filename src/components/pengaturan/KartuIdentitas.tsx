@@ -12,14 +12,14 @@ import { PesanGalat } from '@/components/ui/pesan-galat'
 
 export function KartuIdentitas({ p }: { p: Pengaturan }) {
   const router = useRouter()
-  const [form, setForm] = React.useState({ namaStm: p.namaStm, alamat: p.alamat ?? '', namaBendahara: p.namaBendahara, namaKetua: p.namaKetua ?? '' })
+  const [form, setForm] = React.useState({ namaStm: p.namaStm, alamat: p.alamat ?? '', namaBendahara: p.namaBendahara, namaKetua: p.namaKetua ?? '', namaSekretaris: p.namaSekretaris ?? '' })
   const [galat, setGalat] = React.useState<{ pesan: string; field?: string } | null>(null)
   const [sedangKirim, mulai] = React.useTransition()
 
   function simpan(e: React.FormEvent) {
     e.preventDefault()
     mulai(async () => {
-      const hasil = await simpanIdentitas({ ...form, alamat: form.alamat || null, namaKetua: form.namaKetua || null })
+      const hasil = await simpanIdentitas({ ...form, alamat: form.alamat || null, namaKetua: form.namaKetua || null, namaSekretaris: form.namaSekretaris || null })
       if (!hasil.ok) {
         setGalat({ pesan: hasil.pesan, field: hasil.field })
         return
@@ -48,6 +48,7 @@ export function KartuIdentitas({ p }: { p: Pengaturan }) {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {field({ id: 'nama-bendahara', label: 'Nama bendahara', k: 'namaBendahara' })}
           {field({ id: 'nama-ketua', label: 'Nama ketua', k: 'namaKetua', opsional: true })}
+          {field({ id: 'nama-sekretaris', label: 'Nama sekretaris', k: 'namaSekretaris', opsional: true })}
         </div>
         {galat && !galat.field && <PesanGalat>{galat.pesan}</PesanGalat>}
         <Button type="submit" ukuran="aksi" className="sm:w-fit" disabled={sedangKirim}>

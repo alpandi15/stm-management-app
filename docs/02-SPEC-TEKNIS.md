@@ -198,6 +198,7 @@ export const pengaturan = sqliteTable('pengaturan', {
   alamat: text('alamat'),
   namaBendahara: text('nama_bendahara').notNull(),
   namaKetua: text('nama_ketua'),
+  namaSekretaris: text('nama_sekretaris'),
   saldoAwal: integer('saldo_awal').notNull().default(0),
   tanggalMulai: text('tanggal_mulai').notNull(),
   terkunciSampai: text('terkunci_sampai'),
@@ -738,8 +739,10 @@ Ketentuan:
   seluruh catatan. Laporan ringkas dan pemeriksaan mengikuti penyaring seperti di layar.
 - Parameter URL sama dengan halaman Laporan (`periode`, `acuan`, `awal`, `akhir`, `jenis`,
   `metode`); `cetak=0` mematikan `window.print()` otomatis.
-- Blok tanda tangan memakai nama bendahara dan ketua dari Pengaturan; bila kosong, cetak
-  garis kosong — jangan pernah mencetak "null" atau "undefined".
+- Blok tanda tangan memakai nama ketua, sekretaris, dan bendahara dari Pengaturan; bila
+  kosong, cetak garis kosong — jangan pernah mencetak "null" atau "undefined".
+  Sekretaris opsional: bila namanya kosong, blok tetap dua kolom (Ketua dan Bendahara)
+  seperti semula; bila diisi, kolomnya tiga dan lebarnya menyesuaikan.
 - Sediakan juga tombol **Simpan sebagai PDF** yang memanggil `webContents.printToPDF`
   lewat IPC Electron, sehingga menghasilkan berkas langsung dengan nama deskriptif
   (`Laporan-Ringkas-Januari-2026.pdf`). Nama berkas penting karena hasilnya akan dikirim

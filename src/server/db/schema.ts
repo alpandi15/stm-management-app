@@ -39,6 +39,7 @@ export const pengaturan = sqliteTable('pengaturan', {
   alamat: text('alamat'),
   namaBendahara: text('nama_bendahara').notNull(),
   namaKetua: text('nama_ketua'),
+  namaSekretaris: text('nama_sekretaris'),
   saldoAwal: integer('saldo_awal').notNull().default(0), // rupiah penuh
   tanggalMulai: text('tanggal_mulai').notNull(), // YYYY-MM-DD
   terkunciSampai: text('terkunci_sampai'), // YYYY-MM-DD, penguncian periode

@@ -1,0 +1,1 @@
+ALTER TABLE `pengaturan` ADD `nama_sekretaris` text;

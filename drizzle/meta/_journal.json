@@ -92,6 +92,13 @@
       "when": 1790064267073,
       "tag": "0012_biaya_kutip",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793588336526,
+      "tag": "0013_nama_sekretaris",
+      "breakpoints": true
     }
   ]
 }

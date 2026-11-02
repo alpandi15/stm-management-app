@@ -35,13 +35,14 @@ const skemaIdentitas = z.object({
   alamat: z.string().trim().max(255, 'Alamat terlalu panjang.').nullable().optional(),
   namaBendahara: skemaNama,
   namaKetua: z.string().trim().max(120, 'Nama terlalu panjang.').nullable().optional(),
+  namaSekretaris: z.string().trim().max(120, 'Nama terlalu panjang.').nullable().optional(),
 })
 export type InputIdentitas = z.infer<typeof skemaIdentitas>
 
 export const simpanIdentitas = aksiTerlindungi(async (input: InputIdentitas) => {
   const h = skemaIdentitas.safeParse(input)
   if (!h.success) return pesanZod(h.error)
-  simpan({ namaStm: h.data.namaStm, alamat: h.data.alamat?.trim() || null, namaBendahara: h.data.namaBendahara, namaKetua: h.data.namaKetua?.trim() || null })
+  simpan({ namaStm: h.data.namaStm, alamat: h.data.alamat?.trim() || null, namaBendahara: h.data.namaBendahara, namaKetua: h.data.namaKetua?.trim() || null, namaSekretaris: h.data.namaSekretaris?.trim() || null })
   revalidatePath('/', 'layout')
   return berhasil(undefined)
 })

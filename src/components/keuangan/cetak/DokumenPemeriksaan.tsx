@@ -74,7 +74,7 @@ export function DokumenPemeriksaan({ pemeriksaan, laporan, perubahan, p }: { pem
           </tbody>
         </table>
       </section>
-      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} />
+      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} namaSekretaris={p.namaSekretaris} />
     </>
   )
 }

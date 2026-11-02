@@ -107,7 +107,7 @@ export function DokumenRingkas({ laporan, p }: { laporan: Laporan; p: Pengaturan
           </tbody>
         </table>
       </section>
-      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} />
+      <TandaTangan namaBendahara={p.namaBendahara} namaKetua={p.namaKetua} namaSekretaris={p.namaSekretaris} />
     </>
   )
 }

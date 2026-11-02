@@ -18,11 +18,16 @@ export default async function HalamanCatatBaru({ searchParams }: { searchParams:
   const bulanIni = ringkasanCatatan({ rentang: rentangBulanIni() })
   const sisaKas = hitungSisaKas()
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <JudulHalaman aksi={<TombolKembali />}>{arahAwal === 'masuk' ? 'Catat Uang Masuk' : arahAwal === 'keluar' ? 'Catat Uang Keluar' : 'Catat'}</JudulHalaman>
-      <RingkasCepat sisaKas={sisaKas} bulanIni={bulanIni} terakhir={catatanTerakhir(3)} />
-      <div className="rounded-kartu border border-border bg-surface p-4 shadow-kartu sm:p-6">
-        <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} arahAwal={arahAwal} kodeJenisAwal={kodeJenisAwal} anggotaIdAwal={anggotaIdAwal} sisaKas={sisaKas} />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+        <div className="order-2 rounded-kartu border border-border bg-surface p-4 shadow-kartu sm:p-6 xl:order-1">
+          <FormCatatan daftarJenis={daftarJenisAktif()} daftarAnggota={daftarAnggotaAktif()} daftarPenyetor={daftarPenyetor()} arahAwal={arahAwal} kodeJenisAwal={kodeJenisAwal} anggotaIdAwal={anggotaIdAwal} sisaKas={sisaKas} />
+        </div>
+        {/* Pengingat keadaan kas: di samping form pada layar lebar, di atasnya pada layar sempit */}
+        <div className="order-1 xl:order-2 xl:sticky xl:top-20">
+          <RingkasCepat sisaKas={sisaKas} bulanIni={bulanIni} terakhir={catatanTerakhir(3)} />
+        </div>
       </div>
     </div>
   )

@@ -271,54 +271,60 @@ export function FormCatatan({
         <PesanGalat>{g.arah?.message}</PesanGalat>
       </div>
 
-      {/* 2. Tanggal — kalender langsung terlihat, sudah menunjuk hari ini; tanpa popover */}
-      <div className="flex flex-col gap-2" ref={wadahKalender}>
-        <Label htmlFor="tanggal">Tanggal</Label>
-        <Controller
-          control={control}
-          name="tanggal"
-          render={({ field }) => <PilihTanggal inline id="tanggal" nilai={field.value} onUbah={field.onChange} maks={hariIni()} galat={!!g.tanggal} />}
-        />
-        <PesanGalat>{g.tanggal?.message}</PesanGalat>
-      </div>
-
-      {/* 3. Untuk apa */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="jenisId">Untuk apa uangnya?</Label>
-        <Controller
-          control={control}
-          name="jenisId"
-          render={({ field }) => (
-            <PilihanModal
-              id="jenisId"
-              judul="Untuk apa uangnya?"
-              nilai={field.value ?? null}
-              onUbah={(v) => field.onChange(v ?? undefined)}
-              pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: labelJenis(j), keterangan: j.keterangan ?? undefined }))}
-              placeholder={arah ? 'Pilih dari daftar…' : 'Pilih dulu Uang Masuk atau Uang Keluar'}
-              placeholderCari="Ketik nama jenis…"
-              galat={!!g.jenisId}
-              nonaktif={!arah}
-            />
-          )}
-        />
-        <PesanGalat>{g.jenisId?.message}</PesanGalat>
-      </div>
-
-      {/* 3b. Periode yang dibayar (jenis bulanan/tahunan) */}
-      {jenisPeriode && periodeTampil && (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="periode">{jenisPeriode === 'bulanan' ? 'Untuk bulan' : 'Untuk tahun'}</Label>
-          <PilihPeriode id="periode" jenisPeriode={jenisPeriode} nilai={periodeTampil} onUbah={setPeriode} />
-          <p className="text-ket text-muted">Bawaan mengikuti tanggal catatan. Ubah bila membayar untuk {jenisPeriode === 'bulanan' ? 'bulan' : 'tahun'} lain.</p>
+      {/* Kapan & untuk apa — berdampingan di layar lebar supaya form tidak memanjang ke bawah */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
+        {/* 2. Tanggal — kalender langsung terlihat, sudah menunjuk hari ini; tanpa popover */}
+        <div className="flex flex-col gap-2" ref={wadahKalender}>
+          <Label htmlFor="tanggal">Tanggal</Label>
+          <Controller
+            control={control}
+            name="tanggal"
+            render={({ field }) => <PilihTanggal inline id="tanggal" nilai={field.value} onUbah={field.onChange} maks={hariIni()} galat={!!g.tanggal} />}
+          />
+          <PesanGalat>{g.tanggal?.message}</PesanGalat>
         </div>
-      )}
 
-      {/* 4. Keterangan */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="keterangan">Keterangan</Label>
-        <Textarea id="keterangan" placeholder="Tulis untuk apa uang ini, mis. Iuran wajib Januari 2026 dari 12 anggota Blok C" maxLength={255} {...register('keterangan')} aria-invalid={!!g.keterangan} />
-        <PesanGalat>{g.keterangan?.message}</PesanGalat>
+        {/* 3. Untuk apa, periode, dan keterangan — satu kolom di samping kalender */}
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+          <Label htmlFor="jenisId">Untuk apa uangnya?</Label>
+          <Controller
+            control={control}
+            name="jenisId"
+            render={({ field }) => (
+              <PilihanModal
+                id="jenisId"
+                judul="Untuk apa uangnya?"
+                nilai={field.value ?? null}
+                onUbah={(v) => field.onChange(v ?? undefined)}
+                pilihan={jenisTersedia.map((j) => ({ nilai: j.id, label: labelJenis(j), keterangan: j.keterangan ?? undefined }))}
+                placeholder={arah ? 'Pilih dari daftar…' : 'Pilih dulu Uang Masuk atau Uang Keluar'}
+                placeholderCari="Ketik nama jenis…"
+                galat={!!g.jenisId}
+                nonaktif={!arah}
+              />
+            )}
+          />
+          <PesanGalat>{g.jenisId?.message}</PesanGalat>
+        </div>
+
+        {/* 3b. Periode yang dibayar (jenis bulanan/tahunan) */}
+        {jenisPeriode && periodeTampil && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="periode">{jenisPeriode === 'bulanan' ? 'Untuk bulan' : 'Untuk tahun'}</Label>
+            <PilihPeriode id="periode" jenisPeriode={jenisPeriode} nilai={periodeTampil} onUbah={setPeriode} />
+            <p className="text-ket text-muted">Bawaan mengikuti tanggal catatan. Ubah bila membayar untuk {jenisPeriode === 'bulanan' ? 'bulan' : 'tahun'} lain.</p>
+          </div>
+        )}
+
+        {/* 4. Keterangan */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="keterangan">Keterangan</Label>
+          <Textarea id="keterangan" placeholder="Tulis untuk apa uang ini, mis. Iuran wajib Januari 2026 dari 12 anggota Blok C" maxLength={255} {...register('keterangan')} aria-invalid={!!g.keterangan} />
+          <PesanGalat>{g.keterangan?.message}</PesanGalat>
+        </div>
+
+        </div>
       </div>
 
       {/* 5. Dari / Untuk siapa */}
@@ -394,101 +400,106 @@ export function FormCatatan({
         </div>
       )}
 
-      {/* 6. Jumlah */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="jumlah">Jumlah Uang</Label>
-        <Controller
-          control={control}
-          name="jumlah"
-          render={({ field }) => (
-            <InputRupiah
-              id="jumlah"
-              nilai={field.value ?? null}
-              onUbah={(n) => field.onChange(n ?? undefined)}
-              galat={!!g.jumlah}
-              hanyaBaca={nominalTerkunci && !tanpaNama}
-              petunjuk={petunjukJumlah}
-            />
-          )}
-        />
-        <PesanGalat>{g.jumlah?.message}</PesanGalat>
-        {punyaBiayaKutip && (
-          <div className={cn('mt-1 flex flex-col gap-3 rounded-input border-2 px-4 py-3', biayaKutipAktif ? 'border-warning bg-warning-soft' : 'border-border bg-bg')}>
-            <label className="flex cursor-pointer items-start gap-3">
-              <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5" />
-              <span className="min-w-0">
-                <span className="block text-isi font-semibold">
-                  {modeUbah ? `Perbarui biaya kutip ${jenisTerpilih!.biayaKutipPersen}% mengikuti jumlah ini` : `Catat biaya kutip ${jenisTerpilih!.biayaKutipPersen}% otomatis`}
-                </span>
-                <span className="block text-ket text-muted">
-                  {biayaKutipAktif
-                    ? modeUbah
-                      ? biayaKutipAwal
-                        ? `Catatan uang keluar ${biayaKutipAwal.noBukti} (sekarang ${formatRupiah(biayaKutipAwal.jumlah)}) ikut diperbarui saat Anda menyimpan. Anda tidak perlu mengubahnya sendiri.`
-                        : 'Catatan uang keluar untuk bagian pengutip akan dibuat saat Anda menyimpan.'
-                      : `Uang masuk tetap dicatat ${jumlahSekarang ? formatRupiah(jumlahSekarang) : 'sepenuhnya'}; bagian pengutip ${formatRupiah(nilaiBiayaKutip)} dicatat sendiri sebagai uang keluar. Anda tidak perlu mencatat dua kali.`
-                    : modeUbah && biayaKutipAwal
-                      ? `Catatan uang keluar ${biayaKutipAwal.noBukti} akan dihapus saat Anda menyimpan.`
-                      : 'Tidak ada uang keluar yang dicatat — pakai bila uang ini tidak lewat pengutip.'}
-                </span>
-              </span>
-            </label>
-            {biayaKutipAktif && nilaiBiayaKutip > 0 && (
-              <dl className="angka grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-warning/40 pt-2 text-isi">
-                <dt className="text-muted">Uang masuk dicatat</dt>
-                <dd className="text-right font-semibold text-masuk">{formatRupiah(jumlahSekarang ?? 0)}</dd>
-                <dt className="text-muted">Biaya kutip {jenisTerpilih!.biayaKutipPersen}% (uang keluar otomatis)</dt>
-                <dd className="text-right font-semibold text-keluar">
-                  {modeUbah && biayaKutipAwal && biayaKutipAwal.jumlah !== nilaiBiayaKutip && (
-                    <span className="mr-2 font-normal text-muted line-through">{formatRupiah(biayaKutipAwal.jumlah)}</span>
-                  )}
-                  − {formatRupiah(nilaiBiayaKutip)}
-                </dd>
-                <dt className="font-semibold">Bersih bertambah di kas</dt>
-                <dd className="text-right font-bold">{formatRupiah((jumlahSekarang ?? 0) - nilaiBiayaKutip)}</dd>
-              </dl>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
+        {/* 6. Jumlah */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="jumlah">Jumlah Uang</Label>
+          <Controller
+            control={control}
+            name="jumlah"
+            render={({ field }) => (
+              <InputRupiah
+                id="jumlah"
+                nilai={field.value ?? null}
+                onUbah={(n) => field.onChange(n ?? undefined)}
+                galat={!!g.jumlah}
+                hanyaBaca={nominalTerkunci && !tanpaNama}
+                petunjuk={petunjukJumlah}
+              />
             )}
-          </div>
-        )}
-      </div>
-
-      {/* 7. Cara bayar */}
-      <div className="flex flex-col gap-2">
-        <Label>Cara Bayar</Label>
-        <Controller
-          control={control}
-          name="metode"
-          render={({ field }) => (
-            <PilihanGanda
-              label="Cara Bayar"
-              nilai={field.value ?? null}
-              onPilih={field.onChange}
-              pilihan={[
-                { nilai: 'tunai', label: 'Tunai', Ikon: Banknote },
-                { nilai: 'transfer', label: 'Transfer', Ikon: Landmark },
-              ]}
-            />
+          />
+          <PesanGalat>{g.jumlah?.message}</PesanGalat>
+          {punyaBiayaKutip && (
+            <div className={cn('mt-1 flex flex-col gap-3 rounded-input border-2 px-4 py-3', biayaKutipAktif ? 'border-warning bg-warning-soft' : 'border-border bg-bg')}>
+              <label className="flex cursor-pointer items-start gap-3">
+                <Checkbox checked={biayaKutipAktif} onCheckedChange={(v) => setBiayaKutipAktif(v === true)} className="mt-0.5" />
+                <span className="min-w-0">
+                  <span className="block text-isi font-semibold">
+                    {modeUbah ? `Perbarui biaya kutip ${jenisTerpilih!.biayaKutipPersen}% mengikuti jumlah ini` : `Catat biaya kutip ${jenisTerpilih!.biayaKutipPersen}% otomatis`}
+                  </span>
+                  <span className="block text-ket text-muted">
+                    {biayaKutipAktif
+                      ? modeUbah
+                        ? biayaKutipAwal
+                          ? `Catatan uang keluar ${biayaKutipAwal.noBukti} (sekarang ${formatRupiah(biayaKutipAwal.jumlah)}) ikut diperbarui saat Anda menyimpan. Anda tidak perlu mengubahnya sendiri.`
+                          : 'Catatan uang keluar untuk bagian pengutip akan dibuat saat Anda menyimpan.'
+                        : `Uang masuk tetap dicatat ${jumlahSekarang ? formatRupiah(jumlahSekarang) : 'sepenuhnya'}; bagian pengutip ${formatRupiah(nilaiBiayaKutip)} dicatat sendiri sebagai uang keluar. Anda tidak perlu mencatat dua kali.`
+                      : modeUbah && biayaKutipAwal
+                        ? `Catatan uang keluar ${biayaKutipAwal.noBukti} akan dihapus saat Anda menyimpan.`
+                        : 'Tidak ada uang keluar yang dicatat — pakai bila uang ini tidak lewat pengutip.'}
+                  </span>
+                </span>
+              </label>
+              {biayaKutipAktif && nilaiBiayaKutip > 0 && (
+                <dl className="angka grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-warning/40 pt-2 text-isi">
+                  <dt className="text-muted">Uang masuk dicatat</dt>
+                  <dd className="text-right font-semibold text-masuk">{formatRupiah(jumlahSekarang ?? 0)}</dd>
+                  <dt className="text-muted">Biaya kutip {jenisTerpilih!.biayaKutipPersen}% (uang keluar otomatis)</dt>
+                  <dd className="text-right font-semibold text-keluar">
+                    {modeUbah && biayaKutipAwal && biayaKutipAwal.jumlah !== nilaiBiayaKutip && (
+                      <span className="mr-2 font-normal text-muted line-through">{formatRupiah(biayaKutipAwal.jumlah)}</span>
+                    )}
+                    − {formatRupiah(nilaiBiayaKutip)}
+                  </dd>
+                  <dt className="font-semibold">Bersih bertambah di kas</dt>
+                  <dd className="text-right font-bold">{formatRupiah((jumlahSekarang ?? 0) - nilaiBiayaKutip)}</dd>
+                </dl>
+              )}
+            </div>
           )}
-        />
-        <PesanGalat>{g.metode?.message}</PesanGalat>
-      </div>
+        </div>
 
-      {/* 7b. Disetor / diserahkan oleh — siapa yang membawa uangnya */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="penyetorAnggotaId" className="flex items-center gap-2">
-          <HandCoins className="size-5 text-muted" /> {arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
-        </Label>
-        <PilihanModal<number>
-          id="penyetorAnggotaId"
-          judul={arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
-          nilai={penyetorId}
-          onUbah={setPenyetorId}
-          labelKosong="Bendahara (sendiri)"
-          placeholder="Bendahara (sendiri)"
-          placeholderCari="Ketik nama pengutip atau anggota…"
-          pilihan={daftarPenyetor.map((a) => ({ nilai: a.id, label: a.nama, keterangan: [a.pengutip ? 'pengutip' : null, a.nomor].filter(Boolean).join(' · ') || undefined, kelompok: a.pengutip ? 'Tim pengutip' : 'Anggota lain' }))}
-        />
-        <p className="text-ket text-muted">{arah === 'keluar' ? 'Siapa yang membawa uangnya ke penerima. Kosongkan bila bendahara sendiri.' : 'Siapa yang membawa uangnya ke bendahara — tim pengutip atau anggota lain. Kosongkan bila langsung ke bendahara.'}</p>
+        {/* 7. Cara bayar & siapa yang membawa uangnya — satu kolom di samping jumlah */}
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+          <Label>Cara Bayar</Label>
+          <Controller
+            control={control}
+            name="metode"
+            render={({ field }) => (
+              <PilihanGanda
+                label="Cara Bayar"
+                nilai={field.value ?? null}
+                onPilih={field.onChange}
+                pilihan={[
+                  { nilai: 'tunai', label: 'Tunai', Ikon: Banknote },
+                  { nilai: 'transfer', label: 'Transfer', Ikon: Landmark },
+                ]}
+              />
+            )}
+          />
+          <PesanGalat>{g.metode?.message}</PesanGalat>
+        </div>
+
+        {/* 7b. Disetor / diserahkan oleh — siapa yang membawa uangnya */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="penyetorAnggotaId" className="flex items-center gap-2">
+            <HandCoins className="size-5 text-muted" /> {arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
+          </Label>
+          <PilihanModal<number>
+            id="penyetorAnggotaId"
+            judul={arah === 'keluar' ? 'Diserahkan oleh' : 'Disetor oleh'}
+            nilai={penyetorId}
+            onUbah={setPenyetorId}
+            labelKosong="Bendahara (sendiri)"
+            placeholder="Bendahara (sendiri)"
+            placeholderCari="Ketik nama pengutip atau anggota…"
+            pilihan={daftarPenyetor.map((a) => ({ nilai: a.id, label: a.nama, keterangan: [a.pengutip ? 'pengutip' : null, a.nomor].filter(Boolean).join(' · ') || undefined, kelompok: a.pengutip ? 'Tim pengutip' : 'Anggota lain' }))}
+          />
+          <p className="text-ket text-muted">{arah === 'keluar' ? 'Siapa yang membawa uangnya ke penerima. Kosongkan bila bendahara sendiri.' : 'Siapa yang membawa uangnya ke bendahara — tim pengutip atau anggota lain. Kosongkan bila langsung ke bendahara.'}</p>
+        </div>
+
+        </div>
       </div>
 
       {/* 8. Foto bukti */}

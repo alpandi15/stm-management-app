@@ -162,12 +162,14 @@ diketik/diklik; tombol pilihan yang belum dipilih juga bertepi kuat. Tanggal di 
 sudah menunjuk hari ini, dengan panel "Tanggal dipilih" di sampingnya. Tombol Simpan/Batal
 **lengket di bawah** form (Batal kiri, Simpan kanan dua kali lebih lebar).
 
-**Pengingat di form catat** (1 November 2026): di atas form Catat ada panel kecil berisi
+**Pengingat di form catat** (1 November 2026): di samping form Catat ada panel kecil berisi
 **sisa uang kas sekarang**, uang masuk/keluar bulan ini, dan **tiga catatan terakhir** (jenis,
 nama pihak, tanggal, jam dicatat, nomor bukti, nominal) dengan tautan "Lihat semua". Tujuannya
 supaya bendahara tidak perlu membuka Laporan hanya untuk memastikan "tadi sudah dicatat belum"
 atau "kasnya tinggal berapa". Saat belum ada catatan, panel berbunyi "Yang Anda isi di bawah ini
-menjadi yang pertama". Panel yang sama ada di form **Catat Iuran Kolektif**.
+menjadi yang pertama". Pada layar lebar (≥ 1280px) panel ini berdiri sebagai kolom kanan yang
+lengket; pada layar sempit ia pindah ke atas form. Panel yang sama ada di form
+**Catat Iuran Kolektif**.
 
 Supaya angkanya tetap terlihat saat form digulir, bilah lengket di form catat menampilkan
 **Kas Rp …** (merah bila kas minus) di samping tanggal terpilih, dan ringkasan lengket di form
@@ -312,7 +314,15 @@ Tombol mengambang **+ Catat** di kanan bawah pada layar sempit.
 
 ### 5.5 Form Catat — `/catatan/baru` dan `/catatan/[id]/ubah`
 
-Satu kolom, urutan tetap:
+Halaman ini memakai **lebar isi yang sama dengan halaman lain** — tidak dipersempit dan tidak
+ditengahkan (2 November 2026). Susunannya: form di kartu kiri, panel **Pengingat keadaan kas**
+(§5.4) sebagai kolom kanan selebar 22rem yang lengket saat digulir; di bawah 1280px keduanya
+bertumpuk, panel di atas form. Halaman ubah memakai susunan yang sama, dengan nomor bukti di
+bawah judul dan tombol **Kembali** di kanan judul.
+
+Di dalam form, urutan isiannya tetap. Pada layar lebar (≥ 1024px) beberapa isian yang
+berpasangan diletakkan berdampingan supaya form tidak memanjang ke bawah: kalender di sebelah
+*Untuk apa / periode / keterangan*, dan *Jumlah Uang* di sebelah *Cara Bayar / Disetor oleh*.
 
 1. **Jenis** — dua tombol besar berdampingan, bukan dropdown: `Uang Masuk` / `Uang Keluar`.
    Terpilih otomatis bila datang dari tombol Beranda.
@@ -384,7 +394,7 @@ Satu halaman, beberapa kartu bertumpuk. Tanpa tab.
 
 | Kartu | Isi |
 | --- | --- |
-| **Identitas STM** | Nama, alamat, nama bendahara, nama ketua — untuk kop laporan |
+| **Identitas STM** | Nama, alamat, nama bendahara, nama ketua, nama sekretaris — untuk kop laporan dan blok tanda tangan (ketua dan sekretaris boleh kosong) |
 | **Saldo Awal** | Uang kas sebelum aplikasi ini dipakai, dengan peringatan bahwa mengubahnya mengubah semua laporan |
 | **Jenis Uang Masuk & Keluar** | Daftar jenis, bisa tambah/ubah/nonaktifkan. Jenis bawaan tidak bisa dihapus |
 | **Keamanan** | Ganti PIN, buat ulang kode pemulihan, kunci otomatis setelah 15 menit |
